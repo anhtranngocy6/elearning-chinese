@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nền tảng Học Tiếng Trung Cùng Thư</title>
+    <title>Nền tảng E-Learning</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -222,13 +222,13 @@
 
         // --- 4.1. Giao diện chung ---
         const renderLoginScreen = () => {
-            document.title = "Đăng nhập | Học Tiếng Trung Cùng Thư";
+            document.title = "Đăng nhập | E-Learning";
             appContainer.innerHTML = `
              <div class="min-h-screen flex flex-col items-center justify-center bg-slate-100 bg-cover bg-center" style="background-image: url('https://placehold.co/1920x1080/e2e8f0/e2e8f0?text=.')">
                 <div class="w-full max-w-md bg-white/80 backdrop-blur-xl p-8 rounded-2xl shadow-2xl fade-in">
                     <div class="text-center mb-8">
                         <i class="fas fa-graduation-cap text-5xl text-blue-600"></i>
-                        <h1 class="text-4xl font-bold text-slate-800 mt-2">Học Tiếng Trung Cùng Thư</h1>
+                        <h1 class="text-4xl font-bold text-slate-800 mt-2">E-Learning</h1>
                         <p class="text-slate-500">Chào mừng bạn trở lại!</p>
                     </div>
                     <div id="login-error" class="text-red-500 text-center mb-4 hidden"></div>
@@ -311,7 +311,7 @@
         
         // --- 4.2. Giao diện cho Admin ---
         const renderAdminDashboard = () => {
-             document.title = "Admin Dashboard | Học Tiếng Trung Cùng Thư";
+             document.title = "Admin Dashboard | E-Learning";
             const teachers = users.filter(u => u.role === 'teacher');
             const students = users.filter(u => u.role === 'student');
 
@@ -394,7 +394,7 @@
         // --- 4.3. Giao diện cho Teacher ---
         const renderTeacherDashboard = () => {
             currentView = 'dashboard';
-            document.title = "Teacher Dashboard | Học Tiếng Trung Cùng Thư";
+            document.title = "Teacher Dashboard | E-Learning";
             const myCourses = courses.filter(c => c.createdBy === currentUser.id);
             appContainer.innerHTML = `<div class="w-full max-w-6xl mx-auto fade-in">${renderHeader('Teacher Dashboard')}<div class="grid grid-cols-1 md:grid-cols-3 gap-8 mt-6"><div class="md:col-span-2 bg-white p-6 rounded-xl shadow-lg"><h2 class="text-2xl font-bold mb-4">Khoá học của tôi</h2><div class="space-y-3">${myCourses.length > 0 ? myCourses.map(c => `<div class="p-4 bg-slate-50 rounded-lg flex justify-between items-center"><div><h3 class="font-semibold text-lg">${c.title}</h3><p class="text-sm text-slate-500 truncate">${c.description}</p></div><div class="space-x-2 flex-shrink-0"><button class="edit-course-btn text-gray-500 hover:text-blue-700" data-id="${c.id}" title="Chỉnh sửa thông tin"><i class="fas fa-pen"></i></button><button class="manage-course-btn bg-blue-50 text-blue-600 px-4 py-1 rounded-full border border-blue-200 font-semibold text-sm hover:bg-blue-100" data-id="${c.id}">Quản lý</button></div></div>`).join('') : '<p class="text-slate-500">Bạn chưa tạo khoá học nào.</p>'}</div></div><div class="bg-white p-6 rounded-xl shadow-lg h-fit"><h2 class="text-2xl font-bold mb-4">Tạo khoá học mới</h2><div class="space-y-3"><input type="text" id="new-course-title" placeholder="Tiêu đề khoá học" class="w-full p-2 border rounded-lg"><textarea id="new-course-desc" placeholder="Mô tả khoá học" class="w-full p-2 border rounded-lg h-24"></textarea><input type="text" id="new-course-folder-url" placeholder="Link thư mục Google Drive cho khoá học" class="w-full p-2 border rounded-lg"><button id="add-course-btn" class="w-full bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700">Tạo mới</button></div></div></div></div>`;
         };
@@ -460,7 +460,19 @@
             return `
                 <div>
                     <h3 class="text-xl font-bold mb-4">Danh sách bài học</h3>
-                    ${courseLessons.length > 0 ? courseLessons.map(l => `<div class="p-3 bg-slate-50 rounded-lg mb-2 flex justify-between items-center"><span class="font-medium">${l.title}</span><div class="space-x-4"><button class="manage-homework-btn text-green-600 hover:text-green-800 text-sm" data-lesson-id="${l.id}"><i class="fas fa-tasks mr-1"></i>Bài tập</button><button class="edit-lesson-btn text-gray-500 hover:text-blue-700 text-sm" data-lesson-id="${l.id}"><i class="fas fa-edit mr-1"></i>Chỉnh sửa</button><button class="delete-lesson-btn text-red-500 hover:text-red-700 text-sm" data-lesson-id="${l.id}"><i class="fas fa-trash mr-1"></i>Xóa</button></div></div>`).join('') : '<p class="text-slate-500 text-sm">Chưa có bài học nào.</p>'}
+                    ${courseLessons.map(l => {
+                        const hasHomework = homeworks.some(h => h.lessonId === l.id && h.title && h.description);
+                        const homeworkButtonClass = hasHomework ? 'text-green-600 hover:text-green-800' : 'text-red-500 hover:text-red-700';
+                        return `
+                        <div class="p-3 bg-slate-50 rounded-lg mb-2 flex justify-between items-center">
+                            <span class="font-medium">${l.title}</span>
+                            <div class="space-x-4">
+                                <button class="manage-homework-btn ${homeworkButtonClass} text-sm" data-lesson-id="${l.id}"><i class="fas fa-tasks mr-1"></i>Bài tập</button>
+                                <button class="edit-lesson-btn text-gray-500 hover:text-blue-700 text-sm" data-lesson-id="${l.id}"><i class="fas fa-edit mr-1"></i>Chỉnh sửa</button>
+                                <button class="delete-lesson-btn text-red-500 hover:text-red-700 text-sm" data-lesson-id="${l.id}"><i class="fas fa-trash mr-1"></i>Xóa</button>
+                            </div>
+                        </div>`;
+                    }).join('') || '<p class="text-slate-500 text-sm">Chưa có bài học nào.</p>'}
                 </div>
                 <div class="p-4 bg-slate-50 rounded-lg border border-dashed">
                     <h3 class="text-xl font-bold mb-3">Thêm bài học mới</h3>
@@ -669,7 +681,7 @@
         // --- 4.4. Giao diện cho Student ---
         const renderStudentDashboard = () => {
              currentView = 'dashboard';
-             document.title = "Student Dashboard | Học Tiếng Trung Cùng Thư";
+             document.title = "Student Dashboard | E-Learning";
              const myCourseIds = enrollments.filter(e => e.studentId === currentUser.id).map(e => e.courseId);
              const myCourses = courses.filter(c => myCourseIds.includes(c.id));
              appContainer.innerHTML = `<div class="w-full max-w-6xl mx-auto fade-in">${renderHeader('Các khoá học của tôi')}<main class="mt-6"><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">${myCourses.length > 0 ? myCourses.map(c => renderCourseCard(c)).join('') : '<p class="text-slate-500 md:col-span-3 text-center py-8">Bạn chưa được ghi danh vào khoá học nào.</p>'}</div></main></div>`;
