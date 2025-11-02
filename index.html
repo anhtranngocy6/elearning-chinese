@@ -48,9 +48,9 @@
     <div id="toast-container" class="fixed bottom-5 right-5 z-[101] space-y-3 w-full max-w-xs"></div>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-        import { getFirestore, collection, onSnapshot, addDoc, doc, updateDoc, deleteDoc, writeBatch, setDoc, serverTimestamp, deleteField } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, onSnapshot, addDoc, doc, updateDoc, deleteDoc, writeBatch, setDoc, serverTimestamp, deleteField } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // ===================================================================================
         // KHU VỰC 1: KHỞI TẠO VÀ TRẠNG THÁI ỨNG DỤNG
@@ -233,6 +233,22 @@
             }
         };
 
+        const showModal = (content) => {
+            if (typeof content === 'string') {
+                modalContainer.innerHTML = content;
+            } else if (content instanceof HTMLElement) {
+                modalContainer.innerHTML = '';
+                modalContainer.appendChild(content);
+            }
+            modalContainer.classList.remove('hidden');
+            modalContainer.classList.add('flex');
+        };
+
+        const closeModal = () => {
+            modalContainer.classList.add('hidden');
+            modalContainer.innerHTML = '';
+        };
+
         // ===================================================================================
         // KHU VỰC 3: CÁC HÀM RENDER GIAO DIỆN (UI RENDERING FUNCTIONS)
         // ===================================================================================
@@ -265,7 +281,7 @@
 
         const renderHeader = (title, showBackButton = false) => {
             return `
-                 <header class="w-full bg-white p-4 rounded-xl shadow-lg flex justify-between items-center sticky top-4 md:top-6 z-40">
+                 <header class="w-full bg-white p-4 rounded-xl shadow-lg flex justify-between items-center sticky top-0 z-40 h-20">
                      <div class="flex items-center min-w-0">
                          ${showBackButton ? '<button class="back-btn mr-4 text-slate-500 hover:text-blue-600 transition-colors"><i class="fas fa-arrow-left fa-lg"></i></button>' : ''}
                          <h1 class="text-xl md:text-2xl font-bold text-slate-800 truncate">${title}</h1>
@@ -297,18 +313,10 @@
                  </div>
             `;
             
-            modalContainer.innerHTML = '';
-            modalContainer.appendChild(confirmModal);
-            modalContainer.classList.remove('hidden');
-            modalContainer.classList.add('flex');
+            showModal(confirmModal);
 
-            const close = () => {
-                modalContainer.classList.add('hidden');
-                modalContainer.innerHTML = '';
-            };
-
-            confirmModal.querySelector('.confirm-action').addEventListener('click', () => { onConfirm(); close(); }, { once: true });
-            confirmModal.querySelector('.cancel-modal-btn').addEventListener('click', close, { once: true });
+            confirmModal.querySelector('.confirm-action').addEventListener('click', () => { onConfirm(); closeModal(); }, { once: true });
+            confirmModal.querySelector('.cancel-modal-btn').addEventListener('click', closeModal, { once: true });
         };
         
         const renderAdminDashboard = () => {
@@ -365,29 +373,23 @@
             const enrolledStudentIds = enrollments.filter(e => e.courseId === courseId).map(e => e.studentId);
             const enrolledStudents = users.filter(u => enrolledStudentIds.includes(u.id));
             const modalContent = `<div class="bg-white w-full max-w-2xl rounded-xl shadow-lg p-6 fade-in"><div class="flex justify-between items-center border-b pb-3 mb-4"><h2 class="text-2xl font-bold text-slate-800">${course.title}</h2><button class="cancel-modal-btn text-slate-400 hover:text-slate-800 text-3xl font-light">&times;</button></div><div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-h-[60vh] overflow-y-auto pr-2"><div><h3 class="font-semibold text-lg mb-3 flex items-center"><i class="fas fa-list-alt mr-2 text-gray-500"></i>Các bài học</h3><ul class="space-y-2">${courseLessons.length > 0 ? courseLessons.map(l => `<li class="p-2 bg-slate-100 rounded-md text-sm">${l.title}</li>`).join('') : '<li class="text-sm text-slate-500">Chưa có bài học nào.</li>'}</ul></div><div><h3 class="font-semibold text-lg mb-3 flex items-center"><i class="fas fa-users mr-2 text-gray-500"></i>Học sinh tham gia</h3><ul class="space-y-2">${enrolledStudents.length > 0 ? enrolledStudents.map(s => `<li class="p-2 bg-slate-100 rounded-md text-sm">${s.name}</li>`).join('') : '<li class="text-sm text-slate-500">Chưa có học sinh nào.</li>'}</ul></div></div></div>`;
-            modalContainer.innerHTML = modalContent;
-            modalContainer.classList.remove('hidden');
-            modalContainer.classList.add('flex');
+            return modalContent;
         };
         const renderEditStudentModal = (studentId) => {
             const student = users.find(u => u.id === studentId);
             if (!student) return;
             const studentEnrollments = enrollments.filter(e => e.studentId === studentId).map(e => e.courseId);
             const modalContent = `<div class="bg-white w-full max-w-lg rounded-xl shadow-lg p-6 fade-in" id="edit-student-modal"><h2 class="text-2xl font-bold mb-4">Chỉnh sửa ghi danh cho ${student.name}</h2><p class="text-slate-600 mb-6">Chọn các khoá học mà học sinh này sẽ tham gia.</p><div class="space-y-3 max-h-60 overflow-y-auto pr-2">${courses.map(course => { const isEnrolled = studentEnrollments.includes(course.id); const teacher = users.find(u => u.id === course.createdBy); return `<label class="flex items-center p-3 bg-slate-50 rounded-lg cursor-pointer hover:bg-slate-100"><input type="checkbox" class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500" data-course-id="${course.id}" ${isEnrolled ? 'checked' : ''}><div class="ml-4"><span class="font-medium text-slate-800">${course.title}</span><p class="text-sm text-slate-500">GV: ${teacher?.name}</p></div></label>`; }).join('')}</div><div class="mt-6 flex justify-end space-x-3"><button class="cancel-modal-btn px-4 py-2 bg-slate-200 text-slate-800 rounded-lg hover:bg-slate-300">Huỷ</button><button id="save-enrollment-btn" data-student-id="${studentId}" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Lưu thay đổi</button></div></div>`;
-            modalContainer.innerHTML = modalContent;
-            modalContainer.classList.remove('hidden');
-            modalContainer.classList.add('flex');
+            return modalContent;
         };
         const renderPasswordConfirmModal = (userId, userName) => {
              const modalContent = `<div class="bg-white w-full max-w-sm rounded-xl shadow-lg p-6 fade-in"><h2 class="text-xl font-bold mb-2 text-slate-800">Xác nhận Hành động</h2><p class="text-slate-600 mb-4">Bạn đang chuẩn bị xoá người dùng <strong class="font-semibold">${userName}</strong>. Vui lòng nhập mật khẩu của bạn để xác nhận.</p><div id="delete-error" class="text-red-500 text-center mb-4 text-sm hidden"></div><div class="space-y-3"><div><label for="admin-password-confirm" class="block text-sm font-medium text-slate-600 mb-1">Mật khẩu Admin:</label><input type="password" id="admin-password-confirm" class="w-full p-2 border rounded-lg" placeholder="******"></div><div class="flex justify-end space-x-3 pt-2"><button class="cancel-modal-btn px-4 py-2 bg-slate-200 text-slate-800 rounded-lg hover:bg-slate-300">Huỷ</button><button id="confirm-delete-btn" data-user-id="${userId}" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">Xác nhận Xoá</button></div></div></div>`;
-            modalContainer.innerHTML = modalContent;
-            modalContainer.classList.remove('hidden');
-            modalContainer.classList.add('flex');
+            return modalContent;
         };
         
         const renderTeacherDashboard = () => {
-            currentView = 'dashboard';
-            document.title = "Teacher Dashboard | Học Tiếng Trung Cùng Thư";
+             currentView = 'dashboard';
+             document.title = "Teacher Dashboard | Học Tiếng Trung Cùng Thư";
             const myCourses = courses.filter(c => c.createdBy === currentUser.id);
             appContainer.innerHTML = `<div class="w-full max-w-6xl mx-auto fade-in">${renderHeader('Teacher Dashboard')}<div class="grid grid-cols-1 md:grid-cols-3 gap-8 mt-6"><div class="md:col-span-2 bg-white p-6 rounded-xl shadow-lg"><h2 class="text-2xl font-bold mb-4">Khoá học của tôi</h2><div class="space-y-3">${myCourses.length > 0 ? myCourses.map(c => `<div class="p-4 bg-slate-50 rounded-lg flex justify-between items-center"><div><h3 class="font-semibold text-lg">${c.title}</h3><p class="text-sm text-slate-500 truncate">${c.description}</p></div><div class="space-x-2 flex-shrink-0"><button class="edit-course-btn text-gray-500 hover:text-blue-700" data-id="${c.id}" title="Chỉnh sửa thông tin"><i class="fas fa-pen"></i></button><button class="manage-course-btn bg-blue-50 text-blue-600 px-4 py-1 rounded-full border border-blue-200 font-semibold text-sm hover:bg-blue-100" data-id="${c.id}">Quản lý</button></div></div>`).join('') : '<p class="text-slate-500">Bạn chưa tạo khoá học nào.</p>'}</div></div><div class="bg-white p-6 rounded-xl shadow-lg h-fit"><h2 class="text-2xl font-bold mb-4">Tạo khoá học mới</h2><div class="space-y-3"><input type="text" id="new-course-title" placeholder="Tiêu đề khoá học" class="w-full p-2 border rounded-lg"><textarea id="new-course-desc" placeholder="Mô tả khoá học" class="w-full p-2 border rounded-lg h-24"></textarea><input type="text" id="new-course-folder-url" placeholder="Link thư mục Google Drive cho khoá học" class="w-full p-2 border rounded-lg"><button id="add-course-btn" class="w-full bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700">Tạo mới</button></div></div></div></div>`;
         };
@@ -417,9 +419,7 @@
                      </div>
                  </div>
             `;
-            modalContainer.innerHTML = modalContent;
-            modalContainer.classList.remove('hidden');
-            modalContainer.classList.add('flex');
+            return modalContent;
         };
         const renderTeacherCourseManagement = (courseId) => {
              currentView = 'course';
@@ -431,19 +431,19 @@
             appContainer.innerHTML = `
                  <div class="w-full max-w-7xl mx-auto fade-in">
                      ${renderHeader(course.title, true)}
-                     <main class="bg-white p-6 md:p-8 mt-6 rounded-xl shadow-lg">
-                         <div class="border-b border-gray-200 mb-6">
-                             <nav class="-mb-px flex space-x-6 overflow-x-auto">
+                     <main class="mt-6">
+                         <div class="border-b border-gray-200 mb-6 bg-white/80 backdrop-blur-sm shadow-sm rounded-t-lg sticky top-20 z-30">
+                             <nav class="-mb-px flex space-x-6 overflow-x-auto px-6">
                                  <button data-tab="overview" class="tab-btn tab-active whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm">Tổng quan</button>
                                  <button data-tab="lessons" class="tab-btn text-gray-500 hover:text-gray-700 whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm">Bài học</button>
                                  <button data-tab="students-progress" class="tab-btn text-gray-500 hover:text-gray-700 whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm">Học sinh & Tiến độ</button>
                              </nav>
                          </div>
 
-                         <div>
-                            <div id="tab-overview" class="tab-content"></div>
-                            <div id="tab-lessons" class="tab-content hidden"></div>
-                            <div id="tab-students-progress" class="tab-content hidden"></div>
+                         <div class="bg-white p-6 md:p-8 rounded-b-xl shadow-lg -mt-8 pt-14">
+                             <div id="tab-overview" class="tab-content"></div>
+                             <div id="tab-lessons" class="tab-content hidden"></div>
+                             <div id="tab-students-progress" class="tab-content hidden"></div>
                          </div>
                      </main>
                  </div>`;
@@ -879,9 +879,7 @@
                  </div>
              </div>
             `;
-            modalContainer.innerHTML = modalContent;
-            modalContainer.classList.remove('hidden');
-            modalContainer.classList.add('flex');
+            showModal(modalContent);
             calculateAverageScore();
         };
 
@@ -889,16 +887,12 @@
             const lesson = lessons.find(l => l.id === lessonId);
             if (!lesson) return;
             const modalContent = `<div class="bg-white w-full max-w-lg rounded-xl shadow-lg p-6 fade-in"><h2 class="text-2xl font-bold mb-4">Chỉnh sửa bài học</h2><div class="space-y-4"><div><label for="edit-lesson-title" class="block text-sm font-medium text-slate-600 mb-1">Tiêu đề bài học:</label><input type="text" id="edit-lesson-title" class="w-full p-2 border rounded-lg" value="${lesson.title}"></div><div><label for="edit-lesson-video" class="block text-sm font-medium text-slate-600 mb-1">Link video YouTube:</label><input type="text" id="edit-lesson-video" class="w-full p-2 border rounded-lg" value="${lesson.videoUrl || ''}"></div><div><label for="edit-lesson-content" class="block text-sm font-medium text-slate-600 mb-1">Nội dung bài học:</label><textarea id="edit-lesson-content" class="w-full p-2 border rounded-lg h-32">${lesson.content}</textarea></div></div><div class="mt-6 flex justify-end space-x-3"><button class="cancel-modal-btn px-4 py-2 bg-slate-200 text-slate-800 rounded-lg hover:bg-slate-300">Huỷ</button><button id="save-lesson-btn" data-lesson-id="${lessonId}" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Lưu thay đổi</button></div></div>`;
-            modalContainer.innerHTML = modalContent;
-            modalContainer.classList.remove('hidden');
-            modalContainer.classList.add('flex');
+            return modalContent;
         };
         const renderHomeworkModal = (lessonId) => {
             const homework = homeworks.find(h => h.lessonId === lessonId);
             const modalContent = `<div class="bg-white w-full max-w-lg rounded-xl shadow-lg p-6 fade-in"><h2 class="text-2xl font-bold mb-4">${homework ? 'Chỉnh sửa' : 'Tạo mới'} Bài tập</h2><div class="space-y-4"><div><label for="homework-title" class="block text-sm font-medium text-slate-600 mb-1">Tiêu đề bài tập:</label><input type="text" id="homework-title" class="w-full p-2 border rounded-lg" value="${homework?.title || ''}"></div><div><label for="homework-desc" class="block text-sm font-medium text-slate-600 mb-1">Mô tả / Yêu cầu:</label><textarea id="homework-desc" class="w-full p-2 border rounded-lg h-24">${homework?.description || ''}</textarea></div></div><div class="mt-6 flex justify-between"><div>${homework ? `<button id="delete-homework-btn" data-homework-id="${homework.id}" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600">Xoá bài tập</button>` : ''}</div><div class="flex space-x-3"><button class="cancel-modal-btn px-4 py-2 bg-slate-200 text-slate-800 rounded-lg hover:bg-slate-300">Huỷ</button><button id="save-homework-btn" data-lesson-id="${lessonId}" data-homework-id="${homework?.id || ''}" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Lưu</button></div></div></div>`;
-            modalContainer.innerHTML = modalContent;
-            modalContainer.classList.remove('hidden');
-            modalContainer.classList.add('flex');
+            return modalContent;
         };
 
         const renderStudentDashboard = () => {
@@ -956,11 +950,11 @@
                  </div>
 
                  <div class="space-y-3">${courseLessons.map((lesson, index) => { 
-                    const progressRecord = progress.find(p => p.lessonId === lesson.id && p.studentId === currentUser.id);
-                    const isSubmitted = !!progressRecord?.submittedAt;
-                    
-                    return `<div class="p-4 bg-slate-100 rounded-lg flex justify-between items-center"><div class="flex items-center"><span class="mr-4 font-bold text-slate-400 text-lg">${index + 1}</span>${isSubmitted ? '<i class="fas fa-check-circle text-green-500 mr-3"></i>' : '<i class="far fa-circle text-blue-500 mr-3"></i>'}<span class="font-medium ${isSubmitted ? 'text-slate-500' : ''}">${lesson.title}</span></div><button class="view-lesson-btn bg-white text-blue-600 px-4 py-1 rounded-full border border-blue-200 font-semibold text-sm hover:bg-blue-50" data-lesson-id="${lesson.id}">${isSubmitted ? 'Xem lại' : 'Bắt đầu'}</button></div>` 
-                }).join('') || '<p class="text-slate-500 text-center py-4">Chưa có bài học nào trong khóa học này.</p>'}</div></div></div>`;
+                     const progressRecord = progress.find(p => p.lessonId === lesson.id && p.studentId === currentUser.id);
+                     const isSubmitted = !!progressRecord?.submittedAt;
+                     
+                     return `<div class="p-4 bg-slate-100 rounded-lg flex justify-between items-center"><div class="flex items-center"><span class="mr-4 font-bold text-slate-400 text-lg">${index + 1}</span>${isSubmitted ? '<i class="fas fa-check-circle text-green-500 mr-3"></i>' : '<i class="far fa-circle text-blue-500 mr-3"></i>'}<span class="font-medium ${isSubmitted ? 'text-slate-500' : ''}">${lesson.title}</span></div><button class="view-lesson-btn bg-white text-blue-600 px-4 py-1 rounded-full border border-blue-200 font-semibold text-sm hover:bg-blue-50" data-lesson-id="${lesson.id}">${isSubmitted ? 'Xem lại' : 'Bắt đầu'}</button></div>` 
+                 }).join('') || '<p class="text-slate-500 text-center py-4">Chưa có bài học nào trong khóa học này.</p>'}</div></div></div>`;
         };
         const renderLessonView = (lessonId) => {
             currentView = 'lesson';
@@ -980,16 +974,14 @@
             
             </div></div>`;
         };
-        const renderMyProgressView = (courseId) => {
-            currentView = 'myProgress';
-            const course = courses.find(c => c.id === courseId);
-            if (!course) return renderStudentDashboard();
 
-            document.title = `Tiến độ của tôi: ${course.title}`;
+        const generateStudentProgressReport = (studentId, courseId) => {
+            const course = courses.find(c => c.id === courseId);
+            if (!course) return { html: '', chartData: {} };
 
             const courseLessons = lessons.filter(l => l.courseId === courseId);
             const lessonsWithHomework = courseLessons.filter(l => homeworks.some(h => h.lessonId === l.id));
-            const studentProgress = progress.filter(p => p.studentId === currentUser.id && courseLessons.some(l => l.id === p.lessonId));
+            const studentProgress = progress.filter(p => p.studentId === studentId && courseLessons.some(l => l.id === p.lessonId));
 
             const totalSubmissions = studentProgress.filter(p => p.submittedAt && lessonsWithHomework.some(l => l.id === p.lessonId)).length;
             const totalGraded = studentProgress.filter(p => p.submittedAt && p.grade != null && lessonsWithHomework.some(l => l.id === p.lessonId)).length;
@@ -1010,7 +1002,7 @@
             const calculateAverage = (scores) => scores.length > 0 ? (scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(1) : 0;
 
             const chartData = {
-                submission: { labels: ['Đã nộp', 'Chưa nộp'], datasets: [{ data: [totalSubmissions, totalPossibleSubmissions - totalSubmissions], backgroundColor: ['#3b82f6', '#e2e8f0'] }] },
+                submission: { labels: ['Đã nộp', 'Chưa nộp'], datasets: [{ data: [totalSubmissions, totalPossibleSubmissions > totalSubmissions ? totalPossibleSubmissions - totalSubmissions : 0], backgroundColor: ['#3b82f6', '#e2e8f0'] }] },
                 grading: { labels: ['Đã chấm', 'Chưa chấm'], datasets: [{ data: [totalGraded, totalSubmissions - totalGraded], backgroundColor: ['#22c55e', '#facc15'] }] },
                 attendance: { labels: ['Có mặt', 'Đi trễ', 'Vắng có phép', 'Vắng không phép', 'Chưa điểm danh'], datasets: [{ data: [totalPresent, totalLate, totalAbsentExcused, totalAbsentUnexcused, totalNotRecorded], backgroundColor: ['#22c55e', '#f97316', '#facc15', '#ef4444', '#e2e8f0'] }] },
                 skills: { labels: ['Đọc', 'Nghe', 'Nói', 'Viết'], datasets: [{ label: 'Điểm trung bình', data: [calculateAverage(readingScores), calculateAverage(listeningScores), calculateAverage(speakingScores), calculateAverage(writingScores)], backgroundColor: 'rgba(59, 130, 246, 0.2)', borderColor: 'rgba(59, 130, 246, 1)', pointBackgroundColor: 'rgba(59, 130, 246, 1)' }] }
@@ -1068,28 +1060,42 @@
                      </div>
                 `;
             }).join('');
+            
+            const fullHTML = `
+                <div class="p-6 bg-white rounded-xl shadow-lg mb-6">
+                    <h3 class="text-xl font-bold mb-4">Thống kê cá nhân</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                         <div class="bg-slate-50 p-4 rounded-xl flex flex-col h-72"><h5 class="text-center font-semibold text-slate-600 mb-2 flex-shrink-0">Tỉ lệ Nộp bài</h5><div class="relative flex-grow min-h-0"><canvas id="report-submissionChart"></canvas></div></div>
+                         <div class="bg-slate-50 p-4 rounded-xl flex flex-col h-72"><h5 class="text-center font-semibold text-slate-600 mb-2 flex-shrink-0">Tỉ lệ Chấm bài</h5><div class="relative flex-grow min-h-0"><canvas id="report-gradingChart"></canvas></div></div>
+                         <div class="bg-slate-50 p-4 rounded-xl flex flex-col h-72"><h5 class="text-center font-semibold text-slate-600 mb-2 flex-shrink-0">Chuyên cần</h5><div class="relative flex-grow min-h-0"><canvas id="report-attendanceChart"></canvas></div></div>
+                         <div class="bg-slate-50 p-4 rounded-xl flex flex-col h-72"><h5 class="text-center font-semibold text-slate-600 mb-2 flex-shrink-0">Điểm Kỹ năng TB</h5><div class="relative flex-grow min-h-0"><canvas id="report-skillsChart"></canvas></div></div>
+                    </div>
+                </div>
+                <h3 class="text-xl font-bold mb-4">Chi tiết từng buổi học</h3>
+                <div class="space-y-4">${courseLessons.length > 0 ? progressHTML : '<p class="text-slate-500 text-center py-8">Chưa có bài học nào trong khóa học này.</p>'}</div>
+            `;
+            
+            return { html: fullHTML, chartData };
+        };
+
+        const renderMyProgressView = (courseId) => {
+            currentView = 'myProgress';
+            const course = courses.find(c => c.id === courseId);
+            if (!course) return renderStudentDashboard();
+
+            document.title = `Tiến độ của tôi: ${course.title}`;
+            const { html, chartData } = generateStudentProgressReport(currentUser.id, courseId);
 
             appContainer.innerHTML = `
                  <div class="w-full max-w-4xl mx-auto fade-in">
                      ${renderHeader(`Tiến độ của tôi`, true)}
                      <main class="mt-6">
-                        <div class="p-6 bg-white rounded-xl shadow-lg mb-6">
-                             <h3 class="text-xl font-bold mb-4">Thống kê cá nhân</h3>
-                             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                <div class="bg-slate-50 p-4 rounded-xl flex flex-col h-72"><h5 class="text-center font-semibold text-slate-600 mb-2 flex-shrink-0">Tỉ lệ Nộp bài</h5><div class="relative flex-grow min-h-0"><canvas id="myprogress-submissionChart"></canvas></div></div>
-                                <div class="bg-slate-50 p-4 rounded-xl flex flex-col h-72"><h5 class="text-center font-semibold text-slate-600 mb-2 flex-shrink-0">Tỉ lệ Chấm bài</h5><div class="relative flex-grow min-h-0"><canvas id="myprogress-gradingChart"></canvas></div></div>
-                                <div class="bg-slate-50 p-4 rounded-xl flex flex-col h-72"><h5 class="text-center font-semibold text-slate-600 mb-2 flex-shrink-0">Chuyên cần</h5><div class="relative flex-grow min-h-0"><canvas id="myprogress-attendanceChart"></canvas></div></div>
-                                <div class="bg-slate-50 p-4 rounded-xl flex flex-col h-72"><h5 class="text-center font-semibold text-slate-600 mb-2 flex-shrink-0">Điểm Kỹ năng TB</h5><div class="relative flex-grow min-h-0"><canvas id="myprogress-skillsChart"></canvas></div></div>
-                            </div>
-                        </div>
-                        <h3 class="text-xl font-bold mb-4">Chi tiết từng buổi học</h3>
-                         <div class="space-y-4">${courseLessons.length > 0 ? progressHTML : '<p class="text-slate-500 text-center py-8">Chưa có bài học nào trong khóa học này.</p>'}</div>
+                         ${html}
                      </main>
                  </div>
             `;
-            setTimeout(() => renderCharts(chartData, 'myprogress-'), 50);
+            setTimeout(() => renderCharts(chartData, 'report-'), 50);
         };
-
         const renderTeacherStudentReportView = (studentId, courseId) => {
             currentView = 'studentReport';
             currentStudentIdForProgress = studentId;
@@ -1098,73 +1104,27 @@
             if (!student || !course) return renderTeacherCourseManagement(currentCourseId);
 
             document.title = `Báo cáo: ${student.name}`;
-
-            const courseLessons = lessons.filter(l => l.courseId === courseId);
-            const lessonsWithHomework = courseLessons.filter(l => homeworks.some(h => h.lessonId === l.id));
-            const studentProgress = progress.filter(p => p.studentId === student.id && courseLessons.some(l => l.id === p.lessonId));
-
-            const totalSubmissions = studentProgress.filter(p => p.submittedAt && lessonsWithHomework.some(l => l.id === p.lessonId)).length;
-            const totalGraded = studentProgress.filter(p => p.submittedAt && p.grade != null && lessonsWithHomework.some(l => l.id === p.lessonId)).length;
-            const totalPossibleSubmissions = lessonsWithHomework.length;
-            
-            const totalPresent = studentProgress.filter(p => p.attendanceStatus === 'present').length;
-            const totalLate = studentProgress.filter(p => p.attendanceStatus === 'late').length;
-            const totalAbsentExcused = studentProgress.filter(p => p.attendanceStatus === 'absent_excused').length;
-            const totalAbsentUnexcused = studentProgress.filter(p => p.attendanceStatus === 'absent_unexcused').length;
-            const totalAttendanceSlots = courseLessons.length;
-            const totalRecorded = totalPresent + totalLate + totalAbsentExcused + totalAbsentUnexcused;
-            const totalNotRecorded = totalAttendanceSlots - totalRecorded;
-
-            const readingScores = studentProgress.map(p => p.grades?.reading).filter(s => s != null);
-            const listeningScores = studentProgress.map(p => p.grades?.listening).filter(s => s != null);
-            const speakingScores = studentProgress.map(p => p.grades?.speaking).filter(s => s != null);
-            const writingScores = studentProgress.map(p => p.grades?.writing).filter(s => s != null);
-            const calculateAverage = (scores) => scores.length > 0 ? (scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(1) : 0;
-
-            const chartData = {
-                submission: { labels: ['Đã nộp', 'Chưa nộp'], datasets: [{ data: [totalSubmissions, totalPossibleSubmissions - totalSubmissions], backgroundColor: ['#3b82f6', '#e2e8f0'] }] },
-                grading: { labels: ['Đã chấm', 'Chưa chấm'], datasets: [{ data: [totalGraded, totalSubmissions - totalGraded], backgroundColor: ['#22c55e', '#facc15'] }] },
-                attendance: { labels: ['Có mặt', 'Đi trễ', 'Vắng có phép', 'Vắng không phép', 'Chưa điểm danh'], datasets: [{ data: [totalPresent, totalLate, totalAbsentExcused, totalAbsentUnexcused, totalNotRecorded], backgroundColor: ['#22c55e', '#f97316', '#facc15', '#ef4444', '#e2e8f0'] }] },
-                skills: { labels: ['Đọc', 'Nghe', 'Nói', 'Viết'], datasets: [{ label: 'Điểm trung bình', data: [calculateAverage(readingScores), calculateAverage(listeningScores), calculateAverage(speakingScores), calculateAverage(writingScores)], backgroundColor: 'rgba(59, 130, 246, 0.2)', borderColor: 'rgba(59, 130, 246, 1)', pointBackgroundColor: 'rgba(59, 130, 246, 1)' }] }
-            };
-
-            const progressHTML = courseLessons.sort((a,b) => (a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0)).map(lesson => {
-                const progressRecord = studentProgress.find(p => p.lessonId === lesson.id) || {};
-                const { attendanceStatus, grade, submittedAt: submitted } = progressRecord;
-                const attendanceMap = { present: { text: 'Có mặt', class: 'bg-blue-500 text-white' }, absent_excused: { text: 'Vắng có phép', class: 'bg-yellow-500 text-white' }, absent_unexcused: { text: 'Vắng không phép', class: 'bg-red-500 text-white' }, late: { text: 'Không đúng giờ', class: 'bg-orange-500 text-white' } };
-                const attendanceInfo = attendanceMap[attendanceStatus] || { text: 'Chưa điểm danh', class: 'bg-slate-200 text-slate-500' };
-                return `<div class="p-4 border rounded-lg bg-white shadow-sm"><div class="flex flex-col sm:flex-row justify-between sm:items-start mb-4"><div><p class="font-medium text-lg">${lesson.title}</p>${submitted ? '<p class="text-xs text-green-600 font-semibold mt-1">ĐÃ NỘP BÀI</p>' : '<p class="text-xs text-slate-400 mt-1">Chưa nộp bài</p>'}</div><div class="mt-3 sm:mt-0"><span class="text-sm font-medium">Điểm danh: </span><span class="text-sm px-3 py-1 border rounded-full ${attendanceInfo.class}">${attendanceInfo.text}</span></div></div><div class="border-t pt-4"><div class="grid grid-cols-2 md:grid-cols-5 gap-4 items-center"><div class="col-span-2 md:col-span-4"><p class="font-semibold text-slate-700 mb-2">Điểm chi tiết:</p><div class="grid grid-cols-2 gap-3 text-sm"><p><span class="text-slate-500">Đọc:</span> <strong class="text-slate-800">${progressRecord.grades?.reading ?? '--'}</strong></p><p><span class="text-slate-500">Nghe:</span> <strong class="text-slate-800">${progressRecord.grades?.listening ?? '--'}</strong></p><p><span class="text-slate-500">Nói:</span> <strong class="text-slate-800">${progressRecord.grades?.speaking ?? '--'}</strong></p><p><span class="text-slate-500">Viết:</span> <strong class="text-slate-800">${progressRecord.grades?.writing ?? '--'}</strong></p></div></div><div class="text-center"><p class="text-sm font-medium text-slate-600">Điểm TB</p><p class="font-bold text-3xl text-blue-600">${grade ?? '--'}</p></div></div></div>${progressRecord.comment ? `<div class="mt-4 pt-4 border-t"><p class="font-semibold text-slate-700">Nhận xét của giáo viên:</p><p class="text-slate-600 whitespace-pre-wrap mt-1 bg-slate-50 p-3 rounded-md">${progressRecord.comment}</p></div>` : ''}</div>`;
-            }).join('');
+            const { html, chartData } = generateStudentProgressReport(studentId, courseId);
 
             appContainer.innerHTML = `
                  <div class="w-full max-w-4xl mx-auto fade-in">
-                     <header class="w-full bg-white p-4 rounded-xl shadow-lg flex justify-between items-center sticky top-4 md:top-6 z-40">
+                     <header class="w-full bg-white p-4 rounded-xl shadow-lg flex justify-between items-center sticky top-0 z-40 h-20">
                          <div class="flex items-center min-w-0">
                              <button class="back-btn mr-4 text-slate-500 hover:text-blue-600 transition-colors"><i class="fas fa-arrow-left fa-lg"></i></button>
                              <h1 class="text-xl md:text-2xl font-bold text-slate-800 truncate">Báo cáo: ${student.name}</h1>
                          </div>
                          <div class="flex items-center space-x-4">
-                            <button id="edit-student-progress-btn" data-student-id="${studentId}" class="bg-blue-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-blue-600">
-                                <i class="fas fa-edit mr-2"></i>Chỉnh sửa
-                            </button>
+                             <button id="edit-student-progress-btn" data-student-id="${studentId}" class="bg-blue-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-blue-600">
+                                 <i class="fas fa-edit mr-2"></i>Chỉnh sửa
+                             </button>
                          </div>
                      </header>
                      <main class="mt-6">
-                        <div class="p-6 bg-white rounded-xl shadow-lg mb-6">
-                            <h3 class="text-xl font-bold mb-4">Thống kê của học sinh</h3>
-                             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                <div class="bg-slate-50 p-4 rounded-xl flex flex-col h-72"><h5 class="text-center font-semibold text-slate-600 mb-2 flex-shrink-0">Tỉ lệ Nộp bài</h5><div class="relative flex-grow min-h-0"><canvas id="student-submissionChart"></canvas></div></div>
-                                <div class="bg-slate-50 p-4 rounded-xl flex flex-col h-72"><h5 class="text-center font-semibold text-slate-600 mb-2 flex-shrink-0">Tỉ lệ Chấm bài</h5><div class="relative flex-grow min-h-0"><canvas id="student-gradingChart"></canvas></div></div>
-                                <div class="bg-slate-50 p-4 rounded-xl flex flex-col h-72"><h5 class="text-center font-semibold text-slate-600 mb-2 flex-shrink-0">Chuyên cần</h5><div class="relative flex-grow min-h-0"><canvas id="student-attendanceChart"></canvas></div></div>
-                                <div class="bg-slate-50 p-4 rounded-xl flex flex-col h-72"><h5 class="text-center font-semibold text-slate-600 mb-2 flex-shrink-0">Điểm Kỹ năng TB</h5><div class="relative flex-grow min-h-0"><canvas id="student-skillsChart"></canvas></div></div>
-                            </div>
-                        </div>
-                        <h3 class="text-xl font-bold mb-4">Chi tiết từng buổi học</h3>
-                        <div class="space-y-4">${courseLessons.length > 0 ? progressHTML : '<p class="text-slate-500 text-center py-8">Chưa có bài học nào.</p>'}</div>
+                        ${html}
                      </main>
                  </div>
             `;
-            setTimeout(() => renderCharts(chartData, 'student-'), 50);
+            setTimeout(() => renderCharts(chartData, 'report-'), 50);
         };
 
         // ===================================================================================
@@ -1260,8 +1220,7 @@
                 navigate();
             }
             if (target.closest('.cancel-modal-btn') || target.closest('#cancel-edit-btn') || target === modalContainer || target.closest('#close-detail-modal-btn')) { 
-                modalContainer.classList.add('hidden'); 
-                modalContainer.innerHTML = ''; 
+                closeModal(); 
             }
 
             if (currentUser?.role === 'admin') {
@@ -1286,7 +1245,7 @@
                 if (target.closest('.delete-user-btn')) {
                     const userId = target.closest('.delete-user-btn').dataset.id;
                     const userToDelete = users.find(u => u.id === userId);
-                    if (userToDelete) renderPasswordConfirmModal(userId, userToDelete.name);
+                    if (userToDelete) showModal(renderPasswordConfirmModal(userId, userToDelete.name));
                 }
                 if (target.closest('#confirm-delete-btn')) {
                     const userId = target.closest('#confirm-delete-btn').dataset.userId;
@@ -1317,10 +1276,10 @@
                     }
                     batch.delete(doc(db, "users", userId));
                     await batch.commit();
-                    modalContainer.classList.add('hidden');
+                    closeModal();
                     showToast('Xóa người dùng thành công!', 'success');
                 }
-                if (target.closest('.edit-student-btn')) { renderEditStudentModal(target.closest('.edit-student-btn').dataset.id); }
+                if (target.closest('.edit-student-btn')) { showModal(renderEditStudentModal(target.closest('.edit-student-btn').dataset.id)); }
                 if (target.closest('#save-enrollment-btn')) {
                     const studentId = target.closest('#save-enrollment-btn').dataset.studentId;
                     const batch = writeBatch(db);
@@ -1330,14 +1289,14 @@
                         batch.set(newEnrollmentRef, { studentId: studentId, courseId: box.dataset.courseId });
                     });
                     await batch.commit();
-                    modalContainer.classList.add('hidden');
+                    closeModal();
                     showToast('Cập nhật ghi danh thành công!', 'success');
                 }
-                if (target.closest('.view-course-detail-btn')) { renderCourseDetailModal(target.closest('.view-course-detail-btn').dataset.id); }
+                if (target.closest('.view-course-detail-btn')) { showModal(renderCourseDetailModal(target.closest('.view-course-detail-btn').dataset.id)); }
             }
             
             if (currentUser?.role === 'teacher') {
-                if (target.closest('.edit-course-btn')) { renderEditCourseModal(target.closest('.edit-course-btn').dataset.id); }
+                if (target.closest('.edit-course-btn')) { showModal(renderEditCourseModal(target.closest('.edit-course-btn').dataset.id)); }
                 if (target.closest('#save-course-btn')) {
                     const courseId = target.closest('#save-course-btn').dataset.courseId;
                     const title = document.getElementById('edit-course-title').value;
@@ -1345,7 +1304,7 @@
                     const submissionFolderUrl = document.getElementById('edit-course-folder-url').value;
                     if (title && description) {
                         await updateDoc(doc(db, 'courses', courseId), { title, description, submissionFolderUrl });
-                        modalContainer.classList.add('hidden');
+                        closeModal();
                         showToast('Cập nhật khóa học thành công', 'success');
                     } else { showToast("Vui lòng điền đủ tiêu đề và mô tả.", 'error'); }
                 }
@@ -1372,14 +1331,14 @@
                         showToast('Thêm bài học thành công', 'success');
                     } else { showToast("Vui lòng điền đủ tiêu đề và nội dung.", 'error'); }
                 }
-                if (target.closest('.edit-lesson-btn')) { renderEditLessonModal(target.closest('.edit-lesson-btn').dataset.lessonId); }
+                if (target.closest('.edit-lesson-btn')) { showModal(renderEditLessonModal(target.closest('.edit-lesson-btn').dataset.lessonId)); }
                 if (target.closest('#save-lesson-btn')) {
                     const lessonId = target.closest('#save-lesson-btn').dataset.lessonId;
                     const title = document.getElementById('edit-lesson-title').value;
                     const videoUrl = document.getElementById('edit-lesson-video').value;
                     const content = document.getElementById('edit-lesson-content').value;
                     await updateDoc(doc(db, 'lessons', lessonId), { title, videoUrl, content });
-                    modalContainer.classList.add('hidden');
+                    closeModal();
                     showToast('Cập nhật bài học thành công', 'success');
                 }
                  if (target.closest('.delete-lesson-btn')) {
@@ -1401,7 +1360,7 @@
                 }
                 
                 if (target.closest('.manage-homework-btn')) { 
-                    renderHomeworkModal(target.closest('.manage-homework-btn').dataset.lessonId); 
+                    showModal(renderHomeworkModal(target.closest('.manage-homework-btn').dataset.lessonId)); 
                 }
                 if (target.closest('#save-homework-btn')) {
                     const lessonId = target.closest('#save-homework-btn').dataset.lessonId;
@@ -1414,7 +1373,7 @@
                         } else {
                             await addDoc(collection(db, 'homeworks'), { lessonId, title, description });
                         }
-                        modalContainer.classList.add('hidden');
+                        closeModal();
                         showToast('Lưu bài tập thành công', 'success');
                     } else { showToast("Vui lòng điền đủ thông tin.", 'error'); }
                 }
@@ -1427,7 +1386,7 @@
                         'bg-red-600 hover:bg-red-700',
                         async () => {
                             await deleteDoc(doc(db, 'homeworks', homeworkId));
-                            modalContainer.classList.add('hidden');
+                            // closeModal() được gọi bởi renderConfirmModal
                             showToast('Đã xóa bài tập', 'success');
                         }
                     );
@@ -1462,65 +1421,62 @@
                     renderEditProgressModal(btn.dataset.studentId, btn.dataset.lessonId);
                 }
                  if (target.closest('.attendance-btn-group .attendance-btn')) {
-                    const group = target.closest('.attendance-btn-group');
-                    group.querySelectorAll('.attendance-btn').forEach(btn => {
-                        btn.classList.remove('attendance-btn-active', 'bg-red-500', 'bg-yellow-500', 'bg-orange-500');
-                        if(!btn.classList.contains('bg-white')) btn.classList.add('bg-white', 'hover:bg-slate-100');
-                    });
+                     const group = target.closest('.attendance-btn-group');
+                     group.querySelectorAll('.attendance-btn').forEach(btn => {
+                         btn.classList.remove('attendance-btn-active', 'bg-red-500', 'bg-yellow-500', 'bg-orange-500');
+                         if(!btn.classList.contains('bg-white')) btn.classList.add('bg-white', 'hover:bg-slate-100');
+                     });
 
-                    const status = target.dataset.status;
-                    target.classList.add('attendance-btn-active');
-                    target.classList.remove('bg-white', 'hover:bg-slate-100');
-                    if (status === 'absent_unexcused') target.classList.add('bg-red-500');
-                    if (status === 'absent_excused') target.classList.add('bg-yellow-500');
-                    if (status === 'late') target.classList.add('bg-orange-500');
-                }
+                     const status = target.dataset.status;
+                     target.classList.add('attendance-btn-active');
+                     target.classList.remove('bg-white', 'hover:bg-slate-100');
+                     if (status === 'absent_unexcused') target.classList.add('bg-red-500');
+                     if (status === 'absent_excused') target.classList.add('bg-yellow-500');
+                     if (status === 'late') target.classList.add('bg-orange-500');
+                 }
                  if (target.closest('#save-progress-btn')) {
-                    const button = target.closest('#save-progress-btn');
-                    const studentId = button.dataset.studentId;
-                    const lessonId = button.dataset.lessonId;
-                    const recordId = `${lessonId}_${studentId}`;
-                    
-                    const readingScore = document.getElementById('edit-reading-score').value;
-                    const listeningScore = document.getElementById('edit-listening-score').value;
-                    const speakingScore = document.getElementById('edit-speaking-score').value;
-                    const writingScore = document.getElementById('edit-writing-score').value;
+                     const button = target.closest('#save-progress-btn');
+                     const studentId = button.dataset.studentId;
+                     const lessonId = button.dataset.lessonId;
+                     const recordId = `${lessonId}_${studentId}`;
+                     
+                     const readingScore = document.getElementById('edit-reading-score').value;
+                     const listeningScore = document.getElementById('edit-listening-score').value;
+                     const speakingScore = document.getElementById('edit-speaking-score').value;
+                     const writingScore = document.getElementById('edit-writing-score').value;
 
-                    const newGrades = {
-                        reading: readingScore ? parseFloat(readingScore) : null,
-                        listening: listeningScore ? parseFloat(listeningScore) : null,
-                        speaking: speakingScore ? parseFloat(speakingScore) : null,
-                        writing: writingScore ? parseFloat(writingScore) : null,
-                    };
+                     const newGrades = {
+                         reading: readingScore ? parseFloat(readingScore) : null,
+                         listening: listeningScore ? parseFloat(listeningScore) : null,
+                         speaking: speakingScore ? parseFloat(speakingScore) : null,
+                         writing: writingScore ? parseFloat(writingScore) : null,
+                     };
 
-                    const validScores = Object.values(newGrades).filter(s => s !== null && !isNaN(s));
-                    let averageScore = null;
-                    if (validScores.length > 0) {
-                        averageScore = parseFloat((validScores.reduce((a, b) => a + b, 0) / validScores.length).toFixed(1));
-                    }
-                    
-                    const newComment = document.getElementById('edit-comment-input').value;
-                    
-                    let newStatus = null;
-                    const activeButton = document.querySelector('.attendance-btn.attendance-btn-active');
-                    if (activeButton) {
-                        newStatus = activeButton.dataset.status;
-                    }
+                     const validScores = Object.values(newGrades).filter(s => s !== null && !isNaN(s));
+                     let averageScore = null;
+                     if (validScores.length > 0) {
+                         averageScore = parseFloat((validScores.reduce((a, b) => a + b, 0) / validScores.length).toFixed(1));
+                     }
+                     
+                     const newComment = document.getElementById('edit-comment-input').value;
+                     
+                     const activeButton = document.querySelector('.attendance-btn.attendance-btn-active');
+                     const newStatus = activeButton ? activeButton.dataset.status : null;
 
-                    const dataToSave = {
-                        grade: averageScore,
-                        grades: newGrades,
-                        comment: newComment,
-                        attendanceStatus: newStatus,
-                        studentId,
-                        lessonId,
-                        courseId: currentCourseId
-                    };
+                     const dataToSave = {
+                         grade: averageScore,
+                         grades: newGrades,
+                         comment: newComment,
+                         attendanceStatus: newStatus,
+                         studentId,
+                         lessonId,
+                         courseId: currentCourseId
+                     };
 
-                    await setDoc(doc(db, 'progress', recordId), dataToSave, { merge: true });
-                    modalContainer.classList.add('hidden');
-                    showToast('Đã lưu tiến độ!', 'success');
-                }
+                     await setDoc(doc(db, 'progress', recordId), dataToSave, { merge: true });
+                     closeModal();
+                     showToast('Đã lưu tiến độ!', 'success');
+                 }
             }
             
             if (currentUser?.role === 'student') {
@@ -1559,27 +1515,27 @@
         
         document.body.addEventListener('input', (e) => {
              if (e.target.classList.contains('score-input')) {
-                calculateAverageScore();
+                 calculateAverageScore();
              }
         });
         document.body.addEventListener('change', async (e) => {
              const target = e.target;
              if (target.id === 'admin-teacher-select') {
-                const teacherId = target.value;
-                const courseSelect = document.getElementById('admin-course-select');
-                courseSelect.innerHTML = '<option value="">-- Chọn khoá học --</option>';
-                if (teacherId) {
-                    const teacherCourses = courses.filter(c => c.createdBy === teacherId);
-                    courseSelect.innerHTML += teacherCourses.map(c => `<option value="${c.id}">${c.title}</option>`).join('');
-                    courseSelect.disabled = teacherCourses.length === 0;
-                } else {
-                    courseSelect.disabled = true;
-                }
-            }
-            if (target.id === 'overview-filter') {
-                overviewFilterLessonId = target.value;
-                updateTeacherCourseTabs();
-            }
+                 const teacherId = target.value;
+                 const courseSelect = document.getElementById('admin-course-select');
+                 courseSelect.innerHTML = '<option value="">-- Chọn khoá học --</option>';
+                 if (teacherId) {
+                     const teacherCourses = courses.filter(c => c.createdBy === teacherId);
+                     courseSelect.innerHTML += teacherCourses.map(c => `<option value="${c.id}">${c.title}</option>`).join('');
+                     courseSelect.disabled = teacherCourses.length === 0;
+                 } else {
+                     courseSelect.disabled = true;
+                 }
+             }
+             if (target.id === 'overview-filter') {
+                 overviewFilterLessonId = target.value;
+                 updateTeacherCourseTabs();
+             }
         });
 
         // ===================================================================================
