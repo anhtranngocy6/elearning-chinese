@@ -87,6 +87,8 @@
         let currentLessonId = null;
         let currentStudentIdForProgress = null;
         let overviewFilterLessonId = 'all';
+        let currentActiveTab = 'overview'; // Lưu tab hiện tại
+        let isFirstNavigationAfterRestore = false;
         
         const appContainer = document.getElementById('app');
         const modalContainer = document.getElementById('modal-container');
@@ -388,7 +390,9 @@
         };
         
         const renderTeacherDashboard = () => {
-             currentView = 'dashboard';
+             if (currentView !== 'course' && currentView !== 'studentProgress' && currentView !== 'studentReport') {
+                 currentView = 'dashboard';
+             }
              document.title = "Teacher Dashboard | Học Tiếng Trung Cùng Thư";
             const myCourses = courses.filter(c => c.createdBy === currentUser.id);
             appContainer.innerHTML = `<div class="w-full max-w-6xl mx-auto fade-in">${renderHeader('Teacher Dashboard')}<div class="grid grid-cols-1 md:grid-cols-3 gap-8 mt-6"><div class="md:col-span-2 bg-white p-6 rounded-xl shadow-lg"><h2 class="text-2xl font-bold mb-4">Khoá học của tôi</h2><div class="space-y-3">${myCourses.length > 0 ? myCourses.map(c => `<div class="p-4 bg-slate-50 rounded-lg flex justify-between items-center"><div><h3 class="font-semibold text-lg">${c.title}</h3><p class="text-sm text-slate-500 truncate">${c.description}</p></div><div class="space-x-2 flex-shrink-0"><button class="edit-course-btn text-gray-500 hover:text-blue-700" data-id="${c.id}" title="Chỉnh sửa thông tin"><i class="fas fa-pen"></i></button><button class="manage-course-btn bg-blue-50 text-blue-600 px-4 py-1 rounded-full border border-blue-200 font-semibold text-sm hover:bg-blue-100" data-id="${c.id}">Quản lý</button></div></div>`).join('') : '<p class="text-slate-500">Bạn chưa tạo khoá học nào.</p>'}</div></div><div class="bg-white p-6 rounded-xl shadow-lg h-fit"><h2 class="text-2xl font-bold mb-4">Tạo khoá học mới</h2><div class="space-y-3"><input type="text" id="new-course-title" placeholder="Tiêu đề khoá học" class="w-full p-2 border rounded-lg"><textarea id="new-course-desc" placeholder="Mô tả khoá học" class="w-full p-2 border rounded-lg h-24"></textarea><input type="text" id="new-course-folder-url" placeholder="Link thư mục Google Drive cho khoá học" class="w-full p-2 border rounded-lg"><button id="add-course-btn" class="w-full bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700">Tạo mới</button></div></div></div></div>`;
@@ -421,9 +425,11 @@
             `;
             return modalContent;
         };
-        const renderTeacherCourseManagement = (courseId) => {
-             currentView = 'course';
-             currentCourseId = courseId;
+        const renderTeacherCourseManagement = (courseId, isRestoring = false) => {
+            if (!isRestoring) {
+                currentView = 'course';
+            }
+            currentCourseId = courseId;
             const course = courses.find(c => c.id === courseId);
             if(!course) return renderTeacherDashboard();
             document.title = `Quản lý: ${course.title}`;
@@ -434,16 +440,16 @@
                      <main class="mt-6">
                          <div class="border-b border-gray-200 mb-6 bg-white/80 backdrop-blur-sm shadow-sm rounded-t-lg sticky top-20 z-30">
                              <nav class="-mb-px flex space-x-6 overflow-x-auto px-6">
-                                 <button data-tab="overview" class="tab-btn tab-active whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm">Tổng quan</button>
-                                 <button data-tab="lessons" class="tab-btn text-gray-500 hover:text-gray-700 whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm">Bài học</button>
-                                 <button data-tab="students-progress" class="tab-btn text-gray-500 hover:text-gray-700 whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm">Học sinh & Tiến độ</button>
+                                 <button data-tab="overview" class="tab-btn ${currentActiveTab === 'overview' ? 'tab-active' : 'text-gray-500 hover:text-gray-700'} whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm">Tổng quan</button>
+                                 <button data-tab="lessons" class="tab-btn ${currentActiveTab === 'lessons' ? 'tab-active' : 'text-gray-500 hover:text-gray-700'} whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm">Bài học</button>
+                                 <button data-tab="students-progress" class="tab-btn ${currentActiveTab === 'students-progress' ? 'tab-active' : 'text-gray-500 hover:text-gray-700'} whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm">Học sinh & Tiến độ</button>
                              </nav>
                          </div>
 
                          <div class="bg-white p-6 md:p-8 rounded-b-xl shadow-lg -mt-8 pt-14">
-                             <div id="tab-overview" class="tab-content"></div>
-                             <div id="tab-lessons" class="tab-content hidden"></div>
-                             <div id="tab-students-progress" class="tab-content hidden"></div>
+                             <div id="tab-overview" class="tab-content ${currentActiveTab === 'overview' ? '' : 'hidden'}"></div>
+                             <div id="tab-lessons" class="tab-content ${currentActiveTab === 'lessons' ? '' : 'hidden'}"></div>
+                             <div id="tab-students-progress" class="tab-content ${currentActiveTab === 'students-progress' ? '' : 'hidden'}"></div>
                          </div>
                      </main>
                  </div>`;
@@ -475,7 +481,7 @@
             if (studentsTab) {
                 studentsTab.innerHTML = renderTeacherCourseTabs.students(courseId, enrolledStudents);
             }
-        }
+        };
 
         const renderTeacherCourseTabs = {
             overview: (courseId, enrolledStudents) => {
@@ -735,8 +741,10 @@
                  `).join('')}
                  </div>`;
         };
-        const renderStudentProgressView = (studentId) => {
-            currentView = 'studentProgress';
+        const renderStudentProgressView = (studentId, isRestoring = false) => {
+            if (!isRestoring) {
+                currentView = 'studentProgress';
+            }
             currentStudentIdForProgress = studentId;
             const student = users.find(u => u.id === studentId);
             if (!student) {
@@ -896,7 +904,9 @@
         };
 
         const renderStudentDashboard = () => {
-             currentView = 'dashboard';
+             if (currentView !== 'course' && currentView !== 'lesson' && currentView !== 'myProgress') {
+                 currentView = 'dashboard';
+             }
              document.title = "Student Dashboard | Học Tiếng Trung Cùng Thư";
             const myCourseIds = enrollments.filter(e => e.studentId === currentUser.id).map(e => e.courseId);
             const myCourses = courses.filter(c => myCourseIds.includes(c.id));
@@ -928,8 +938,10 @@
                  </div>
              </div>`;
         };
-        const renderStudentCourseView = (courseId) => {
-            currentView = 'course';
+        const renderStudentCourseView = (courseId, isRestoring = false) => {
+            if (!isRestoring) {
+                currentView = 'course';
+            }
             currentCourseId = courseId;
             const course = courses.find(c => c.id === courseId);
             if (!course) return renderStudentDashboard(); // Fallback
@@ -956,8 +968,10 @@
                      return `<div class="p-4 bg-slate-100 rounded-lg flex justify-between items-center"><div class="flex items-center"><span class="mr-4 font-bold text-slate-400 text-lg">${index + 1}</span>${isSubmitted ? '<i class="fas fa-check-circle text-green-500 mr-3"></i>' : '<i class="far fa-circle text-blue-500 mr-3"></i>'}<span class="font-medium ${isSubmitted ? 'text-slate-500' : ''}">${lesson.title}</span></div><button class="view-lesson-btn bg-white text-blue-600 px-4 py-1 rounded-full border border-blue-200 font-semibold text-sm hover:bg-blue-50" data-lesson-id="${lesson.id}">${isSubmitted ? 'Xem lại' : 'Bắt đầu'}</button></div>` 
                  }).join('') || '<p class="text-slate-500 text-center py-4">Chưa có bài học nào trong khóa học này.</p>'}</div></div></div>`;
         };
-        const renderLessonView = (lessonId) => {
-            currentView = 'lesson';
+        const renderLessonView = (lessonId, isRestoring = false) => {
+            if (!isRestoring && currentView !== 'lesson') {
+                currentView = 'lesson';
+            }
             currentLessonId = lessonId;
             const lesson = lessons.find(l => l.id === lessonId);
             if (!lesson) return renderStudentCourseView(currentCourseId);
@@ -968,7 +982,7 @@
             const hasSubmitted = progressRecord?.submittedAt;
             const embedUrl = getYoutubeEmbedUrl(lesson.videoUrl);
 
-            appContainer.innerHTML = `<div class="w-full max-w-4xl mx-auto fade-in">${renderHeader(lesson.title, true)}<div class="bg-white p-6 md:p-8 mt-6 rounded-xl shadow-lg">${embedUrl ? `<div class="video-container shadow-md mb-8"><iframe src="${embedUrl}" frameborder="0" allowfullscreen></iframe></div>` : ''}<h2 class="text-3xl font-bold mb-4 text-slate-800">Nội dung bài học</h2><div class="prose max-w-none text-slate-700 mb-8">${lesson.content || '<p><em>Chưa có nội dung cho bài học này.</em></p>'}</div>
+            appContainer.innerHTML = `<div class="w-full max-w-4xl mx-auto fade-in">${renderHeader(lesson.title, true)}<div class="bg-white p-6 md:p-8 mt-6 rounded-xl shadow-lg">${embedUrl ? `<div class="video-container shadow-md mb-8"><iframe src="${embedUrl}" frameborder="0" allowfullscreen></iframe></div>` : ''}<h2 class="text-3xl font-bold mb-4 text-slate-800">Nội dung bài học</h2><div class="prose max-w-none text-slate-700 mb-8 whitespace-pre-wrap">${lesson.content || '<p><em>Chưa có nội dung cho bài học này.</em></p>'}</div>
             
             ${homework ? `<hr class="my-8"><div class="p-6 bg-slate-50 rounded-lg"><h2 class="text-2xl font-bold mb-2">Bài tập: ${homework.title}</h2><p class="text-slate-600 mb-6">${homework.description}</p>${currentUser.role === 'student' ? (hasSubmitted ? `<div class="p-4 border rounded-lg ${progressRecord.grade !== null && progressRecord.grade !== undefined ? 'bg-green-50 border-green-300' : 'bg-blue-50 border-blue-200'}"><div class="flex justify-between items-start"><div class="flex items-start"><i class="fas fa-check-circle ${progressRecord.grade !== null && progressRecord.grade !== undefined ? 'text-green-600' : 'text-blue-600'} mr-3 fa-lg mt-1"></i><div><p class="font-bold ${progressRecord.grade !== null && progressRecord.grade !== undefined ? 'text-green-800' : 'text-blue-800'}">Bạn đã nộp bài.</p><p class="mt-2"><strong>Điểm:</strong> ${progressRecord.grade !== null && progressRecord.grade !== undefined ? `<span class="font-bold text-lg">${progressRecord.grade}</span>` : 'Chưa được chấm'}</p></div></div>${(progressRecord.grade === null || progressRecord.grade === undefined) ? `<button class="cancel-submission-btn bg-gray-200 text-gray-700 text-xs font-semibold px-3 py-1 rounded-full hover:bg-gray-300" data-lesson-id="${lesson.id}">Hủy xác nhận</button>` : ''}</div>${progressRecord.comment ? `<div class="border-t pt-3 mt-3"><p class="font-semibold text-slate-700">Nhận xét của giáo viên:</p><p class="text-slate-600 whitespace-pre-wrap mt-1">${progressRecord.comment}</p></div>` : ''}</div>` : `<div class="space-y-4"><div class="p-4 border-l-4 border-blue-500 bg-blue-50"><p class="font-bold text-blue-800">Hướng dẫn nộp bài</p><ol class="list-decimal list-inside text-sm text-blue-700 space-y-1 mt-2"><li>Nhấn nút <strong class="font-semibold">"Mở thư mục lớp học"</strong>.</li><li>Trong thư mục đó, tạo một thư mục mới với tên: <strong class="font-semibold">${currentUser.name} - ${lesson.title}</strong>.</li><li>Tải tất cả các file bài làm của bạn vào thư mục vừa tạo.</li><li>Quay lại đây và nhấn nút <strong class="font-semibold">"Xác nhận đã nộp bài"</strong>.</li></ol></div><div class="flex items-center space-x-4"><a href="${course?.submissionFolderUrl || '#'}" target="_blank" class="inline-block bg-yellow-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-yellow-600 transition-colors ${!course?.submissionFolderUrl ? 'opacity-50 cursor-not-allowed' : ''}"><i class="fab fa-google-drive mr-2"></i>Mở thư mục lớp học</a><button class="confirm-submission-btn bg-blue-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-blue-700" data-lesson-id="${lesson.id}"><i class="fas fa-check-circle mr-2"></i>Xác nhận đã nộp bài</button></div></div>`) : ''}</div>` : ''}
             
@@ -1078,8 +1092,10 @@
             return { html: fullHTML, chartData };
         };
 
-        const renderMyProgressView = (courseId) => {
-            currentView = 'myProgress';
+        const renderMyProgressView = (courseId, isRestoring = false) => {
+            if (!isRestoring) {
+                currentView = 'myProgress';
+            }
             const course = courses.find(c => c.id === courseId);
             if (!course) return renderStudentDashboard();
 
@@ -1096,8 +1112,10 @@
             `;
             setTimeout(() => renderCharts(chartData, 'report-'), 50);
         };
-        const renderTeacherStudentReportView = (studentId, courseId) => {
-            currentView = 'studentReport';
+        const renderTeacherStudentReportView = (studentId, courseId, isRestoring = false) => {
+            if (!isRestoring) {
+                currentView = 'studentReport';
+            }
             currentStudentIdForProgress = studentId;
             const student = users.find(u => u.id === studentId);
             const course = courses.find(c => c.id === courseId);
@@ -1138,22 +1156,46 @@
                 return;
             }
 
+            // Lưu trạng thái hiện tại vào localStorage (trừ khi là lần khôi phục đầu tiên)
+            if (!isFirstNavigationAfterRestore && currentView !== 'login') {
+                localStorage.setItem('currentView', currentView);
+                localStorage.setItem('currentCourseId', currentCourseId || '');
+                localStorage.setItem('currentLessonId', currentLessonId || '');
+                localStorage.setItem('currentStudentIdForProgress', currentStudentIdForProgress || '');
+                localStorage.setItem('currentActiveTab', currentActiveTab || 'overview');
+            }
+
+            // Lưu trạng thái khôi phục để các render function biết
+            const isRestoring = isFirstNavigationAfterRestore;
+
             switch (currentUser.role) {
                 case 'admin':
+                    currentView = 'dashboard';
                     renderAdminDashboard();
                     break;
                 case 'teacher':
-                    if (currentView === 'studentReport') renderTeacherStudentReportView(currentStudentIdForProgress, currentCourseId);
-                    else if (currentView === 'studentProgress') renderStudentProgressView(currentStudentIdForProgress);
-                    else if (currentView === 'course') renderTeacherCourseManagement(currentCourseId);
-                    else renderTeacherDashboard();
+                    if (currentView === 'studentReport') renderTeacherStudentReportView(currentStudentIdForProgress, currentCourseId, isRestoring);
+                    else if (currentView === 'studentProgress') renderStudentProgressView(currentStudentIdForProgress, isRestoring);
+                    else if (currentView === 'course') renderTeacherCourseManagement(currentCourseId, isRestoring);
+                    else {
+                        currentView = 'dashboard';
+                        renderTeacherDashboard();
+                    }
                     break;
                 case 'student':
-                    if (currentView === 'myProgress') renderMyProgressView(currentCourseId);
-                    else if (currentView === 'lesson') renderLessonView(currentLessonId);
-                    else if (currentView === 'course') renderStudentCourseView(currentCourseId);
-                    else renderStudentDashboard();
+                    if (currentView === 'myProgress') renderMyProgressView(currentCourseId, isRestoring);
+                    else if (currentView === 'lesson') renderLessonView(currentLessonId, isRestoring);
+                    else if (currentView === 'course') renderStudentCourseView(currentCourseId, isRestoring);
+                    else {
+                        currentView = 'dashboard';
+                        renderStudentDashboard();
+                    }
                     break;
+            }
+
+            // Sau khi gọi navigate lần đầu tiên từ khôi phục, đặt cờ về false
+            if (isFirstNavigationAfterRestore) {
+                isFirstNavigationAfterRestore = false;
             }
         };
 
@@ -1172,13 +1214,13 @@
                     if(currentUser.role === 'teacher') {
                         updateTeacherCourseTabs();
                     } else if (currentUser.role === 'student') {
-                        renderStudentCourseView(currentCourseId);
+                        renderStudentCourseView(currentCourseId, false);
                     }
                     break;
-                case 'lesson': renderLessonView(currentLessonId); break;
-                case 'studentProgress': renderStudentProgressView(currentStudentIdForProgress); break;
-                case 'studentReport': renderTeacherStudentReportView(currentStudentIdForProgress, currentCourseId); break;
-                case 'myProgress': renderMyProgressView(currentCourseId); break;
+                case 'lesson': renderLessonView(currentLessonId, false); break;
+                case 'studentProgress': renderStudentProgressView(currentStudentIdForProgress, false); break;
+                case 'studentReport': renderTeacherStudentReportView(currentStudentIdForProgress, currentCourseId, false); break;
+                case 'myProgress': renderMyProgressView(currentCourseId, false); break;
             }
         };
 
@@ -1193,6 +1235,7 @@
                 const password = document.getElementById('password-input').value;
                 const userToLogin = users.find(u => u.username === username && u.password === password);
                 if (userToLogin) {
+                    localStorage.setItem('currentUserId', userToLogin.id);
                     currentUser = userToLogin;
                     navigate();
                     showToast(`Chào mừng, ${currentUser.name}!`, 'success');
@@ -1203,9 +1246,16 @@
                 }
             }
             if (target.closest('#logout-btn')) { 
+                localStorage.removeItem('currentUserId');
+                localStorage.removeItem('currentView');
+                localStorage.removeItem('currentCourseId');
+                localStorage.removeItem('currentLessonId');
+                localStorage.removeItem('currentStudentIdForProgress');
+                localStorage.removeItem('currentActiveTab');
                 currentUser = null; 
                 currentView = 'login'; 
                 currentStudentIdForProgress = null;
+                currentActiveTab = 'overview';
                 overviewFilterLessonId = 'all';
                 navigate(); 
             }
@@ -1216,6 +1266,7 @@
                 } else if (currentView === 'course') {
                     currentView = 'dashboard';
                     overviewFilterLessonId = 'all';
+                    currentActiveTab = 'overview'; // Reset tab khi quay về dashboard
                 }
                 navigate();
             }
@@ -1319,7 +1370,9 @@
                 }
                 if (target.closest('.manage-course-btn')) { 
                     overviewFilterLessonId = 'all';
-                    renderTeacherCourseManagement(target.closest('.manage-course-btn').dataset.id);
+                    currentCourseId = target.closest('.manage-course-btn').dataset.id;
+                    currentView = 'course';
+                    navigate();
                 }
                 if (target.closest('#add-lesson-btn')) {
                     const courseId = target.closest('#add-lesson-btn').dataset.courseId;
@@ -1393,6 +1446,8 @@
                 }
                 if(target.closest('.tab-btn')) {
                     const tabName = target.dataset.tab;
+                    currentActiveTab = tabName; // Lưu tab được chọn
+                    localStorage.setItem('currentActiveTab', tabName); // Lưu vào localStorage
                     document.querySelectorAll('.tab-btn').forEach(btn => {
                         btn.classList.remove('tab-active');
                         btn.classList.add('text-gray-500', 'hover:text-gray-700');
@@ -1403,12 +1458,14 @@
                     document.getElementById(`tab-${tabName}`).classList.remove('hidden');
                 }
                 if (target.closest('.view-student-progress-btn')) {
-                    const studentId = target.closest('.view-student-progress-btn').dataset.studentId;
-                    renderTeacherStudentReportView(studentId, currentCourseId);
+                    currentStudentIdForProgress = target.closest('.view-student-progress-btn').dataset.studentId;
+                    currentView = 'studentReport';
+                    navigate();
                 }
                 if (target.closest('#edit-student-progress-btn')) {
-                    const studentId = target.closest('#edit-student-progress-btn').dataset.studentId;
-                    renderStudentProgressView(studentId);
+                    currentStudentIdForProgress = target.closest('#edit-student-progress-btn').dataset.studentId;
+                    currentView = 'studentProgress';
+                    navigate();
                 }
                 if (target.closest('.lesson-progress-summary')) {
                     const summaryCard = target.closest('.lesson-progress-summary');
@@ -1480,10 +1537,15 @@
             }
             
             if (currentUser?.role === 'student') {
-                if (target.closest('.view-course-btn')) { renderStudentCourseView(target.closest('.view-course-btn').dataset.id); }
+                if (target.closest('.view-course-btn')) { 
+                    currentCourseId = target.closest('.view-course-btn').dataset.id;
+                    currentView = 'course';
+                    navigate();
+                }
                 if (target.closest('.view-lesson-btn')) {
                     currentLessonId = target.closest('.view-lesson-btn').dataset.lessonId;
-                    renderLessonView(currentLessonId);
+                    currentView = 'lesson';
+                    navigate();
                 }
                 if (target.closest('.confirm-submission-btn')) {
                     const lessonId = target.closest('.confirm-submission-btn').dataset.lessonId;
@@ -1507,8 +1569,9 @@
                     );
                 }
                 if (target.closest('.view-my-progress-btn')) {
-                    const courseId = target.closest('.view-my-progress-btn').dataset.courseId;
-                    renderMyProgressView(courseId);
+                    currentCourseId = target.closest('.view-my-progress-btn').dataset.courseId;
+                    currentView = 'myProgress';
+                    navigate();
                 }
             }
         });
@@ -1565,6 +1628,46 @@
                                 
                                 if (initialLoads.size === collectionsToWatch.length) {
                                     initialLoadComplete = true;
+                                    
+                                    // Khôi phục currentUser từ localStorage
+                                    const savedUserId = localStorage.getItem('currentUserId');
+                                    if (savedUserId) {
+                                        const foundUser = users.find(u => u.id === savedUserId);
+                                        if (foundUser) {
+                                            currentUser = foundUser;
+                                            
+                                            // Khôi phục trạng thái view từ localStorage
+                                            const savedView = localStorage.getItem('currentView');
+                                            const savedCourseId = localStorage.getItem('currentCourseId');
+                                            const savedLessonId = localStorage.getItem('currentLessonId');
+                                            const savedStudentId = localStorage.getItem('currentStudentIdForProgress');
+                                            const savedActiveTab = localStorage.getItem('currentActiveTab');
+                                            
+                                            // Chỉ khôi phục nếu có giá trị hợp lệ
+                                            if (savedView && savedView !== 'login' && savedView !== '') {
+                                                currentView = savedView;
+                                                if (savedCourseId && savedCourseId !== '') currentCourseId = savedCourseId;
+                                                if (savedLessonId && savedLessonId !== '') currentLessonId = savedLessonId;
+                                                if (savedStudentId && savedStudentId !== '') currentStudentIdForProgress = savedStudentId;
+                                                if (savedActiveTab && savedActiveTab !== '') currentActiveTab = savedActiveTab;
+                                                
+                                                // Đặt cờ để navigate() biết đây là lần khôi phục đầu tiên
+                                                // Nó sẽ không lưu lại localStorage, giữ nguyên các giá trị
+                                                isFirstNavigationAfterRestore = true;
+                                            } else {
+                                                // Nếu không có saved view, mặc định là dashboard
+                                                currentView = 'dashboard';
+                                            }
+                                        } else {
+                                            localStorage.removeItem('currentUserId');
+                                            localStorage.removeItem('currentView');
+                                            localStorage.removeItem('currentCourseId');
+                                            localStorage.removeItem('currentLessonId');
+                                            localStorage.removeItem('currentStudentIdForProgress');
+                                            currentUser = null;
+                                        }
+                                    }
+                                    
                                     const loadingOverlay = document.getElementById('loading-overlay');
                                     loadingOverlay.style.opacity = '0';
                                     setTimeout(() => {
@@ -1573,6 +1676,18 @@
                                     }, 300);
                                 }
                             } else {
+                                // Sau khi tải lần đầu, nếu collection 'users' thay đổi, cập nhật currentUser
+                                if (colName === 'users' && currentUser) {
+                                    const refreshedUser = users.find(u => u.id === currentUser.id);
+                                    if (refreshedUser) {
+                                        currentUser = refreshedUser;
+                                    } else {
+                                        localStorage.removeItem('currentUserId');
+                                        currentUser = null;
+                                        navigate();
+                                        return;
+                                    }
+                                }
                                 updateUI();
                             }
                         }, (error) => {
@@ -1599,4 +1714,3 @@
     </script>
 </body>
 </html>
-
