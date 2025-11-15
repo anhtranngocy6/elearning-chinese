@@ -194,19 +194,12 @@
             }
 
             const ctxGrade = document.getElementById(`${prefix}gradingChart`);
-            if (ctxGrade && chartData.grading.datasets[0].data.reduce((a, b) => a + b, 0) > 0) {
+            if (ctxGrade) {
                 window.myCharts.grading = new Chart(ctxGrade, { type: 'doughnut', data: chartData.grading, options: doughnutPieOptions });
-            } else if (ctxGrade) {
-                const ctx = ctxGrade.getContext('2d');
-                ctx.clearRect(0, 0, ctxGrade.width, ctxGrade.height);
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillStyle = '#64748b';
-                ctx.fillText('Chưa có bài nộp', ctxGrade.width / 2, ctxGrade.height / 2);
             }
 
             const ctxAtt = document.getElementById(`${prefix}attendanceChart`);
-            if(ctxAtt) {
+            if(ctxAtt && chartData.attendance) {
                 window.myCharts.attendance = new Chart(ctxAtt, { 
                     type: 'pie', 
                     data: chartData.attendance, 
@@ -215,7 +208,7 @@
             }
             
             const ctxSkills = document.getElementById(`${prefix}skillsChart`);
-            if(ctxSkills) {
+            if(ctxSkills && chartData.skills) {
                 window.myCharts.skills = new Chart(ctxSkills, {
                     type: 'radar',
                     data: chartData.skills,
@@ -1043,7 +1036,7 @@
             </div></div>`;
         };
 
-        const generateStudentProgressReport = (studentId, courseId) => {
+        const generateStudentProgressReport = (studentId, courseId, isTeacher = false) => {
             const course = courses.find(c => c.id === courseId);
             if (!course) return { html: '', chartData: {} };
 
@@ -1125,7 +1118,7 @@
                          
                          <div class="border-t pt-4">
                              <div class="grid grid-cols-2 md:grid-cols-5 gap-4 items-center">
-                                 <div class="col-span-2 md:col-span-4">
+                                 ${isTeacher ? `<div class="col-span-2 md:col-span-4">
                                      <p class="font-semibold text-slate-700 mb-2">Điểm chi tiết:</p>
                                      <div class="grid grid-cols-2 gap-3 text-sm">
                                          <p><span class="text-slate-500">Đọc:</span> <strong class="text-slate-800">${progressRecord.grades?.reading ?? '--'}</strong></p>
@@ -1133,9 +1126,9 @@
                                          <p><span class="text-slate-500">Nói:</span> <strong class="text-slate-800">${progressRecord.grades?.speaking ?? '--'}</strong></p>
                                          <p><span class="text-slate-500">Viết:</span> <strong class="text-slate-800">${progressRecord.grades?.writing ?? '--'}</strong></p>
                                      </div>
-                                 </div>
-                                 <div class="text-center">
-                                     <p class="text-sm font-medium text-slate-600">Điểm TB</p>
+                                 </div>` : ''}
+                                 <div class="text-center ${isTeacher ? '' : 'col-span-2 md:col-span-5'}">
+                                     <p class="text-sm font-medium text-slate-600">Điểm Đánh Giá Năng Lực</p>
                                      <p class="font-bold text-3xl text-blue-600">${grade ?? '--'}</p>
                                  </div>
                              </div>
@@ -1160,13 +1153,14 @@
                 <div class="p-6 bg-gradient-to-br from-slate-50 to-blue-50 rounded-xl shadow-lg mb-6 border border-blue-100">
                     <h3 class="text-xl font-bold mb-6 text-slate-800">📊 Tổng quan kết quả học tập</h3>
                     
-                    <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
+                    <div class="grid grid-cols-1 ${isTeacher ? 'md:grid-cols-5' : 'md:grid-cols-3'} gap-4 mb-8">
                         <div class="bg-white p-5 rounded-lg shadow-sm border-l-4 border-blue-500">
                             <p class="text-sm font-medium text-slate-600 mb-2">Điểm Đánh Giá Năng Lực</p>
                             <p class="text-3xl font-bold text-blue-600">${overallAverage}</p>
                             <p class="text-xs text-slate-500 mt-2">Từ ${allGradedRecords.length} bài đã chấm</p>
                         </div>
                         
+                        ${isTeacher ? `
                         <div class="bg-white p-5 rounded-lg shadow-sm border-l-4 border-green-500">
                             <p class="text-sm font-medium text-slate-600 mb-2">Đọc</p>
                             <p class="text-3xl font-bold text-green-600">${readingAvg}</p>
@@ -1190,6 +1184,19 @@
                             <p class="text-3xl font-bold text-red-600">${writingAvg}</p>
                             <p class="text-xs text-slate-500 mt-2">${gradedCount > 0 ? 'Trung bình' : 'Chưa đánh giá'}</p>
                         </div>
+                        ` : `
+                        <div class="bg-white p-5 rounded-lg shadow-sm border-l-4 border-slate-400">
+                            <p class="text-sm font-medium text-slate-600 mb-2">Số bài đã nộp</p>
+                            <p class="text-3xl font-bold text-slate-600">${totalSubmissions}/${totalPossibleSubmissions}</p>
+                            <p class="text-xs text-slate-500 mt-2">Tiến độ nộp bài</p>
+                        </div>
+                        
+                        <div class="bg-white p-5 rounded-lg shadow-sm border-l-4 border-slate-400">
+                            <p class="text-sm font-medium text-slate-600 mb-2">Chuyên cần</p>
+                            <p class="text-3xl font-bold text-slate-600">${totalPresent}/${totalAttendanceSlots}</p>
+                            <p class="text-xs text-slate-500 mt-2">Buổi có mặt / Tổng buổi</p>
+                        </div>
+                        `}
                     </div>
                 </div>
                 
@@ -1217,7 +1224,7 @@
             if (!course) return renderStudentDashboard();
 
             document.title = `Tiến độ của tôi: ${course.title}`;
-            const { html, chartData } = generateStudentProgressReport(currentUser.id, courseId);
+            const { html, chartData } = generateStudentProgressReport(currentUser.id, courseId, false);
 
             appContainer.innerHTML = `
                  <div class="w-full max-w-7xl mx-auto fade-in">
@@ -1239,7 +1246,7 @@
             if (!student || !course) return renderTeacherCourseManagement(currentCourseId);
 
             document.title = `Báo cáo: ${student.name}`;
-            const { html, chartData } = generateStudentProgressReport(studentId, courseId);
+            const { html, chartData } = generateStudentProgressReport(studentId, courseId, true);
 
             appContainer.innerHTML = `
                  <div class="w-full max-w-7xl mx-auto fade-in">
