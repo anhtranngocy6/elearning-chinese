@@ -50,11 +50,11 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, onSnapshot, addDoc, doc, updateDoc, deleteDoc, writeBatch, setDoc, serverTimestamp, deleteField } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot, addDoc, doc, updateDoc, deleteDoc, writeBatch, setDoc, serverTimestamp, deleteField, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // ===================================================================================
-        // KHU VỰC 1: KHỞI TẠO VÀ TRẠNG THÁI ỨNG DỤNG
-        // ===================================================================================
+        // ═══════════════════════════════════════════════════════════════════════════════════
+        // FIREBASE INITIALIZATION
+        // ═══════════════════════════════════════════════════════════════════════════════════
         let db, auth;
         const firebaseConfig = {
             apiKey: "AIzaSyD7FL9Alrsci7uvi3UnCSYmsbyICxtDWR4",
@@ -74,6 +74,9 @@
             document.getElementById('loading-overlay').innerHTML = '<p class="text-red-500">Lỗi kết nối Firebase. Vui lòng kiểm tra cấu hình.</p>';
         }
 
+        // ═══════════════════════════════════════════════════════════════════════════════════
+        // GLOBAL STATE
+        // ═══════════════════════════════════════════════════════════════════════════════════
         let users = [];
         let courses = [];
         let lessons = [];
@@ -87,15 +90,15 @@
         let currentLessonId = null;
         let currentStudentIdForProgress = null;
         let overviewFilterLessonId = 'all';
-        let currentActiveTab = 'overview'; // Lưu tab hiện tại
+        let currentActiveTab = 'overview';
         let isFirstNavigationAfterRestore = false;
         
         const appContainer = document.getElementById('app');
         const modalContainer = document.getElementById('modal-container');
 
-        // ===================================================================================
-        // KHU VỰC 2: CÁC HÀM TIỆN ÍCH (UTILITIES)
-        // ===================================================================================
+        // ═══════════════════════════════════════════════════════════════════════════════════
+        // UTILITY FUNCTIONS
+        // ═══════════════════════════════════════════════════════════════════════════════════
         const showToast = (message, type = 'info') => {
             const container = document.getElementById('toast-container');
             const icons = { success: 'fa-check-circle', error: 'fa-times-circle', info: 'fa-info-circle' };
@@ -260,10 +263,127 @@
             }
         };
 
-        // ===================================================================================
-        // KHU VỰC 3: CÁC HÀM RENDER GIAO DIỆN (UI RENDERING FUNCTIONS)
-        // ===================================================================================
+        // ═══════════════════════════════════════════════════════════════════════════════════
+        // FILE SUBMISSION FUNCTIONS
+        // ═══════════════════════════════════════════════════════════════════════════════════
 
+        // Quick submission: Create folder and redirect to Google Drive
+        const handleQuickSubmission = async (lessonId) => {
+            const lesson = lessons.find(l => l.id === lessonId);
+            const course = courses.find(c => c.id === lesson.courseId);
+            
+            if (!lesson || !course || !course.scriptUrl) {
+                showToast('Không thể nộp bài: Hệ thống chưa được cấu hình. Vui lòng liên hệ giáo viên.', 'error');
+                return;
+            }
+
+            try {
+                // Show loading state
+                showToast('📁 Đang tạo thư mục...', 'info');
+                
+                // Call server to create folder (using GET with query parameters)
+                const params = new URLSearchParams({
+                    action: 'create_folder',
+                    class_name: course.title,
+                    student_name: currentUser.name,
+                    assignment_name: lesson.title
+                });
+                
+                const response = await fetch(`${course.scriptUrl}?${params}`);
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Show modal to upload files to Google Drive (don't save progress yet)
+                    const uploadModal = document.createElement('div');
+                    uploadModal.className = "bg-white w-full max-w-md rounded-xl shadow-lg p-8 fade-in text-center";
+                    uploadModal.innerHTML = `
+                        <div class="mb-4">
+                            <i class="fas fa-folder-plus text-5xl text-blue-500"></i>
+                        </div>
+                        <h2 class="text-2xl font-bold text-slate-800 mb-2">📁 Thư Mục Đã Tạo</h2>
+                        <p class="text-slate-600 mb-2">Thư mục đã được tạo thành công trên Google Drive.</p>
+                        <p class="text-slate-500 text-sm mb-6">Hãy upload file vào thư mục, sau đó quay lại ấn "Xác nhận" để hoàn tất nộp bài.</p>
+                        <div class="flex flex-col gap-3">
+                            <button class="open-drive-btn bg-blue-600 text-white font-semibold px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2">
+                                <i class="fas fa-folder-open"></i> Tiếp tục - Mở Google Drive
+                            </button>
+                            <button class="cancel-upload-btn bg-red-500 text-white font-semibold px-6 py-3 rounded-lg hover:bg-red-600 transition-colors">
+                                Huỷ - Xoá Thư Mục
+                            </button>
+                        </div>
+                    `;
+                    
+                    showModal(uploadModal);
+                    
+                    // Store folder info for later use
+                    uploadModal.folderId = result.folderId;
+                    uploadModal.folderUrl = result.folderUrl;
+                    uploadModal.lessonId = lessonId;
+                    uploadModal.course = course;
+                    
+                    // Setup button handlers
+                    uploadModal.querySelector('.open-drive-btn').addEventListener('click', async () => {
+                        // Save progress to Firestore only when user clicks "Tiếp tục"
+                        try {
+                            const progressRecord = progress.find(p => p.lessonId === lessonId && p.studentId === currentUser.id);
+                            if (progressRecord) {
+                                await updateDoc(doc(db, 'progress', progressRecord.id), { submittedAt: serverTimestamp() });
+                                progressRecord.submittedAt = new Date();
+                            } else {
+                                const newDocRef = await addDoc(collection(db, 'progress'), {
+                                    studentId: currentUser.id,
+                                    lessonId: lessonId,
+                                    submittedAt: serverTimestamp(),
+                                    attendanceStatus: 'present',
+                                    grade: null,
+                                    comment: ''
+                                });
+                                progress.push({
+                                    id: newDocRef.id,
+                                    studentId: currentUser.id,
+                                    lessonId: lessonId,
+                                    submittedAt: new Date(),
+                                    attendanceStatus: 'present',
+                                    grade: null,
+                                    comment: ''
+                                });
+                            }
+                        } catch (err) {
+                            console.error('Error saving progress:', err);
+                        }
+                        
+                        // Open Google Drive and transition to submission success screen
+                        window.open(result.folderUrl, '_blank');
+                        closeModal();
+                        showToast('✅ Nộp bài thành công!', 'success');
+                        renderLessonView(lessonId);
+                    });
+                    
+                    uploadModal.querySelector('.cancel-upload-btn').addEventListener('click', () => {
+                        // Just close modal without deleting folder
+                        closeModal();
+                        showToast('❌ Đã huỷ nộp bài.', 'error');
+                    });
+                } else {
+                    showToast(`❌ Lỗi: ${result.message}`, 'error');
+                }
+            } catch (error) {
+                console.error('Error in handleQuickSubmission:', error);
+                
+                // If CORS error, provide helpful message
+                if (error.message === 'Failed to fetch') {
+                    showToast('❌ Lỗi CORS: Hệ thống chưa được deploy. Vui lòng liên hệ quản trị viên.', 'error');
+                    console.log('CORS Error: Make sure the Google Apps Script is deployed as a web app accessible to anyone.');
+                } else {
+                    showToast(`❌ Lỗi: ${error.message}`, 'error');
+                }
+            }
+        };
+
+        // ═══════════════════════════════════════════════════════════════════════════════════
+        // RENDER FUNCTIONS: COMMON/SHARED UI
+        // ═══════════════════════════════════════════════════════════════════════════════════
         const renderLoginScreen = () => {
             document.title = "Đăng nhập | Học Tiếng Trung Cùng Thư";
             appContainer.innerHTML = `
@@ -311,7 +431,10 @@
                      </div>
                  </header>`;
         };
-        
+
+        // ═══════════════════════════════════════════════════════════════════════════════════
+        // RENDER FUNCTIONS: CONFIRMATION MODAL
+        // ═══════════════════════════════════════════════════════════════════════════════════
         const renderConfirmModal = (title, message, confirmText, confirmClass, onConfirm) => {
             const confirmModal = document.createElement('div');
             confirmModal.className = "bg-white w-full max-w-sm rounded-xl shadow-lg p-6 fade-in";
@@ -330,6 +453,9 @@
             confirmModal.querySelector('.cancel-modal-btn').addEventListener('click', closeModal, { once: true });
         };
         
+        // ═══════════════════════════════════════════════════════════════════════════════════
+        // RENDER FUNCTIONS: ADMIN
+        // ═══════════════════════════════════════════════════════════════════════════════════
         const renderAdminDashboard = () => {
              document.title = "Admin Dashboard | Học Tiếng Trung Cùng Thư";
             const teachers = users.filter(u => u.role === 'teacher');
@@ -398,13 +524,16 @@
             return modalContent;
         };
         
+        // ═══════════════════════════════════════════════════════════════════════════════════
+        // RENDER FUNCTIONS: TEACHER
+        // ═══════════════════════════════════════════════════════════════════════════════════
         const renderTeacherDashboard = () => {
              if (currentView !== 'course' && currentView !== 'studentProgress' && currentView !== 'studentReport') {
                  currentView = 'dashboard';
              }
              document.title = "Teacher Dashboard | Học Tiếng Trung Cùng Thư";
             const myCourses = courses.filter(c => c.createdBy === currentUser.id);
-            appContainer.innerHTML = `<div class="w-full max-w-7xl mx-auto fade-in">${renderHeader('Teacher Dashboard')}<div class="grid grid-cols-1 md:grid-cols-3 gap-8 mt-6"><div class="md:col-span-2 bg-white p-6 rounded-xl shadow-lg"><h2 class="text-2xl font-bold mb-4">Khoá học của tôi</h2><div class="space-y-3">${myCourses.length > 0 ? myCourses.map(c => `<div class="p-4 bg-slate-50 rounded-lg flex justify-between items-center"><div><h3 class="font-semibold text-lg">${c.title}</h3><p class="text-sm text-slate-500 truncate">${c.description}</p></div><div class="space-x-2 flex-shrink-0"><button class="edit-course-btn text-gray-500 hover:text-blue-700" data-id="${c.id}" title="Chỉnh sửa thông tin"><i class="fas fa-pen"></i></button><button class="manage-course-btn bg-blue-50 text-blue-600 px-4 py-1 rounded-full border border-blue-200 font-semibold text-sm hover:bg-blue-100" data-id="${c.id}">Quản lý</button></div></div>`).join('') : '<p class="text-slate-500">Bạn chưa tạo khoá học nào.</p>'}</div></div><div class="bg-white p-6 rounded-xl shadow-lg h-fit"><h2 class="text-2xl font-bold mb-4">Tạo khoá học mới</h2><div class="space-y-3"><input type="text" id="new-course-title" placeholder="Tiêu đề khoá học" class="w-full p-2 border rounded-lg"><textarea id="new-course-desc" placeholder="Mô tả khoá học" class="w-full p-2 border rounded-lg h-24"></textarea><input type="text" id="new-course-folder-url" placeholder="Link thư mục Google Drive cho khoá học" class="w-full p-2 border rounded-lg"><button id="add-course-btn" class="w-full bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700">Tạo mới</button></div></div></div></div>`;
+            appContainer.innerHTML = `<div class="w-full max-w-7xl mx-auto fade-in">${renderHeader('Teacher Dashboard')}<div class="grid grid-cols-1 md:grid-cols-3 gap-8 mt-6"><div class="md:col-span-2 bg-white p-6 rounded-xl shadow-lg"><h2 class="text-2xl font-bold mb-4">Khoá học của tôi</h2><div class="space-y-3">${myCourses.length > 0 ? myCourses.map(c => `<div class="p-4 bg-slate-50 rounded-lg flex justify-between items-center"><div><h3 class="font-semibold text-lg">${c.title}</h3><p class="text-sm text-slate-500 truncate">${c.description}</p></div><div class="space-x-2 flex-shrink-0"><button class="edit-course-btn text-gray-500 hover:text-blue-700" data-id="${c.id}" title="Chỉnh sửa thông tin"><i class="fas fa-pen"></i></button><button class="manage-course-btn bg-blue-50 text-blue-600 px-4 py-1 rounded-full border border-blue-200 font-semibold text-sm hover:bg-blue-100" data-id="${c.id}">Quản lý</button></div></div>`).join('') : '<p class="text-slate-500">Bạn chưa tạo khoá học nào.</p>'}</div></div><div class="bg-white p-6 rounded-xl shadow-lg h-fit"><h2 class="text-2xl font-bold mb-4">Tạo khoá học mới</h2><div class="space-y-3"><input type="text" id="new-course-title" placeholder="Tiêu đề khoá học" class="w-full p-2 border rounded-lg"><textarea id="new-course-desc" placeholder="Mô tả khoá học" class="w-full p-2 border rounded-lg h-24"></textarea><input type="text" id="new-course-folder-url" placeholder="Link thư mục Google Drive cho khoá học" class="w-full p-2 border rounded-lg"><input type="text" id="new-course-script-url" placeholder="URL Google Apps Script Web App (tùy chọn)" class="w-full p-2 border rounded-lg" title="Để kích hoạt nộp bài tự động"><button id="add-course-btn" class="w-full bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700">Tạo mới</button></div></div></div></div>`;
         };
         const renderEditCourseModal = (courseId) => {
             const course = courses.find(c => c.id === courseId);
@@ -425,6 +554,11 @@
                              <label for="edit-course-folder-url" class="block text-sm font-medium text-slate-600 mb-1">Link thư mục Google Drive:</label>
                              <input type="text" id="edit-course-folder-url" class="w-full p-2 border rounded-lg" value="${course.submissionFolderUrl || ''}">
                          </div>
+                         <div>
+                             <label for="edit-course-script-url" class="block text-sm font-medium text-slate-600 mb-1">URL Google Apps Script Web App:</label>
+                             <input type="text" id="edit-course-script-url" class="w-full p-2 border rounded-lg" value="${course.scriptUrl || ''}" placeholder="https://script.google.com/macros/d/.../usercontent">
+                             <p class="text-xs text-slate-500 mt-1">Để kích hoạt nộp bài tự động cho học sinh</p>
+                         </div>
                      </div>
                      <div class="mt-6 flex justify-end space-x-3">
                          <button class="cancel-modal-btn px-4 py-2 bg-slate-200 text-slate-800 rounded-lg hover:bg-slate-300">Huỷ</button>
@@ -432,7 +566,14 @@
                      </div>
                  </div>
             `;
-            return modalContent;
+            showModal(modalContent);
+            
+            // Setup event listener for cancel button
+            document.querySelectorAll('.cancel-modal-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    closeModal();
+                }, { once: true });
+            });
         };
         const renderTeacherCourseManagement = (courseId, isRestoring = false) => {
             if (!isRestoring) {
@@ -935,6 +1076,14 @@
             `;
             showModal(modalContent);
             calculateAverageScore();
+
+            // Setup event listener for cancel button
+            document.querySelectorAll('.cancel-modal-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    closeModal();
+                }, { once: true });
+            });
         };
 
         const renderEditLessonModal = (lessonId) => {
@@ -942,14 +1091,31 @@
             if (!lesson) return;
             const skillsToTeach = lesson.skillsToTeach || [];
             const modalContent = `<div class="bg-white w-full max-w-lg rounded-xl shadow-lg p-6 fade-in"><h2 class="text-2xl font-bold mb-4">Chỉnh sửa bài học</h2><div class="space-y-4"><div><label for="edit-lesson-title" class="block text-sm font-medium text-slate-600 mb-1">Tiêu đề bài học:</label><input type="text" id="edit-lesson-title" class="w-full p-2 border rounded-lg" value="${lesson.title}"></div><div><label for="edit-lesson-video" class="block text-sm font-medium text-slate-600 mb-1">Link video YouTube:</label><input type="text" id="edit-lesson-video" class="w-full p-2 border rounded-lg" value="${lesson.videoUrl || ''}"></div><div><label for="edit-lesson-content" class="block text-sm font-medium text-slate-600 mb-1">Nội dung bài học:</label><textarea id="edit-lesson-content" class="w-full p-2 border rounded-lg h-32">${lesson.content}</textarea></div><div><label class="block text-sm font-medium text-slate-600 mb-2">Kỹ năng sẽ dạy trong bài học:</label><div class="space-y-2"><label class="flex items-center"><input type="checkbox" class="edit-lesson-skill-checkbox" value="reading" ${skillsToTeach.includes('reading') ? 'checked' : ''} class="h-4 w-4"><span class="ml-2 text-sm">Kỹ năng Đọc</span></label><label class="flex items-center"><input type="checkbox" class="edit-lesson-skill-checkbox" value="listening" ${skillsToTeach.includes('listening') ? 'checked' : ''} class="h-4 w-4"><span class="ml-2 text-sm">Kỹ năng Nghe</span></label><label class="flex items-center"><input type="checkbox" class="edit-lesson-skill-checkbox" value="speaking" ${skillsToTeach.includes('speaking') ? 'checked' : ''} class="h-4 w-4"><span class="ml-2 text-sm">Kỹ năng Nói</span></label><label class="flex items-center"><input type="checkbox" class="edit-lesson-skill-checkbox" value="writing" ${skillsToTeach.includes('writing') ? 'checked' : ''} class="h-4 w-4"><span class="ml-2 text-sm">Kỹ năng Viết</span></label></div></div></div><div class="mt-6 flex justify-end space-x-3"><button class="cancel-modal-btn px-4 py-2 bg-slate-200 text-slate-800 rounded-lg hover:bg-slate-300">Huỷ</button><button id="save-lesson-btn" data-lesson-id="${lessonId}" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Lưu thay đổi</button></div></div>`;
-            return modalContent;
+            showModal(modalContent);
+            
+            // Setup event listener for cancel button
+            document.querySelectorAll('.cancel-modal-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    closeModal();
+                }, { once: true });
+            });
         };
         const renderHomeworkModal = (lessonId) => {
             const homework = homeworks.find(h => h.lessonId === lessonId);
             const modalContent = `<div class="bg-white w-full max-w-lg rounded-xl shadow-lg p-6 fade-in"><h2 class="text-2xl font-bold mb-4">${homework ? 'Chỉnh sửa' : 'Tạo mới'} Bài tập</h2><div class="space-y-4"><div><label for="homework-title" class="block text-sm font-medium text-slate-600 mb-1">Tiêu đề bài tập:</label><input type="text" id="homework-title" class="w-full p-2 border rounded-lg" value="${homework?.title || ''}"></div><div><label for="homework-desc" class="block text-sm font-medium text-slate-600 mb-1">Mô tả / Yêu cầu:</label><textarea id="homework-desc" class="w-full p-2 border rounded-lg h-24">${homework?.description || ''}</textarea></div></div><div class="mt-6 flex justify-between"><div>${homework ? `<button id="delete-homework-btn" data-homework-id="${homework.id}" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600">Xoá bài tập</button>` : ''}</div><div class="flex space-x-3"><button class="cancel-modal-btn px-4 py-2 bg-slate-200 text-slate-800 rounded-lg hover:bg-slate-300">Huỷ</button><button id="save-homework-btn" data-lesson-id="${lessonId}" data-homework-id="${homework?.id || ''}" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Lưu</button></div></div></div>`;
-            return modalContent;
+            showModal(modalContent);
+            
+            // Setup event listener for cancel button
+            document.querySelectorAll('.cancel-modal-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    closeModal();
+                }, { once: true });
+            });
         };
 
+        // ═══════════════════════════════════════════════════════════════════════════════════
+        // RENDER FUNCTIONS: STUDENT
+        // ═══════════════════════════════════════════════════════════════════════════════════
         const renderStudentDashboard = () => {
              if (currentView !== 'course' && currentView !== 'lesson' && currentView !== 'myProgress') {
                  currentView = 'dashboard';
@@ -1031,7 +1197,7 @@
 
             appContainer.innerHTML = `<div class="w-full max-w-7xl mx-auto fade-in">${renderHeader(lesson.title, true)}<div class="bg-white p-6 md:p-8 mt-6 rounded-xl shadow-lg">${embedUrl ? `<div class="video-container shadow-md mb-8"><iframe src="${embedUrl}" frameborder="0" allowfullscreen></iframe></div>` : ''}<h2 class="text-3xl font-bold mb-4 text-slate-800">Nội dung bài học</h2><div class="prose max-w-none text-slate-700 mb-8 whitespace-pre-wrap">${lesson.content || '<p><em>Chưa có nội dung cho bài học này.</em></p>'}</div>
             
-            ${homework ? `<hr class="my-8"><div class="p-6 bg-slate-50 rounded-lg"><h2 class="text-2xl font-bold mb-2">Bài tập: ${homework.title}</h2><p class="text-slate-600 mb-6 whitespace-pre-wrap">${homework.description}</p>${currentUser.role === 'student' ? (hasSubmitted ? `<div class="p-4 border rounded-lg ${progressRecord.grade !== null && progressRecord.grade !== undefined ? 'bg-green-50 border-green-300' : 'bg-blue-50 border-blue-200'}"><div class="flex justify-between items-start"><div class="flex items-start"><i class="fas fa-check-circle ${progressRecord.grade !== null && progressRecord.grade !== undefined ? 'text-green-600' : 'text-blue-600'} mr-3 fa-lg mt-1"></i><div><p class="font-bold ${progressRecord.grade !== null && progressRecord.grade !== undefined ? 'text-green-800' : 'text-blue-800'}">Bạn đã nộp bài.</p><p class="mt-2"><strong>Điểm:</strong> ${progressRecord.grade !== null && progressRecord.grade !== undefined ? `<span class="font-bold text-lg">${progressRecord.grade}</span>` : 'Chưa được chấm'}</p></div></div>${(progressRecord.grade === null || progressRecord.grade === undefined) ? `<button class="cancel-submission-btn bg-gray-200 text-gray-700 text-xs font-semibold px-3 py-1 rounded-full hover:bg-gray-300" data-lesson-id="${lesson.id}">Hủy xác nhận</button>` : ''}</div>${progressRecord.comment ? `<div class="border-t pt-3 mt-3"><p class="font-semibold text-slate-700">Nhận xét của giáo viên:</p><p class="text-slate-600 whitespace-pre-wrap mt-1">${progressRecord.comment}</p></div>` : ''}</div>` : `<div class="space-y-4"><div class="p-4 border-l-4 border-blue-500 bg-blue-50"><p class="font-bold text-blue-800">Hướng dẫn nộp bài</p><ol class="list-decimal list-inside text-sm text-blue-700 space-y-1 mt-2"><li>Nhấn nút <strong class="font-semibold">"Mở thư mục lớp học"</strong>.</li><li>Trong thư mục đó, tạo một thư mục mới với tên: <strong class="font-semibold">${currentUser.name} - ${lesson.title}</strong>.</li><li>Tải tất cả các file bài làm của bạn vào thư mục vừa tạo.</li><li>Quay lại đây và nhấn nút <strong class="font-semibold">"Xác nhận đã nộp bài"</strong>.</li></ol></div><div class="flex items-center space-x-4"><a href="${course?.submissionFolderUrl || '#'}" target="_blank" class="inline-block bg-yellow-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-yellow-600 transition-colors ${!course?.submissionFolderUrl ? 'opacity-50 cursor-not-allowed' : ''}"><i class="fab fa-google-drive mr-2"></i>Mở thư mục lớp học</a><button class="confirm-submission-btn bg-blue-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-blue-700" data-lesson-id="${lesson.id}"><i class="fas fa-check-circle mr-2"></i>Xác nhận đã nộp bài</button></div></div>`) : ''}</div>` : ''}
+            ${homework ? `<hr class="my-8"><div class="p-6 bg-slate-50 rounded-lg"><h2 class="text-2xl font-bold mb-2">Bài tập: ${homework.title}</h2><p class="text-slate-600 mb-6 whitespace-pre-wrap">${homework.description}</p>${currentUser.role === 'student' ? (hasSubmitted ? `<div class="p-4 border rounded-lg ${progressRecord.grade !== null && progressRecord.grade !== undefined ? 'bg-green-50 border-green-300' : 'bg-blue-50 border-blue-200'}"><div class="flex justify-between items-start"><div class="flex items-start"><i class="fas fa-check-circle ${progressRecord.grade !== null && progressRecord.grade !== undefined ? 'text-green-600' : 'text-blue-600'} mr-3 fa-lg mt-1"></i><div><p class="font-bold ${progressRecord.grade !== null && progressRecord.grade !== undefined ? 'text-green-800' : 'text-blue-800'}">Bạn đã nộp bài.</p><p class="mt-2"><strong>Điểm:</strong> ${progressRecord.grade !== null && progressRecord.grade !== undefined ? `<span class="font-bold text-lg">${progressRecord.grade}</span>` : 'Chưa được chấm'}</p></div></div>${(progressRecord.grade === null || progressRecord.grade === undefined) ? `<button class="cancel-submission-btn bg-gray-200 text-gray-700 text-xs font-semibold px-3 py-1 rounded-full hover:bg-gray-300" data-lesson-id="${lesson.id}">Hủy xác nhận</button>` : ''}</div>${progressRecord.comment ? `<div class="border-t pt-3 mt-3"><p class="font-semibold text-slate-700">Nhận xét của giáo viên:</p><p class="text-slate-600 whitespace-pre-wrap mt-1">${progressRecord.comment}</p></div>` : ''}</div>` : `<div class="flex items-center space-x-3"><button class="confirm-submission-btn bg-blue-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors" data-lesson-id="${lesson.id}"><i class="fas fa-upload mr-2"></i>Nộp Bài</button><p class="text-slate-600 text-sm">Nhấn nút để tải file bài làm lên hệ thống</p></div>`) : ''}</div>` : ''}
             
             </div></div>`;
         };
@@ -1269,9 +1435,9 @@
             setTimeout(() => renderCharts(chartData, 'report-'), 50);
         };
 
-        // ===================================================================================
-        // KHU VỰC 5: LOGIC CHÍNH VÀ ĐIỀU HƯỚNG
-        // ===================================================================================
+                // ═══════════════════════════════════════════════════════════════════════════════════
+        // LOGIC & NAVIGATION
+        // ═══════════════════════════════════════════════════════════════════════════════════
         const navigate = () => {
             if (!currentUser) {
                 if (document.getElementById('loading-overlay').style.opacity === '0') {
@@ -1348,11 +1514,79 @@
             }
         };
 
-        // ===================================================================================
-        // KHU VỰC 6: BỘ LẮNG NGHE SỰ KIỆN (EVENT LISTENERS)
-        // ===================================================================================
+                // ═══════════════════════════════════════════════════════════════════════════════════
+        // EVENT LISTENERS
+        // ═══════════════════════════════════════════════════════════════════════════════════
         document.addEventListener('click', async (e) => {
             const target = e.target;
+            
+            // ⭐ BACK BUTTON HANDLER - MUST BE BEFORE ROLE CHECKS
+            if (target.closest('.back-btn')) {
+                if (currentUser?.role === 'teacher') {
+                    if (currentView === 'course') {
+                        currentView = 'dashboard';
+                        renderTeacherDashboard();
+                    } else if (currentView === 'studentProgress') {
+                        currentView = 'course';
+                        renderTeacherCourseManagement(currentCourseId);
+                    } else if (currentView === 'studentReport') {
+                        currentView = 'course';
+                        renderTeacherCourseManagement(currentCourseId);
+                    }
+                } else if (currentUser?.role === 'student') {
+                    if (currentView === 'lesson') {
+                        currentView = 'course';
+                        renderStudentCourseView(currentCourseId);
+                    } else if (currentView === 'course') {
+                        currentView = 'dashboard';
+                        renderStudentDashboard();
+                    } else if (currentView === 'myProgress') {
+                        currentView = 'course';
+                        renderStudentCourseView(currentCourseId);
+                    }
+                }
+                return;
+            }
+            
+            // ⭐ CANCEL SUBMISSION HANDLER - MUST BE BEFORE ROLE CHECKS
+            if (target.closest('.cancel-submission-btn')) {
+                const btn = target.closest('.cancel-submission-btn');
+                const lessonId = btn.dataset.lessonId;
+                renderConfirmModal('Xác nhận hủy','Bạn có chắc chắn muốn hủy nộp bài không?','Đồng ý','bg-red-600 hover:bg-red-700',async () => {
+                    try {
+                        const lesson = lessons.find(l => l.id === lessonId);
+                        const course = courses.find(c => c.id === lesson.courseId);
+                        const progressRecord = progress.find(p => p.lessonId === lessonId && p.studentId === currentUser.id);
+                        
+                        if (course?.scriptUrl && course.title && currentUser.name && lesson.title) {
+                            try {
+                                const fd = new FormData();
+                                fd.append('action','delete');
+                                fd.append('class_name', course.title);
+                                fd.append('student_name', currentUser.name);
+                                fd.append('assignment_name', lesson.title);
+                                
+                                await fetch(course.scriptUrl, { method:'POST', body: fd });
+                            } catch (delErr) { 
+                                console.error('Delete request error:', delErr);
+                            }
+                        }
+                        
+                        if (progressRecord) {
+                            await updateDoc(doc(db,'progress', progressRecord.id), { submittedAt: deleteField() });
+                            delete progressRecord.submittedAt;
+                        }
+                        
+                        showToast('Đã hủy xác nhận nộp bài.', 'success');
+                        closeModal();
+                        renderLessonView(lessonId);
+                    } catch (err) {
+                        console.error('Cancel submission error:', err);
+                        showToast('Có lỗi khi hủy nộp bài', 'error');
+                    }
+                });
+                return;
+            }
             
             if (target.closest('#login-btn')) {
                 const username = document.getElementById('username-input').value;
@@ -1374,85 +1608,38 @@
                 localStorage.removeItem('currentView');
                 localStorage.removeItem('currentCourseId');
                 localStorage.removeItem('currentLessonId');
-                localStorage.removeItem('currentStudentIdForProgress');
-                localStorage.removeItem('currentActiveTab');
-                currentUser = null; 
-                currentView = 'login'; 
-                currentStudentIdForProgress = null;
-                currentActiveTab = 'overview';
-                overviewFilterLessonId = 'all';
-                navigate(); 
-            }
-            if (target.closest('.back-btn')) {
-                if (['lesson', 'studentProgress', 'myProgress', 'studentReport'].includes(currentView)) {
-                    currentView = 'course';
-                    currentStudentIdForProgress = null;
-                } else if (currentView === 'course') {
-                    currentView = 'dashboard';
-                    overviewFilterLessonId = 'all';
-                    currentActiveTab = 'overview'; // Reset tab khi quay về dashboard
-                }
+                currentUser = null;
                 navigate();
+                showToast('Đã đăng xuất!', 'success');
             }
-            if (target.closest('.cancel-modal-btn') || target.closest('#cancel-edit-btn') || target === modalContainer || target.closest('#close-detail-modal-btn')) { 
-                closeModal(); 
-            }
-
+            
             if (currentUser?.role === 'admin') {
-                if (target.closest('#add-teacher-btn')) {
-                    const name = document.getElementById('new-teacher-name').value;
-                    const password = document.getElementById('new-teacher-password').value;
-                    if (name && password) {
-                        await addDoc(collection(db, "users"), { name: `GV. ${name}`, username: generateUsername(name, 'teacher'), role: 'teacher', password });
-                        showToast('Thêm giáo viên thành công!', 'success');
-                    } else { showToast('Vui lòng nhập đủ thông tin', 'error'); }
-                }
-                if (target.closest('#add-student-btn')) {
-                    const name = document.getElementById('new-student-name').value;
-                    const password = document.getElementById('new-student-password').value;
-                    const courseId = document.getElementById('admin-course-select').value;
-                    if (name && password && courseId) {
-                        const newStudentRef = await addDoc(collection(db, "users"), { name: `HS. ${name}`, username: generateUsername(name, 'student'), role: 'student', password });
-                        await addDoc(collection(db, "enrollments"), { studentId: newStudentRef.id, courseId: courseId });
-                        showToast('Thêm và ghi danh học sinh thành công!', 'success');
-                    } else { showToast('Vui lòng nhập đủ thông tin', 'error'); }
-                }
                 if (target.closest('.delete-user-btn')) {
                     const userId = target.closest('.delete-user-btn').dataset.id;
                     const userToDelete = users.find(u => u.id === userId);
-                    if (userToDelete) showModal(renderPasswordConfirmModal(userId, userToDelete.name));
+                    if (userToDelete) {
+                        showModal(renderPasswordConfirmModal(userId, userToDelete.name));
+                    }
                 }
                 if (target.closest('#confirm-delete-btn')) {
                     const userId = target.closest('#confirm-delete-btn').dataset.userId;
-                    const passwordInput = document.getElementById('admin-password-confirm').value;
-                    if (passwordInput !== currentUser.password) {
-                        document.getElementById('delete-error').textContent = 'Mật khẩu không chính xác.';
-                        document.getElementById('delete-error').classList.remove('hidden');
-                        return;
-                    }
-                    const batch = writeBatch(db);
-                    const userToDelete = users.find(u => u.id === userId);
-                    if (!userToDelete) return;
-
-                    if (userToDelete.role === 'teacher') {
-                        const courseIdsToDelete = courses.filter(c => c.createdBy === userId).map(c => c.id);
-                        if (courseIdsToDelete.length > 0) {
-                            const lessonIdsToDelete = lessons.filter(l => courseIdsToDelete.includes(l.courseId)).map(l => l.id);
-                            progress.filter(p => lessonIdsToDelete.includes(p.lessonId)).forEach(p => batch.delete(doc(db, "progress", p.id)));
-                            homeworks.filter(h => lessonIdsToDelete.includes(h.lessonId)).forEach(h => batch.delete(doc(db, "homeworks", h.id)));
-                            lessons.filter(l => courseIdsToDelete.includes(l.courseId)).forEach(l => batch.delete(doc(db, "lessons", l.id)));
-                            enrollments.filter(e => courseIdsToDelete.includes(e.courseId)).forEach(e => batch.delete(doc(db, "enrollments", e.id)));
-                            courses.filter(c => c.createdBy === userId).forEach(c => batch.delete(doc(db, "courses", c.id)));
+                    const password = document.getElementById('admin-password-confirm').value;
+                    if (password === currentUser.password) {
+                        const batch = writeBatch(db);
+                        const userToDelete = users.find(u => u.id === userId);
+                        if (userToDelete.role === 'student') {
+                            enrollments.filter(e => e.studentId === userId).forEach(e => batch.delete(doc(db, "enrollments", e.id)));
+                            progress.filter(p => p.studentId === userId).forEach(p => batch.delete(doc(db, "progress", p.id)));
                         }
+                        batch.delete(doc(db, "users", userId));
+                        await batch.commit();
+                        users = users.filter(u => u.id !== userId);
+                        closeModal();
+                        showToast('Xóa người dùng thành công!', 'success');
+                    } else {
+                        document.getElementById('delete-error').textContent = 'Mật khẩu không chính xác!';
+                        document.getElementById('delete-error').classList.remove('hidden');
                     }
-                    if (userToDelete.role === 'student') {
-                        enrollments.filter(e => e.studentId === userId).forEach(e => batch.delete(doc(db, "enrollments", e.id)));
-                        progress.filter(p => p.studentId === userId).forEach(p => batch.delete(doc(db, "progress", p.id)));
-                    }
-                    batch.delete(doc(db, "users", userId));
-                    await batch.commit();
-                    closeModal();
-                    showToast('Xóa người dùng thành công!', 'success');
                 }
                 if (target.closest('.edit-student-btn')) { showModal(renderEditStudentModal(target.closest('.edit-student-btn').dataset.id)); }
                 if (target.closest('#save-enrollment-btn')) {
@@ -1471,14 +1658,15 @@
             }
             
             if (currentUser?.role === 'teacher') {
-                if (target.closest('.edit-course-btn')) { showModal(renderEditCourseModal(target.closest('.edit-course-btn').dataset.id)); }
+                if (target.closest('.edit-course-btn')) { renderEditCourseModal(target.closest('.edit-course-btn').dataset.id); }
                 if (target.closest('#save-course-btn')) {
                     const courseId = target.closest('#save-course-btn').dataset.courseId;
                     const title = document.getElementById('edit-course-title').value;
                     const description = document.getElementById('edit-course-desc').value;
                     const submissionFolderUrl = document.getElementById('edit-course-folder-url').value;
+                    const scriptUrl = document.getElementById('edit-course-script-url').value;
                     if (title && description) {
-                        await updateDoc(doc(db, 'courses', courseId), { title, description, submissionFolderUrl });
+                        await updateDoc(doc(db, 'courses', courseId), { title, description, submissionFolderUrl, scriptUrl });
                         closeModal();
                         showToast('Cập nhật khóa học thành công', 'success');
                     } else { showToast("Vui lòng điền đủ tiêu đề và mô tả.", 'error'); }
@@ -1487,9 +1675,14 @@
                     const title = document.getElementById('new-course-title').value;
                     const description = document.getElementById('new-course-desc').value;
                     const folderUrl = document.getElementById('new-course-folder-url').value;
+                    const scriptUrl = document.getElementById('new-course-script-url')?.value || '';
                     if (title && description) {
-                        await addDoc(collection(db, 'courses'), { title, description, createdBy: currentUser.id, submissionFolderUrl: folderUrl });
+                        await addDoc(collection(db, 'courses'), { title, description, createdBy: currentUser.id, submissionFolderUrl: folderUrl, scriptUrl });
                         showToast('Tạo khóa học thành công', 'success');
+                        document.getElementById('new-course-title').value = '';
+                        document.getElementById('new-course-desc').value = '';
+                        document.getElementById('new-course-folder-url').value = '';
+                        if (document.getElementById('new-course-script-url')) document.getElementById('new-course-script-url').value = '';
                     } else { showToast("Vui lòng điền đủ tiêu đề và mô tả.", 'error'); }
                 }
                 if (target.closest('.manage-course-btn')) { 
@@ -1643,11 +1836,13 @@
                      const button = target.closest('#save-progress-btn');
                      const studentId = button.dataset.studentId;
                      const lessonId = button.dataset.lessonId;
-                     const recordId = `${lessonId}_${studentId}`;
                      
                      // Lấy bài học để biết kỹ năng nào được dạy
                      const lesson = lessons.find(l => l.id === lessonId);
                      const skillsToTeach = lesson?.skillsToTeach || [];
+                     
+                     // Lấy record hiện tại để giữ lại submittedAt
+                     const existingRecord = progress.find(p => p.lessonId === lessonId && p.studentId === studentId) || {};
                      
                      const readingScore = document.getElementById('edit-reading-score').value;
                      const listeningScore = document.getElementById('edit-listening-score').value;
@@ -1683,12 +1878,24 @@
                          attendanceStatus: newStatus,
                          studentId,
                          lessonId,
-                         courseId: currentCourseId
+                         courseId: currentCourseId,
+                         // Giữ lại submittedAt nếu đã tồn tại
+                         ...(existingRecord.submittedAt && { submittedAt: existingRecord.submittedAt })
                      };
 
-                     await setDoc(doc(db, 'progress', recordId), dataToSave, { merge: true });
+                     // Sử dụng ID hiện tại nếu đã tồn tại, ngược lại tạo ID mới
+                     const docId = existingRecord.id || `${lessonId}_${studentId}`;
+                     
+                     await setDoc(doc(db, 'progress', docId), dataToSave, { merge: true });
                      closeModal();
                      showToast('Đã lưu tiến độ!', 'success');
+                     
+                     // Cập nhật lại UI để hiển thị trạng thái đã chấm
+                     if (currentView === 'studentReport') {
+                         renderTeacherStudentReportView(studentId, currentCourseId, false);
+                     } else if (currentView === 'studentProgress') {
+                         renderStudentProgressView(studentId, false);
+                     }
                  }
             }
             
@@ -1705,24 +1912,7 @@
                 }
                 if (target.closest('.confirm-submission-btn')) {
                     const lessonId = target.closest('.confirm-submission-btn').dataset.lessonId;
-                    const recordId = `${lessonId}_${currentUser.id}`;
-                    await setDoc(doc(db, "progress", recordId), { lessonId, studentId: currentUser.id, courseId: currentCourseId, submittedAt: serverTimestamp() }, { merge: true });
-                    showToast('Xác nhận nộp bài thành công!', 'success');
-                }
-                if (target.closest('.cancel-submission-btn')) {
-                    const lessonId = target.dataset.lessonId;
-                    renderConfirmModal(
-                        'Xác nhận hủy',
-                        'Bạn có chắc chắn muốn hủy nộp bài không?',
-                        'Đồng ý',
-                        'bg-red-600 hover:bg-red-700',
-                        async () => {
-                            const recordId = `${lessonId}_${currentUser.id}`;
-                            const progressDocRef = doc(db, "progress", recordId);
-                            await updateDoc(progressDocRef, { submittedAt: deleteField() });
-                            showToast('Đã hủy xác nhận nộp bài.', 'info');
-                        }
-                    );
+                    handleQuickSubmission(lessonId);
                 }
                 if (target.closest('.view-my-progress-btn')) {
                     currentCourseId = target.closest('.view-my-progress-btn').dataset.courseId;
@@ -1757,9 +1947,9 @@
              }
         });
 
-        // ===================================================================================
-        // KHU VỰC 7: KHỞI ĐỘNG ỨNG DỤNG
-        // ===================================================================================
+                // ═══════════════════════════════════════════════════════════════════════════════════
+        // APP STARTUP
+        // ═══════════════════════════════════════════════════════════════════════════════════
         async function startApp() {
             if (!db || !auth) return;
 
