@@ -1608,7 +1608,13 @@
                 localStorage.removeItem('currentView');
                 localStorage.removeItem('currentCourseId');
                 localStorage.removeItem('currentLessonId');
+                localStorage.removeItem('currentStudentIdForProgress');
+                localStorage.removeItem('currentActiveTab');
                 currentUser = null;
+                currentCourseId = null;
+                currentLessonId = null;
+                currentStudentIdForProgress = null;
+                currentActiveTab = 'overview';
                 navigate();
                 showToast('Đã đăng xuất!', 'success');
             }
@@ -2010,6 +2016,7 @@
                                             localStorage.removeItem('currentCourseId');
                                             localStorage.removeItem('currentLessonId');
                                             localStorage.removeItem('currentStudentIdForProgress');
+                                            localStorage.removeItem('currentActiveTab');
                                             currentUser = null;
                                         }
                                     }
@@ -2029,6 +2036,11 @@
                                         currentUser = refreshedUser;
                                     } else {
                                         localStorage.removeItem('currentUserId');
+                                        localStorage.removeItem('currentView');
+                                        localStorage.removeItem('currentCourseId');
+                                        localStorage.removeItem('currentLessonId');
+                                        localStorage.removeItem('currentStudentIdForProgress');
+                                        localStorage.removeItem('currentActiveTab');
                                         currentUser = null;
                                         navigate();
                                         return;
