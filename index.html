@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nền tảng Học Tiếng Trung Cùng Thư</title>
+    <title>Nền tảng SmartEdu x AT</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -97,7 +97,7 @@
         const modalContainer = document.getElementById('modal-container');
 
         // ═══════════════════════════════════════════════════════════════════════════════════
-        // UTILITY FUNCTIONS
+        // 🔧 KHU VỰC 1: UTILITY FUNCTIONS - HÀM DÙNG CHUNG
         // ═══════════════════════════════════════════════════════════════════════════════════
         const showToast = (message, type = 'info') => {
             const container = document.getElementById('toast-container');
@@ -233,10 +233,10 @@
         };
 
         const showModal = (content) => {
+            modalContainer.innerHTML = '';
             if (typeof content === 'string') {
                 modalContainer.innerHTML = content;
             } else if (content instanceof HTMLElement) {
-                modalContainer.innerHTML = '';
                 modalContainer.appendChild(content);
             }
             modalContainer.classList.remove('hidden');
@@ -267,12 +267,14 @@
         // FILE SUBMISSION FUNCTIONS
         // ═══════════════════════════════════════════════════════════════════════════════════
 
-        // Quick submission: Create folder and redirect to Google Drive
+        // Quick submission: Create folder and redirect to Google Drive        // ═══════════════════════════════════════════════════════════════════════════════════
+        // 📁 KHU VỰC 2: FILE SUBMISSION FUNCTIONS - FUNCTIONS CHO CÁC THỨ LIÊN QUAN ĐẾN NỘP BÀI
+        // ═══════════════════════════════════════════════════════════════════════════════════
         const handleQuickSubmission = async (lessonId) => {
-            const lesson = lessons.find(l => l.id === lessonId);
-            const course = courses.find(c => c.id === lesson.courseId);
-            
-            if (!lesson || !course || !course.scriptUrl) {
+             const lesson = lessons.find(l => l.id === lessonId);
+             const course = courses.find(c => c.id === lesson.courseId);
+             
+             if (!lesson || !course || !course.scriptUrl) {
                 showToast('Không thể nộp bài: Hệ thống chưa được cấu hình. Vui lòng liên hệ giáo viên.', 'error');
                 return;
             }
@@ -384,15 +386,18 @@
         // ═══════════════════════════════════════════════════════════════════════════════════
         // RENDER FUNCTIONS: COMMON/SHARED UI
         // ═══════════════════════════════════════════════════════════════════════════════════
+        // ═══════════════════════════════════════════════════════════════════════════════════
+        // 🎨 KHU VỰC 3: COMMON RENDER FUNCTIONS - HÀM RENDER CHUNG CHO TẤT CẢ VAI TRÒ
+        // ═══════════════════════════════════════════════════════════════════════════════════
         const renderLoginScreen = () => {
-            document.title = "Đăng nhập | Học Tiếng Trung Cùng Thư";
+            document.title = "Đăng nhập | SmartEdu x AT";
             appContainer.innerHTML = `
              <div class="min-h-screen flex flex-col items-center justify-center bg-slate-100 bg-cover bg-center" style="background-image: url('https://placehold.co/1920x1080/e2e8f0/e2e8f0?text=.')">
                  <div class="w-full max-w-md bg-white/80 backdrop-blur-xl p-8 rounded-2xl shadow-2xl fade-in">
                      <div class="text-center mb-8">
                          <i class="fas fa-graduation-cap text-5xl text-blue-600"></i>
-                         <h1 class="text-4xl font-bold text-slate-800 mt-2">Học Tiếng Trung Cùng Thư</h1>
-                         <p class="text-slate-500">Chào mừng bạn trở lại!</p>
+                         <h1 class="text-4xl font-bold text-slate-800 mt-2">SmartEdu x AT</h1>
+                         <p class="text-slate-500">Trí Thức - Sáng Tạo - Dẫn Dắt</p>
                      </div>
                      <div id="login-error" class="text-red-500 text-center mb-4 hidden"></div>
                      <div class="space-y-4">
@@ -425,6 +430,9 @@
                                 <p class="text-xs text-slate-500 capitalize">${currentUser.role}</p>
                             </div>
                          </div>
+                         <button id="edit-account-btn" class="bg-blue-500 text-white font-semibold px-3 py-2 rounded-lg hover:bg-blue-600 transition-colors" title="Chỉnh sửa tài khoản">
+                             <i class="fas fa-cog"></i>
+                         </button>
                          <button id="logout-btn" class="bg-red-500 text-white font-semibold px-3 py-2 rounded-lg hover:bg-red-600 transition-colors">
                              <i class="fas fa-sign-out-alt"></i>
                          </button>
@@ -452,12 +460,57 @@
             confirmModal.querySelector('.confirm-action').addEventListener('click', () => { onConfirm(); closeModal(); }, { once: true });
             confirmModal.querySelector('.cancel-modal-btn').addEventListener('click', closeModal, { once: true });
         };
+
+        const renderEditAccountModal = () => {
+            const modalContent = `
+                <div class="bg-white w-full max-w-md rounded-xl shadow-lg p-8 fade-in">
+                    <div class="flex justify-between items-center mb-6 pb-4 border-b">
+                        <h2 class="text-2xl font-bold text-slate-800"><i class="fas fa-user-cog text-blue-600 mr-2"></i>Chỉnh sửa Tài khoản</h2>
+                        <button class="cancel-modal-btn text-slate-400 hover:text-slate-800 text-2xl font-light">&times;</button>
+                    </div>
+                    <div class="space-y-6">
+                        <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                            <h3 class="font-semibold text-slate-700 mb-3 flex items-center"><i class="fas fa-info-circle text-blue-600 mr-2"></i>Thông tin cá nhân</h3>
+                            <div class="space-y-2 text-sm">
+                                <p><span class="font-medium text-slate-600">Họ tên:</span> <span class="text-slate-800">${currentUser.name}</span></p>
+                                <p><span class="font-medium text-slate-600">Username:</span> <span class="font-mono text-slate-800">@${currentUser.username}</span></p>
+                                <p><span class="font-medium text-slate-600">Vai trò:</span> <span class="capitalize text-slate-800">${currentUser.role === 'student' ? 'Học sinh' : currentUser.role === 'teacher' ? 'Giáo viên' : 'Quản trị viên'}</span></p>
+                            </div>
+                        </div>
+                        <div class="space-y-3">
+                            <h3 class="font-semibold text-slate-700 flex items-center"><i class="fas fa-lock text-amber-600 mr-2"></i>Đổi mật khẩu</h3>
+                            <div>
+                                <label for="current-password" class="block text-sm font-medium text-slate-600 mb-1">Mật khẩu hiện tại:</label>
+                                <input type="password" id="current-password" class="w-full p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="••••••••">
+                            </div>
+                            <div>
+                                <label for="new-password" class="block text-sm font-medium text-slate-600 mb-1">Mật khẩu mới:</label>
+                                <input type="password" id="new-password" class="w-full p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="••••••••">
+                            </div>
+                            <div>
+                                <label for="confirm-password" class="block text-sm font-medium text-slate-600 mb-1">Xác nhận mật khẩu:</label>
+                                <input type="password" id="confirm-password" class="w-full p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="••••••••">
+                            </div>
+                            <div id="password-error" class="text-red-500 text-sm hidden bg-red-50 p-2.5 rounded-lg"></div>
+                        </div>
+                    </div>
+                    <div class="flex justify-end space-x-3 mt-8 pt-4 border-t">
+                        <button class="cancel-modal-btn px-4 py-2 bg-slate-200 text-slate-800 rounded-lg hover:bg-slate-300 font-medium transition-colors">Huỷ</button>
+                        <button id="save-account-btn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors flex items-center gap-2"><i class="fas fa-check-circle"></i>Lưu thay đổi</button>
+                    </div>
+                </div>
+            `;
+            showModal(modalContent);
+        };
         
         // ═══════════════════════════════════════════════════════════════════════════════════
         // RENDER FUNCTIONS: ADMIN
         // ═══════════════════════════════════════════════════════════════════════════════════
+        // ═══════════════════════════════════════════════════════════════════════════════════
+        // 🎨 KHU VỰC 4: ADMIN RENDER FUNCTIONS - HÀM RENDER RIÊNG CHO ADMIN
+        // ═══════════════════════════════════════════════════════════════════════════════════
         const renderAdminDashboard = () => {
-             document.title = "Admin Dashboard | Học Tiếng Trung Cùng Thư";
+             document.title = "Admin Dashboard | SmartEdu x AT";
             const teachers = users.filter(u => u.role === 'teacher');
             const students = users.filter(u => u.role === 'student');
 
@@ -472,32 +525,150 @@
                               <div class="bg-white p-6 rounded-xl shadow-lg flex items-center space-x-4"><div class="bg-yellow-100 text-yellow-600 p-4 rounded-full"><i class="fas fa-tasks fa-xl"></i></div><div><p class="text-slate-500 text-sm">Lượt Ghi danh</p><p class="text-2xl font-bold">${enrollments.length}</p></div></div>
                          </div>
 
-                         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                             <div class="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
-                                 <div class="bg-white p-6 rounded-xl shadow-lg">
-                                     <h2 class="text-xl font-bold mb-4">Quản lý Giáo viên</h2>
-                                     <div class="space-y-2 pt-4 border-t">
-                                         <input type="text" id="new-teacher-name" placeholder="Họ và tên giáo viên" class="w-full p-2 border rounded-lg">
-                                         <input type="password" id="new-teacher-password" placeholder="Mật khẩu ban đầu" class="w-full p-2 border rounded-lg">
-                                         <button id="add-teacher-btn" class="w-full bg-blue-500 text-white p-2 rounded-lg hover:bg-blue-600">Thêm Giáo viên</button>
-                                     </div>
-                                     <div class="space-y-2 mt-4 max-h-60 overflow-y-auto pr-2">${teachers.map(t => `<div class="flex justify-between items-center p-3 bg-slate-50 rounded-lg"><div><p class="font-medium">${t.name}</p><p class="text-xs text-slate-500">${t.username}</p></div><button class="delete-user-btn text-red-500 hover:text-red-700" data-id="${t.id}"><i class="fas fa-trash"></i></button></div>`).join('') || '<p class="text-sm text-slate-500">Chưa có giáo viên.</p>'}</div>
+                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                             <!-- QUẢN LÝ GIÁO VIÊN -->
+                             <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                                 <div class="bg-gradient-to-r from-blue-600 to-blue-500 p-6 text-white">
+                                     <h2 class="text-2xl font-bold flex items-center"><i class="fas fa-chalkboard-teacher mr-3"></i>Quản lý Giáo viên</h2>
+                                     <p class="text-blue-100 mt-1 text-sm">Tổng: <strong>${teachers.length}</strong> giáo viên</p>
                                  </div>
-                                 <div class="bg-white p-6 rounded-xl shadow-lg">
-                                     <h2 class="text-xl font-bold mb-4">Quản lý Học sinh</h2>
-                                     <div class="space-y-3 pt-4 border-t">
-                                         <input type="text" id="new-student-name" placeholder="Họ và tên học sinh" class="w-full p-2 border rounded-lg">
-                                         <input type="password" id="new-student-password" placeholder="Mật khẩu ban đầu" class="w-full p-2 border rounded-lg">
-                                         <select id="admin-teacher-select" class="w-full p-2 border border-slate-300 rounded-lg"><option value="">-- Chọn giáo viên --</option>${teachers.map(t => `<option value="${t.id}">${t.name}</option>`).join('')}</select>
-                                         <select id="admin-course-select" class="w-full p-2 border border-slate-300 rounded-lg" disabled><option value="">-- Chọn khoá học --</option></select>
-                                         <button id="add-student-btn" class="w-full bg-green-500 text-white p-2 rounded-lg hover:bg-green-600">Thêm và Ghi danh</button>
+                                 <div class="p-6">
+                                     <div class="bg-blue-50 p-4 rounded-lg mb-4 border border-blue-200">
+                                         <h3 class="font-semibold text-slate-700 mb-3 flex items-center"><i class="fas fa-plus-circle text-blue-600 mr-2"></i>Thêm giáo viên mới</h3>
+                                         <div class="space-y-3">
+                                             <input type="text" id="new-teacher-name" placeholder="Họ và tên giáo viên" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                             <input type="password" id="new-teacher-password" placeholder="Mật khẩu ban đầu" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                             <button id="add-teacher-btn" class="w-full bg-blue-600 text-white font-semibold p-3 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center"><i class="fas fa-plus mr-2"></i>Thêm Giáo viên</button>
+                                         </div>
                                      </div>
-                                      <div class="space-y-2 mt-4 max-h-60 overflow-y-auto pr-2">${students.map(s => `<div class="flex justify-between items-center p-3 bg-slate-50 rounded-lg"><div><p class="font-medium">${s.name}</p><p class="text-xs text-slate-500">${s.username}</p></div><div class="space-x-3"><button class="edit-student-btn text-blue-500 hover:text-blue-700" data-id="${s.id}"><i class="fas fa-edit"></i></button><button class="delete-user-btn text-red-500 hover:text-red-700" data-id="${s.id}"><i class="fas fa-trash"></i></button></div></div>`).join('') || '<p class="text-sm text-slate-500">Chưa có học sinh.</p>'}</div>
+
+                                     <div class="border-t pt-4">
+                                         <div class="mb-4">
+                                             <h3 class="font-semibold text-slate-700 mb-3 flex items-center"><i class="fas fa-list mr-2 text-slate-500"></i>Danh sách giáo viên (${teachers.length})</h3>
+                                             <div class="relative mb-3 bg-white">
+                                                 <i class="fas fa-search absolute left-3 top-3 text-slate-400 pointer-events-none"></i>
+                                                 <input type="text" id="teacher-search" placeholder="🔍 Tìm kiếm giáo viên theo tên hoặc username..." class="w-full pl-10 pr-4 py-2.5 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm font-medium transition-all shadow-sm hover:border-slate-400">
+                                             </div>
+                                         </div>
+                                         <div class="space-y-2 max-h-96 overflow-y-auto pr-2" id="teacher-list">
+                                             ${teachers.length > 0 ? teachers.map(t => `
+                                                 <div class="p-4 bg-gradient-to-r from-slate-50 to-blue-50 rounded-lg border border-slate-200 hover:border-blue-300 hover:shadow-md transition-all teacher-item" data-name="${t.name.toLowerCase()}" data-username="${t.username.toLowerCase()}">
+                                                     <div class="flex justify-between items-start">
+                                                         <div class="flex-grow">
+                                                             <p class="font-semibold text-slate-800">${t.name}</p>
+                                                             <p class="text-xs text-slate-500 font-mono bg-slate-100 inline-block px-2 py-1 rounded mt-1">@${t.username}</p>
+                                                         </div>
+                                                         <div class="flex space-x-2">
+                                                             <button class="view-user-info-btn text-blue-500 hover:text-blue-700 hover:bg-blue-50 p-2 rounded-lg transition-colors" data-id="${t.id}" data-role="teacher" title="Xem thông tin">
+                                                                 <i class="fas fa-eye"></i>
+                                                             </button>
+                                                             <button class="delete-user-btn text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded-lg transition-colors" data-id="${t.id}" title="Xóa giáo viên">
+                                                                 <i class="fas fa-trash-alt"></i>
+                                                             </button>
+                                                         </div>
+                                                     </div>
+                                                 </div>
+                                             `).join('') : '<p class="text-center py-8 text-slate-400"><i class="fas fa-inbox fa-2x mb-2"></i><br>Chưa có giáo viên.</p>'}
+                                         </div>
+                                     </div>
                                  </div>
                              </div>
-                             <div class="bg-white p-6 rounded-xl shadow-lg">
-                                 <h2 class="text-xl font-bold mb-4">Tổng quan Khoá học</h2>
-                                 <div class="space-y-4 max-h-[42rem] overflow-y-auto pr-2">${courses.map(c => { const teacher = users.find(u => u.id === c.createdBy); const studentCount = enrollments.filter(e => e.courseId === c.id).length; const lessonCount = lessons.filter(l => l.courseId === c.id).length; return `<div class="flex items-start p-4 bg-slate-50 rounded-lg space-x-4 hover:bg-slate-100 transition-colors cursor-pointer view-course-detail-btn" data-id="${c.id}"><div class="flex-shrink-0 h-12 w-12 bg-purple-100 text-purple-600 rounded-lg flex items-center justify-center"><i class="fas fa-book-open fa-lg"></i></div><div><h4 class="font-bold text-slate-800">${c.title}</h4><p class="text-sm text-slate-500">GV: ${teacher?.name}</p><div class="flex items-center space-x-4 mt-2 text-xs text-slate-600"><span class="flex items-center" title="${studentCount} học sinh"><i class="fas fa-users mr-1.5 text-gray-400"></i> ${studentCount}</span><span class="flex items-center" title="${lessonCount} bài học"><i class="fas fa-list-alt mr-1.5 text-gray-400"></i> ${lessonCount}</span></div></div></div>` }).join('') || '<p class="text-sm text-slate-500 text-center py-4">Chưa có khóa học nào.</p>'}</div>
+
+                             <!-- QUẢN LÝ HỌC SINH -->
+                             <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                                 <div class="bg-gradient-to-r from-green-600 to-green-500 p-6 text-white">
+                                     <h2 class="text-2xl font-bold flex items-center"><i class="fas fa-user-graduate mr-3"></i>Quản lý Học sinh</h2>
+                                     <p class="text-green-100 mt-1 text-sm">Tổng: <strong>${students.length}</strong> học sinh</p>
+                                 </div>
+                                 <div class="p-6">
+                                     <div class="bg-green-50 p-4 rounded-lg mb-4 border border-green-200">
+                                         <h3 class="font-semibold text-slate-700 mb-3 flex items-center"><i class="fas fa-plus-circle text-green-600 mr-2"></i>Thêm học sinh mới</h3>
+                                         <div class="space-y-3">
+                                             <input type="text" id="new-student-name" placeholder="Họ và tên học sinh" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                                             <input type="password" id="new-student-password" placeholder="Mật khẩu ban đầu" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                                             <select id="admin-teacher-select" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                                                 <option value="">-- Chọn giáo viên --</option>
+                                                 ${teachers.map(t => `<option value="${t.id}">${t.name}</option>`).join('')}
+                                             </select>
+                                             <select id="admin-course-select" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:bg-slate-100 disabled:cursor-not-allowed" disabled>
+                                                 <option value="">-- Chọn khoá học --</option>
+                                             </select>
+                                             <button id="add-student-btn" class="w-full bg-green-600 text-white font-semibold p-3 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center"><i class="fas fa-plus mr-2"></i>Thêm & Ghi danh</button>
+                                         </div>
+                                     </div>
+
+                                     <div class="border-t pt-4">
+                                         <div class="mb-4">
+                                             <h3 class="font-semibold text-slate-700 mb-3 flex items-center"><i class="fas fa-list mr-2 text-slate-500"></i>Danh sách học sinh (${students.length})</h3>
+                                             <div class="relative mb-3 bg-white">
+                                                 <i class="fas fa-search absolute left-3 top-3 text-slate-400 pointer-events-none"></i>
+                                                 <input type="text" id="student-search" placeholder="🔍 Tìm kiếm học sinh theo tên hoặc username..." class="w-full pl-10 pr-4 py-2.5 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm font-medium transition-all shadow-sm hover:border-slate-400">
+                                             </div>
+                                         </div>
+                                         <div class="space-y-2 max-h-96 overflow-y-auto pr-2" id="student-list">
+                                             ${students.length > 0 ? students.map(s => `
+                                                 <div class="p-4 bg-gradient-to-r from-slate-50 to-green-50 rounded-lg border border-slate-200 hover:border-green-300 hover:shadow-md transition-all student-item" data-name="${s.name.toLowerCase()}" data-username="${s.username.toLowerCase()}">
+                                                     <div class="flex justify-between items-start">
+                                                         <div class="flex-grow">
+                                                             <p class="font-semibold text-slate-800">${s.name}</p>
+                                                             <p class="text-xs text-slate-500 font-mono bg-slate-100 inline-block px-2 py-1 rounded mt-1">@${s.username}</p>
+                                                         </div>
+                                                         <div class="flex space-x-2">
+                                                             <button class="view-user-info-btn text-blue-500 hover:text-blue-700 hover:bg-blue-50 p-2 rounded-lg transition-colors" data-id="${s.id}" data-role="student" title="Xem thông tin">
+                                                                 <i class="fas fa-eye"></i>
+                                                             </button>
+                                                             <button class="edit-student-btn text-amber-500 hover:text-amber-700 hover:bg-amber-50 p-2 rounded-lg transition-colors" data-id="${s.id}" title="Chỉnh sửa ghi danh">
+                                                                 <i class="fas fa-user-edit"></i>
+                                                             </button>
+                                                             <button class="delete-user-btn text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded-lg transition-colors" data-id="${s.id}" title="Xóa học sinh">
+                                                                 <i class="fas fa-trash-alt"></i>
+                                                             </button>
+                                                         </div>
+                                                     </div>
+                                                 </div>
+                                             `).join('') : '<p class="text-center py-8 text-slate-400"><i class="fas fa-inbox fa-2x mb-2"></i><br>Chưa có học sinh.</p>'}
+                                         </div>
+                                     </div>
+                                 </div>
+                             </div>
+                         </div>
+
+                         <!-- TỔNG QUAN KHOÁ HỌC -->
+                         <div class="bg-white rounded-xl shadow-lg overflow-hidden mt-6">
+                             <div class="bg-gradient-to-r from-purple-600 to-purple-500 p-6 text-white">
+                                 <h2 class="text-2xl font-bold flex items-center"><i class="fas fa-book-open mr-3"></i>Tổng quan Khoá học</h2>
+                                 <p class="text-purple-100 mt-1 text-sm">Tổng: <strong>${courses.length}</strong> khoá học</p>
+                             </div>
+                             <div class="p-6">
+                                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-96 overflow-y-auto pr-2">
+                                     ${courses.length > 0 ? courses.map(c => { 
+                                         const teacher = users.find(u => u.id === c.createdBy); 
+                                         const studentCount = enrollments.filter(e => e.courseId === c.id).length; 
+                                         const lessonCount = lessons.filter(l => l.courseId === c.id).length; 
+                                         return `
+                                         <div class="p-4 bg-gradient-to-br from-slate-50 to-purple-50 rounded-lg border border-slate-200 hover:border-purple-300 hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer view-course-detail-btn" data-id="${c.id}">
+                                             <div class="flex items-start space-x-3 mb-3">
+                                                 <div class="h-10 w-10 bg-purple-100 text-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                                                     <i class="fas fa-book"></i>
+                                                 </div>
+                                                 <div class="flex-grow min-w-0">
+                                                     <h4 class="font-bold text-slate-800 truncate">${c.title}</h4>
+                                                     <p class="text-xs text-slate-500">GV: ${teacher?.name || 'N/A'}</p>
+                                                 </div>
+                                             </div>
+                                             <div class="flex items-center space-x-4 text-xs text-slate-600 border-t pt-3">
+                                                 <span class="flex items-center flex-1" title="${studentCount} học sinh">
+                                                     <i class="fas fa-users mr-1.5 text-green-600"></i> 
+                                                     <strong>${studentCount}</strong>
+                                                 </span>
+                                                 <span class="flex items-center flex-1" title="${lessonCount} bài học">
+                                                     <i class="fas fa-list-check mr-1.5 text-blue-600"></i> 
+                                                     <strong>${lessonCount}</strong>
+                                                 </span>
+                                             </div>
+                                         </div>
+                                     `; }).join('') : '<p class="text-center py-12 text-slate-400 col-span-full"><i class="fas fa-inbox fa-2x mb-2"></i><br>Chưa có khóa học nào.</p>'}
+                                 </div>
                              </div>
                          </div>
                      </main>
@@ -506,10 +677,60 @@
         const renderCourseDetailModal = (courseId) => {
             const course = courses.find(c => c.id === courseId);
             if (!course) return;
-            const courseLessons = lessons.filter(l => l.courseId === courseId);
+            const courseLessons = lessons.filter(l => l.courseId === courseId).sort((a, b) => (a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0));
             const enrolledStudentIds = enrollments.filter(e => e.courseId === courseId).map(e => e.studentId);
             const enrolledStudents = users.filter(u => enrolledStudentIds.includes(u.id));
-            const modalContent = `<div class="bg-white w-full max-w-2xl rounded-xl shadow-lg p-6 fade-in"><div class="flex justify-between items-center border-b pb-3 mb-4"><h2 class="text-2xl font-bold text-slate-800">${course.title}</h2><button class="cancel-modal-btn text-slate-400 hover:text-slate-800 text-3xl font-light">&times;</button></div><div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-h-[60vh] overflow-y-auto pr-2"><div><h3 class="font-semibold text-lg mb-3 flex items-center"><i class="fas fa-list-alt mr-2 text-gray-500"></i>Các bài học</h3><ul class="space-y-2">${courseLessons.length > 0 ? courseLessons.map(l => `<li class="p-2 bg-slate-100 rounded-md text-sm">${l.title}</li>`).join('') : '<li class="text-sm text-slate-500">Chưa có bài học nào.</li>'}</ul></div><div><h3 class="font-semibold text-lg mb-3 flex items-center"><i class="fas fa-users mr-2 text-gray-500"></i>Học sinh tham gia</h3><ul class="space-y-2">${enrolledStudents.length > 0 ? enrolledStudents.map(s => `<li class="p-2 bg-slate-100 rounded-md text-sm">${s.name}</li>`).join('') : '<li class="text-sm text-slate-500">Chưa có học sinh nào.</li>'}</ul></div></div></div>`;
+            const modalContent = `
+            <div class="bg-white w-full max-w-3xl rounded-xl shadow-lg p-8 fade-in max-h-[80vh] overflow-y-auto">
+                <div class="flex justify-between items-center border-b pb-4 mb-6">
+                    <div>
+                        <h2 class="text-3xl font-bold text-slate-800">${course.title}</h2>
+                        <p class="text-sm text-slate-500 mt-1">Chi tiết khóa học</p>
+                    </div>
+                    <button class="cancel-modal-btn text-slate-400 hover:text-slate-800 text-3xl font-light hover:bg-slate-100 p-2 rounded-lg transition-colors">&times;</button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <!-- Bài học -->
+                    <div>
+                        <h3 class="font-bold text-lg mb-4 flex items-center text-blue-600">
+                            <i class="fas fa-list-check mr-2"></i>Danh sách bài học (${courseLessons.length})
+                        </h3>
+                        <div class="space-y-2 max-h-96 overflow-y-auto pr-2">
+                            ${courseLessons.length > 0 ? courseLessons.map((l, idx) => `
+                                <div class="p-3 bg-gradient-to-r from-blue-50 to-slate-50 rounded-lg border border-blue-100 hover:border-blue-300 hover:shadow-md transition-all">
+                                    <div class="flex items-start">
+                                        <span class="text-sm font-medium text-slate-800">${l.title}</span>
+                                    </div>
+                                </div>
+                            `).join('') : '<p class="text-sm text-slate-500 py-8 text-center">Chưa có bài học nào.</p>'}
+                        </div>
+                    </div>
+
+                    <!-- Học sinh tham gia -->
+                    <div>
+                        <h3 class="font-bold text-lg mb-4 flex items-center text-green-600">
+                            <i class="fas fa-users mr-2"></i>Học sinh tham gia (${enrolledStudents.length})
+                        </h3>
+                        <div class="space-y-2 max-h-96 overflow-y-auto pr-2">
+                            ${enrolledStudents.length > 0 ? enrolledStudents.map(s => `
+                                <div class="p-3 bg-gradient-to-r from-green-50 to-slate-50 rounded-lg border border-green-100 hover:border-green-300 hover:shadow-md transition-all">
+                                    <div class="flex justify-between items-center">
+                                        <div class="flex-grow">
+                                            <p class="text-sm font-medium text-slate-800">${s.name}</p>
+                                            <p class="text-xs text-slate-500 font-mono">@${s.username}</p>
+                                        </div>
+                                        <button class="delete-student-from-course text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded-lg transition-colors" data-student-id="${s.id}" data-course-id="${courseId}" title="Xóa học sinh khỏi khóa học">
+                                            <i class="fas fa-trash-alt text-sm"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            `).join('') : '<p class="text-sm text-slate-500 py-8 text-center">Chưa có học sinh nào.</p>'}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            `;
             return modalContent;
         };
         const renderEditStudentModal = (studentId) => {
@@ -520,18 +741,214 @@
             return modalContent;
         };
         const renderPasswordConfirmModal = (userId, userName) => {
-             const modalContent = `<div class="bg-white w-full max-w-sm rounded-xl shadow-lg p-6 fade-in"><h2 class="text-xl font-bold mb-2 text-slate-800">Xác nhận Hành động</h2><p class="text-slate-600 mb-4">Bạn đang chuẩn bị xoá người dùng <strong class="font-semibold">${userName}</strong>. Vui lòng nhập mật khẩu của bạn để xác nhận.</p><div id="delete-error" class="text-red-500 text-center mb-4 text-sm hidden"></div><div class="space-y-3"><div><label for="admin-password-confirm" class="block text-sm font-medium text-slate-600 mb-1">Mật khẩu Admin:</label><input type="password" id="admin-password-confirm" class="w-full p-2 border rounded-lg" placeholder="******"></div><div class="flex justify-end space-x-3 pt-2"><button class="cancel-modal-btn px-4 py-2 bg-slate-200 text-slate-800 rounded-lg hover:bg-slate-300">Huỷ</button><button id="confirm-delete-btn" data-user-id="${userId}" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">Xác nhận Xoá</button></div></div></div>`;
+             const user = users.find(u => u.id === userId);
+             const isStudent = user?.role === 'student';
+             const enrolledCourses = isStudent ? enrollments.filter(e => e.studentId === userId).length : 0;
+             const studentProgress = isStudent ? progress.filter(p => p.studentId === userId).length : 0;
+             
+             const modalContent = `
+             <div class="bg-white w-full max-w-md rounded-xl shadow-lg p-8 fade-in">
+                 <div class="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-lg">
+                     <div class="flex items-start">
+                         <i class="fas fa-exclamation-triangle text-red-600 text-xl mt-1 mr-3 flex-shrink-0"></i>
+                         <div>
+                             <h2 class="text-lg font-bold text-red-800 mb-2">⚠️ Xác nhận Xóa người dùng</h2>
+                             <p class="text-red-700 font-semibold">${userName}</p>
+                         </div>
+                     </div>
+                 </div>
+
+                 ${isStudent ? `
+                 <div class="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-sm">
+                     <p class="text-yellow-800 mb-2 font-semibold">⚠️ Dữ liệu sẽ bị xóa:</p>
+                     <ul class="text-yellow-700 space-y-1 ml-4">
+                         <li>✗ Ghi danh (${enrolledCourses} khóa học)</li>
+                         <li>✗ Tiến độ học tập (${studentProgress} bản ghi)</li>
+                         <li>✗ Điểm số và bình luận của giáo viên</li>
+                     </ul>
+                     <p class="text-yellow-800 font-semibold mt-3">Hành động này không thể hoàn tác!</p>
+                 </div>
+                 ` : `
+                 <div class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg text-sm">
+                     <p class="text-blue-800">Xóa giáo viên này sẽ không ảnh hưởng đến các khóa học và học sinh hiện tại.</p>
+                 </div>
+                 `}
+
+                 <div class="space-y-3 mb-6">
+                     <label for="admin-password-confirm" class="block text-sm font-semibold text-slate-700">Nhập mật khẩu Admin để xác nhận:</label>
+                     <input type="password" id="admin-password-confirm" class="w-full p-3 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent" placeholder="••••••••">
+                 </div>
+
+                 <div id="delete-error" class="text-red-500 text-center mb-4 text-sm font-medium hidden bg-red-50 p-3 rounded-lg"></div>
+
+                 <div class="flex justify-end space-x-3">
+                     <button class="cancel-modal-btn px-4 py-2 bg-slate-200 text-slate-800 rounded-lg hover:bg-slate-300 font-semibold transition-colors">Huỷ</button>
+                     <button id="confirm-delete-btn" data-user-id="${userId}" class="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-semibold transition-colors flex items-center gap-2">
+                         <i class="fas fa-trash-alt"></i>Xóa vĩnh viễn
+                     </button>
+                 </div>
+             </div>
+             `;
             return modalContent;
+        };
+        
+        const renderViewUserInfoModal = (userId, userRole) => {
+            const user = users.find(u => u.id === userId);
+            if (!user) {
+                showToast('Không tìm thấy người dùng', 'error');
+                return;
+            }
+
+            let contentHtml = '';
+
+            if (userRole === 'teacher') {
+                const teacherCourses = courses.filter(c => c.createdBy === userId);
+                const totalLessons = teacherCourses.reduce((sum, course) => {
+                    const courseLessons = lessons.filter(l => l.courseId === course.id);
+                    return sum + courseLessons.length;
+                }, 0);
+                const enrolledStudents = new Set(
+                    enrollments
+                        .filter(e => teacherCourses.some(c => c.id === e.courseId))
+                        .map(e => e.studentId)
+                ).size;
+
+                contentHtml = `
+                    <div class="bg-white w-full max-w-lg rounded-xl shadow-lg p-6 fade-in">
+                        <div class="flex justify-between items-center mb-4 pb-3 border-b">
+                            <h2 class="text-xl font-bold text-slate-800"><i class="fas fa-user-tie text-blue-600 mr-2"></i>${user.name}</h2>
+                            <button class="cancel-modal-btn text-slate-400 hover:text-slate-800 text-2xl font-light">&times;</button>
+                        </div>
+                        
+                        <div class="space-y-3 mb-4">
+                            <p class="text-sm"><span class="font-medium text-slate-700">Username:</span> <span class="text-slate-600">@${user.username}</span></p>
+                            <p class="text-sm"><span class="font-medium text-slate-700">ID:</span> <span class="text-slate-600 font-mono text-xs">${user.id}</span></p>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3 mb-4">
+                            <div class="bg-blue-50 p-3 rounded-lg border border-blue-200">
+                                <p class="text-slate-600 text-xs font-medium">📚 Khóa học</p>
+                                <p class="text-lg font-bold text-blue-600">${teacherCourses.length}</p>
+                            </div>
+                            <div class="bg-green-50 p-3 rounded-lg border border-green-200">
+                                <p class="text-slate-600 text-xs font-medium">📝 Bài học</p>
+                                <p class="text-lg font-bold text-green-600">${totalLessons}</p>
+                            </div>
+                            <div class="bg-purple-50 p-3 rounded-lg border border-purple-200">
+                                <p class="text-slate-600 text-xs font-medium">👥 Học sinh</p>
+                                <p class="text-lg font-bold text-purple-600">${enrolledStudents}</p>
+                            </div>
+                            <div class="bg-amber-50 p-3 rounded-lg border border-amber-200">
+                                <p class="text-slate-600 text-xs font-medium">📊 Ghi danh</p>
+                                <p class="text-lg font-bold text-amber-600">${enrollments.filter(e => teacherCourses.some(c => c.id === e.courseId)).length}</p>
+                            </div>
+                        </div>
+
+                        ${teacherCourses.length > 0 ? `
+                        <div class="border-t pt-3">
+                            <p class="text-xs font-semibold text-slate-700 mb-2">Khóa học:</p>
+                            <div class="space-y-2 max-h-32 overflow-y-auto">
+                                ${teacherCourses.map(course => {
+                                    const courseEnrollments = enrollments.filter(e => e.courseId === course.id);
+                                    return `
+                                        <div class="text-xs p-2 bg-slate-50 rounded border border-slate-200">
+                                            <p class="font-medium text-slate-800">${course.title}</p>
+                                            <p class="text-slate-500">${courseEnrollments.length}HS • ${lessons.filter(l => l.courseId === course.id).length}bài</p>
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                        </div>
+                        ` : ''}
+
+                        <div class="flex justify-between mt-4 pt-3 border-t">
+                            <button class="reset-password-btn px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 font-medium text-sm transition-colors" data-user-id="${user.id}">🔑 Reset MK</button>
+                            <button class="cancel-modal-btn px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm transition-colors">Đóng</button>
+                        </div>
+                    </div>
+                `;
+            } else if (userRole === 'student') {
+                const studentEnrollments = enrollments.filter(e => e.studentId === userId);
+                const enrolledCourses = studentEnrollments.map(e => courses.find(c => c.id === e.courseId)).filter(c => c);
+                const studentProgress = progress.filter(p => p.studentId === userId);
+                const submitted = studentProgress.filter(p => p.submittedAt).length;
+                const graded = studentProgress.filter(p => p.submittedAt && p.grade != null).length;
+                const totalLessons = lessons.filter(l => enrolledCourses.some(c => c.id === l.courseId)).length;
+                const progressPercentage = totalLessons > 0 ? Math.round((submitted / totalLessons) * 100) : 0;
+
+                contentHtml = `
+                    <div class="bg-white w-full max-w-lg rounded-xl shadow-lg p-6 fade-in">
+                        <div class="flex justify-between items-center mb-4 pb-3 border-b">
+                            <h2 class="text-xl font-bold text-slate-800"><i class="fas fa-user-graduate text-green-600 mr-2"></i>${user.name}</h2>
+                            <button class="cancel-modal-btn text-slate-400 hover:text-slate-800 text-2xl font-light">&times;</button>
+                        </div>
+                        
+                        <div class="space-y-3 mb-4">
+                            <p class="text-sm"><span class="font-medium text-slate-700">Username:</span> <span class="text-slate-600">@${user.username}</span></p>
+                            <p class="text-sm"><span class="font-medium text-slate-700">ID:</span> <span class="text-slate-600 font-mono text-xs">${user.id}</span></p>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3 mb-4">
+                            <div class="bg-blue-50 p-3 rounded-lg border border-blue-200">
+                                <p class="text-slate-600 text-xs font-medium">📚 Khóa học</p>
+                                <p class="text-lg font-bold text-blue-600">${enrolledCourses.length}</p>
+                            </div>
+                            <div class="bg-green-50 p-3 rounded-lg border border-green-200">
+                                <p class="text-slate-600 text-xs font-medium">📤 Nộp bài</p>
+                                <p class="text-lg font-bold text-green-600">${submitted}</p>
+                            </div>
+                            <div class="bg-purple-50 p-3 rounded-lg border border-purple-200">
+                                <p class="text-slate-600 text-xs font-medium">✅ Được chấm</p>
+                                <p class="text-lg font-bold text-purple-600">${graded}</p>
+                            </div>
+                            <div class="bg-amber-50 p-3 rounded-lg border border-amber-200">
+                                <p class="text-slate-600 text-xs font-medium">📊 Tiến độ</p>
+                                <p class="text-lg font-bold text-amber-600">${progressPercentage}%</p>
+                            </div>
+                        </div>
+
+                        ${enrolledCourses.length > 0 ? `
+                        <div class="border-t pt-3">
+                            <p class="text-xs font-semibold text-slate-700 mb-2">Khóa học:</p>
+                            <div class="space-y-2 max-h-32 overflow-y-auto">
+                                ${enrolledCourses.map(course => {
+                                    const teacher = users.find(u => u.id === course.createdBy);
+                                    const courseLessons = lessons.filter(l => l.courseId === course.id);
+                                    const courseProgress = progress.filter(p => p.studentId === userId && courseLessons.some(l => l.id === p.lessonId));
+                                    const completed = courseProgress.filter(p => p.submittedAt).length;
+                                    return `
+                                        <div class="text-xs p-2 bg-slate-50 rounded border border-slate-200">
+                                            <p class="font-medium text-slate-800">${course.title}</p>
+                                            <p class="text-slate-500">GV: ${teacher?.name || 'N/A'} • ${completed}/${courseLessons.length} bài</p>
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                        </div>
+                        ` : ''}
+
+                        <div class="flex justify-between mt-4 pt-3 border-t">
+                            <button class="reset-password-btn px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 font-medium text-sm transition-colors" data-user-id="${user.id}">🔑 Reset MK</button>
+                            <button class="cancel-modal-btn px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium text-sm transition-colors">Đóng</button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            showModal(contentHtml);
         };
         
         // ═══════════════════════════════════════════════════════════════════════════════════
         // RENDER FUNCTIONS: TEACHER
         // ═══════════════════════════════════════════════════════════════════════════════════
+        // ═══════════════════════════════════════════════════════════════════════════════════
+        // 🎨 KHU VỰC 5: TEACHER RENDER FUNCTIONS - HÀM RENDER RIÊNG CHO GIÁO VIÊN
+        // ═══════════════════════════════════════════════════════════════════════════════════
         const renderTeacherDashboard = () => {
              if (currentView !== 'course' && currentView !== 'studentProgress' && currentView !== 'studentReport') {
                  currentView = 'dashboard';
              }
-             document.title = "Teacher Dashboard | Học Tiếng Trung Cùng Thư";
+             document.title = "Teacher Dashboard | SmartEdu x AT";
             const myCourses = courses.filter(c => c.createdBy === currentUser.id);
             appContainer.innerHTML = `<div class="w-full max-w-7xl mx-auto fade-in">${renderHeader('Teacher Dashboard')}<div class="grid grid-cols-1 md:grid-cols-3 gap-8 mt-6"><div class="md:col-span-2 bg-white p-6 rounded-xl shadow-lg"><h2 class="text-2xl font-bold mb-4">Khoá học của tôi</h2><div class="space-y-3">${myCourses.length > 0 ? myCourses.map(c => `<div class="p-4 bg-slate-50 rounded-lg flex justify-between items-center"><div><h3 class="font-semibold text-lg">${c.title}</h3><p class="text-sm text-slate-500 truncate">${c.description}</p></div><div class="space-x-2 flex-shrink-0"><button class="edit-course-btn text-gray-500 hover:text-blue-700" data-id="${c.id}" title="Chỉnh sửa thông tin"><i class="fas fa-pen"></i></button><button class="manage-course-btn bg-blue-50 text-blue-600 px-4 py-1 rounded-full border border-blue-200 font-semibold text-sm hover:bg-blue-100" data-id="${c.id}">Quản lý</button></div></div>`).join('') : '<p class="text-slate-500">Bạn chưa tạo khoá học nào.</p>'}</div></div><div class="bg-white p-6 rounded-xl shadow-lg h-fit"><h2 class="text-2xl font-bold mb-4">Tạo khoá học mới</h2><div class="space-y-3"><input type="text" id="new-course-title" placeholder="Tiêu đề khoá học" class="w-full p-2 border rounded-lg"><textarea id="new-course-desc" placeholder="Mô tả khoá học" class="w-full p-2 border rounded-lg h-24"></textarea><input type="text" id="new-course-folder-url" placeholder="Link thư mục Google Drive cho khoá học" class="w-full p-2 border rounded-lg"><input type="text" id="new-course-script-url" placeholder="URL Google Apps Script Web App (tùy chọn)" class="w-full p-2 border rounded-lg" title="Để kích hoạt nộp bài tự động"><button id="add-course-btn" class="w-full bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700">Tạo mới</button></div></div></div></div>`;
         };
@@ -567,13 +984,6 @@
                  </div>
             `;
             showModal(modalContent);
-            
-            // Setup event listener for cancel button
-            document.querySelectorAll('.cancel-modal-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    closeModal();
-                }, { once: true });
-            });
         };
         const renderTeacherCourseManagement = (courseId, isRestoring = false) => {
             if (!isRestoring) {
@@ -639,7 +1049,9 @@
                     .filter(l => l.courseId === courseId && homeworks.some(h => h.lessonId === l.id))
                     .sort((a, b) => (a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0));
                 
-                const allLessonsInCourse = lessons.filter(l => l.courseId === courseId);
+                const allLessonsInCourse = lessons
+                    .filter(l => l.courseId === courseId)
+                    .sort((a, b) => (a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0));
 
                 if (enrolledStudents.length === 0 ) {
                     return { html: '<div class="text-center py-12"><i class="fas fa-info-circle fa-2x text-slate-400"></i><p class="mt-4 text-slate-500">Chưa có học sinh trong khóa học.</p></div>' };
@@ -1076,14 +1488,6 @@
             `;
             showModal(modalContent);
             calculateAverageScore();
-
-            // Setup event listener for cancel button
-            document.querySelectorAll('.cancel-modal-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    closeModal();
-                }, { once: true });
-            });
         };
 
         const renderEditLessonModal = (lessonId) => {
@@ -1092,35 +1496,24 @@
             const skillsToTeach = lesson.skillsToTeach || [];
             const modalContent = `<div class="bg-white w-full max-w-lg rounded-xl shadow-lg p-6 fade-in"><h2 class="text-2xl font-bold mb-4">Chỉnh sửa bài học</h2><div class="space-y-4"><div><label for="edit-lesson-title" class="block text-sm font-medium text-slate-600 mb-1">Tiêu đề bài học:</label><input type="text" id="edit-lesson-title" class="w-full p-2 border rounded-lg" value="${lesson.title}"></div><div><label for="edit-lesson-video" class="block text-sm font-medium text-slate-600 mb-1">Link video YouTube:</label><input type="text" id="edit-lesson-video" class="w-full p-2 border rounded-lg" value="${lesson.videoUrl || ''}"></div><div><label for="edit-lesson-content" class="block text-sm font-medium text-slate-600 mb-1">Nội dung bài học:</label><textarea id="edit-lesson-content" class="w-full p-2 border rounded-lg h-32">${lesson.content}</textarea></div><div><label class="block text-sm font-medium text-slate-600 mb-2">Kỹ năng sẽ dạy trong bài học:</label><div class="space-y-2"><label class="flex items-center"><input type="checkbox" class="edit-lesson-skill-checkbox" value="reading" ${skillsToTeach.includes('reading') ? 'checked' : ''} class="h-4 w-4"><span class="ml-2 text-sm">Kỹ năng Đọc</span></label><label class="flex items-center"><input type="checkbox" class="edit-lesson-skill-checkbox" value="listening" ${skillsToTeach.includes('listening') ? 'checked' : ''} class="h-4 w-4"><span class="ml-2 text-sm">Kỹ năng Nghe</span></label><label class="flex items-center"><input type="checkbox" class="edit-lesson-skill-checkbox" value="speaking" ${skillsToTeach.includes('speaking') ? 'checked' : ''} class="h-4 w-4"><span class="ml-2 text-sm">Kỹ năng Nói</span></label><label class="flex items-center"><input type="checkbox" class="edit-lesson-skill-checkbox" value="writing" ${skillsToTeach.includes('writing') ? 'checked' : ''} class="h-4 w-4"><span class="ml-2 text-sm">Kỹ năng Viết</span></label></div></div></div><div class="mt-6 flex justify-end space-x-3"><button class="cancel-modal-btn px-4 py-2 bg-slate-200 text-slate-800 rounded-lg hover:bg-slate-300">Huỷ</button><button id="save-lesson-btn" data-lesson-id="${lessonId}" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Lưu thay đổi</button></div></div>`;
             showModal(modalContent);
-            
-            // Setup event listener for cancel button
-            document.querySelectorAll('.cancel-modal-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    closeModal();
-                }, { once: true });
-            });
         };
         const renderHomeworkModal = (lessonId) => {
             const homework = homeworks.find(h => h.lessonId === lessonId);
             const modalContent = `<div class="bg-white w-full max-w-lg rounded-xl shadow-lg p-6 fade-in"><h2 class="text-2xl font-bold mb-4">${homework ? 'Chỉnh sửa' : 'Tạo mới'} Bài tập</h2><div class="space-y-4"><div><label for="homework-title" class="block text-sm font-medium text-slate-600 mb-1">Tiêu đề bài tập:</label><input type="text" id="homework-title" class="w-full p-2 border rounded-lg" value="${homework?.title || ''}"></div><div><label for="homework-desc" class="block text-sm font-medium text-slate-600 mb-1">Mô tả / Yêu cầu:</label><textarea id="homework-desc" class="w-full p-2 border rounded-lg h-24">${homework?.description || ''}</textarea></div></div><div class="mt-6 flex justify-between"><div>${homework ? `<button id="delete-homework-btn" data-homework-id="${homework.id}" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600">Xoá bài tập</button>` : ''}</div><div class="flex space-x-3"><button class="cancel-modal-btn px-4 py-2 bg-slate-200 text-slate-800 rounded-lg hover:bg-slate-300">Huỷ</button><button id="save-homework-btn" data-lesson-id="${lessonId}" data-homework-id="${homework?.id || ''}" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Lưu</button></div></div></div>`;
             showModal(modalContent);
-            
-            // Setup event listener for cancel button
-            document.querySelectorAll('.cancel-modal-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    closeModal();
-                }, { once: true });
-            });
         };
 
         // ═══════════════════════════════════════════════════════════════════════════════════
         // RENDER FUNCTIONS: STUDENT
         // ═══════════════════════════════════════════════════════════════════════════════════
+        // ═══════════════════════════════════════════════════════════════════════════════════
+        // 🎨 KHU VỰC 6: STUDENT RENDER FUNCTIONS - HÀM RENDER RIÊNG CHO HỌC SINH
+        // ═══════════════════════════════════════════════════════════════════════════════════
         const renderStudentDashboard = () => {
              if (currentView !== 'course' && currentView !== 'lesson' && currentView !== 'myProgress') {
                  currentView = 'dashboard';
              }
-             document.title = "Student Dashboard | Học Tiếng Trung Cùng Thư";
+             document.title = "Student Dashboard | SmartEdu x AT";
             const myCourseIds = enrollments.filter(e => e.studentId === currentUser.id).map(e => e.courseId);
             const myCourses = courses.filter(c => myCourseIds.includes(c.id));
             appContainer.innerHTML = `<div class="w-full max-w-7xl mx-auto fade-in">${renderHeader('Các khoá học của tôi')}<main class="mt-6"><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">${myCourses.length > 0 ? myCourses.map(c => renderCourseCard(c)).join('') : '<p class="text-slate-500 md:col-span-3 text-center py-8">Bạn chưa được ghi danh vào khoá học nào.</p>'}</div></main></div>`;
@@ -1435,8 +1828,8 @@
             setTimeout(() => renderCharts(chartData, 'report-'), 50);
         };
 
-                // ═══════════════════════════════════════════════════════════════════════════════════
-        // LOGIC & NAVIGATION
+        // ═══════════════════════════════════════════════════════════════════════════════════
+        // 🔄 KHU VỰC 7: LOGIC & NAVIGATION - XỬ LÝ LOGIC VÀ ĐỊNH TUYẾN CÁC VIEW
         // ═══════════════════════════════════════════════════════════════════════════════════
         const navigate = () => {
             if (!currentUser) {
@@ -1514,8 +1907,13 @@
             }
         };
 
-                // ═══════════════════════════════════════════════════════════════════════════════════
-        // EVENT LISTENERS
+        // ═══════════════════════════════════════════════════════════════════════════════════
+        // 🎯 KHU VỰC 8: EVENT LISTENERS - XỬ LÝ CÁC SỰ KIỆN NGƯỜI DÙNG
+        // ═══════════════════════════════════════════════════════════════════════════════════
+        // 8.1 - GLOBAL CLICK EVENT LISTENER (các handler chung cho tất cả vai trò)
+        // 8.2 - ADMIN CLICK HANDLERS (quản lý giáo viên, học sinh, ghi danh)
+        // 8.3 - TEACHER CLICK HANDLERS (quản lý khóa học, bài học, điểm danh học sinh)
+        // 8.4 - STUDENT CLICK HANDLERS (xem khóa học, bài học, nộp bài)
         // ═══════════════════════════════════════════════════════════════════════════════════
         document.addEventListener('click', async (e) => {
             const target = e.target;
@@ -1603,6 +2001,9 @@
                     loginError.classList.remove('hidden');
                 }
             }
+            if (target.closest('#edit-account-btn')) {
+                renderEditAccountModal();
+            }
             if (target.closest('#logout-btn')) { 
                 localStorage.removeItem('currentUserId');
                 localStorage.removeItem('currentView');
@@ -1618,8 +2019,61 @@
                 navigate();
                 showToast('Đã đăng xuất!', 'success');
             }
+
+            // ⭐ GLOBAL CANCEL MODAL HANDLER - MUST BE BEFORE ROLE CHECKS
+            if (target.closest('.cancel-modal-btn')) {
+                closeModal();
+                return;
+            }
             
             if (currentUser?.role === 'admin') {
+                if (target.closest('#add-teacher-btn')) {
+                    const name = document.getElementById('new-teacher-name').value;
+                    const password = document.getElementById('new-teacher-password').value;
+                    if (name && password) {
+                        const username = generateUsername(name, 'teacher');
+                        try {
+                            await addDoc(collection(db, 'users'), { name, username, password, role: 'teacher', createdAt: serverTimestamp() });
+                            document.getElementById('new-teacher-name').value = '';
+                            document.getElementById('new-teacher-password').value = '';
+                            showToast(`✅ Thêm giáo viên ${name} thành công! Username: ${username}`, 'success');
+                        } catch (error) {
+                            console.error('Error adding teacher:', error);
+                            showToast('Có lỗi khi thêm giáo viên', 'error');
+                        }
+                    } else {
+                        showToast('Vui lòng điền đủ tên và mật khẩu', 'error');
+                    }
+                }
+                if (target.closest('#add-student-btn')) {
+                    const name = document.getElementById('new-student-name').value;
+                    const password = document.getElementById('new-student-password').value;
+                    const teacherId = document.getElementById('admin-teacher-select').value;
+                    const courseId = document.getElementById('admin-course-select').value;
+                    if (name && password && teacherId && courseId) {
+                        const username = generateUsername(name, 'student');
+                        try {
+                            const userRef = await addDoc(collection(db, 'users'), { name, username, password, role: 'student', createdAt: serverTimestamp() });
+                            await addDoc(collection(db, 'enrollments'), { studentId: userRef.id, courseId });
+                            document.getElementById('new-student-name').value = '';
+                            document.getElementById('new-student-password').value = '';
+                            document.getElementById('admin-teacher-select').value = '';
+                            document.getElementById('admin-course-select').value = '';
+                            document.getElementById('admin-course-select').disabled = true;
+                            showToast(`✅ Thêm học sinh ${name} thành công! Username: ${username}`, 'success');
+                        } catch (error) {
+                            console.error('Error adding student:', error);
+                            showToast('Có lỗi khi thêm học sinh', 'error');
+                        }
+                    } else {
+                        showToast('Vui lòng điền đủ thông tin (tên, mật khẩu, giáo viên, khoá học)', 'error');
+                    }
+                }
+                if (target.closest('.view-user-info-btn')) {
+                    const userId = target.closest('.view-user-info-btn').dataset.id;
+                    const userRole = target.closest('.view-user-info-btn').dataset.role;
+                    renderViewUserInfoModal(userId, userRole);
+                }
                 if (target.closest('.delete-user-btn')) {
                     const userId = target.closest('.delete-user-btn').dataset.id;
                     const userToDelete = users.find(u => u.id === userId);
@@ -1660,7 +2114,121 @@
                     closeModal();
                     showToast('Cập nhật ghi danh thành công!', 'success');
                 }
-                if (target.closest('.view-course-detail-btn')) { showModal(renderCourseDetailModal(target.closest('.view-course-detail-btn').dataset.id)); }
+                if (target.closest('#save-account-btn')) {
+                    const currentPassword = document.getElementById('current-password')?.value || '';
+                    const newPassword = document.getElementById('new-password')?.value || '';
+                    const confirmPassword = document.getElementById('confirm-password')?.value || '';
+                    const passwordError = document.getElementById('password-error');
+                    
+                    // Validation
+                    if (!currentPassword) {
+                        passwordError.textContent = 'Vui lòng nhập mật khẩu hiện tại!';
+                        passwordError.classList.remove('hidden');
+                        return;
+                    }
+                    if (!newPassword) {
+                        passwordError.textContent = 'Vui lòng nhập mật khẩu mới!';
+                        passwordError.classList.remove('hidden');
+                        return;
+                    }
+                    if (newPassword !== confirmPassword) {
+                        passwordError.textContent = 'Mật khẩu mới và xác nhận không trùng khớp!';
+                        passwordError.classList.remove('hidden');
+                        return;
+                    }
+                    if (currentPassword === newPassword) {
+                        passwordError.textContent = 'Mật khẩu mới phải khác mật khẩu cũ!';
+                        passwordError.classList.remove('hidden');
+                        return;
+                    }
+                    if (currentPassword !== currentUser.password) {
+                        passwordError.textContent = 'Mật khẩu hiện tại không chính xác!';
+                        passwordError.classList.remove('hidden');
+                        return;
+                    }
+                    
+                    // Update password in Firestore
+                    try {
+                        await updateDoc(doc(db, 'users', currentUser.id), { password: newPassword });
+                        currentUser.password = newPassword;
+                        closeModal();
+                        showToast('✅ Đổi mật khẩu thành công!', 'success');
+                    } catch (error) {
+                        console.error('Error updating password:', error);
+                        passwordError.textContent = 'Có lỗi xảy ra. Vui lòng thử lại!';
+                        passwordError.classList.remove('hidden');
+                    }
+                }
+                if (target.closest('.view-course-detail-btn')) { 
+                    showModal(renderCourseDetailModal(target.closest('.view-course-detail-btn').dataset.id)); 
+                }
+                if (target.closest('.reset-password-btn')) {
+                    const userId = target.closest('.reset-password-btn').dataset.userId;
+                    const userToReset = users.find(u => u.id === userId);
+                    if (userToReset) {
+                        renderConfirmModal(
+                            'Xác nhận Reset Mật khẩu',
+                            `Bạn có chắc chắn muốn reset mật khẩu của <strong>${userToReset.name}</strong>?<br><br>Mật khẩu sẽ được đặt lại thành: <span class="font-mono font-bold text-orange-600">123456</span>`,
+                            'Reset',
+                            'bg-orange-600 hover:bg-orange-700',
+                            async () => {
+                                try {
+                                    await updateDoc(doc(db, 'users', userId), { password: '123456' });
+                                    const userIndex = users.findIndex(u => u.id === userId);
+                                    if (userIndex !== -1) {
+                                        users[userIndex].password = '123456';
+                                    }
+                                    closeModal();
+                                    showToast(`✅ Reset mật khẩu thành công! Mật khẩu mới: 123456`, 'success');
+                                } catch (error) {
+                                    console.error('Error resetting password:', error);
+                                    showToast('❌ Có lỗi xảy ra khi reset mật khẩu!', 'error');
+                                }
+                            }
+                        );
+                    }
+                }
+                if (target.closest('.delete-student-from-course')) {
+                    const btn = target.closest('.delete-student-from-course');
+                    const studentId = btn.dataset.studentId;
+                    const courseId = btn.dataset.courseId;
+                    const student = users.find(u => u.id === studentId);
+                    
+                    renderConfirmModal(
+                        'Xác nhận xóa học sinh khỏi khóa học',
+                        `Bạn có chắc chắn muốn xóa <strong>${student?.name}</strong> khỏi khóa học này?<br><br>Tất cả tiến độ học tập và điểm số của học sinh trong khóa học này sẽ bị xóa.`,
+                        'Xóa',
+                        'bg-red-600 hover:bg-red-700',
+                        async () => {
+                            try {
+                                const batch = writeBatch(db);
+                                
+                                // Xóa ghi danh
+                                const enrollmentToDelete = enrollments.find(e => e.studentId === studentId && e.courseId === courseId);
+                                if (enrollmentToDelete) {
+                                    batch.delete(doc(db, 'enrollments', enrollmentToDelete.id));
+                                }
+                                
+                                // Xóa tiến độ trong khóa học này
+                                const courseLessons = lessons.filter(l => l.courseId === courseId);
+                                progress.filter(p => p.studentId === studentId && courseLessons.some(l => l.id === p.lessonId)).forEach(p => {
+                                    batch.delete(doc(db, 'progress', p.id));
+                                });
+                                
+                                await batch.commit();
+                                showToast(`✅ Đã xóa ${student?.name} khỏi khóa học`, 'success');
+                            } catch (error) {
+                                console.error('Error deleting student from course:', error);
+                                showToast('Có lỗi khi xóa học sinh', 'error');
+                            }
+                        }
+                    );
+                }
+                if (target.closest('.view-user-info-btn')) {
+                    const userId = target.closest('.view-user-info-btn').dataset.id;
+                    const userRole = target.closest('.view-user-info-btn').dataset.role;
+                    renderViewUserInfoModal(userId, userRole);
+                }
             }
             
             if (currentUser?.role === 'teacher') {
@@ -1672,6 +2240,16 @@
                     const submissionFolderUrl = document.getElementById('edit-course-folder-url').value;
                     const scriptUrl = document.getElementById('edit-course-script-url').value;
                     if (title && description) {
+                        // ✅ VALIDATE URLs if provided
+                        if (submissionFolderUrl && !submissionFolderUrl.includes('drive.google.com')) {
+                            showToast('❌ Google Drive URL không hợp lệ', 'error');
+                            return;
+                        }
+                        if (scriptUrl && !scriptUrl.includes('script.google.com')) {
+                            showToast('❌ Google Apps Script URL không hợp lệ', 'error');
+                            return;
+                        }
+                        
                         await updateDoc(doc(db, 'courses', courseId), { title, description, submissionFolderUrl, scriptUrl });
                         closeModal();
                         showToast('Cập nhật khóa học thành công', 'success');
@@ -1683,6 +2261,16 @@
                     const folderUrl = document.getElementById('new-course-folder-url').value;
                     const scriptUrl = document.getElementById('new-course-script-url')?.value || '';
                     if (title && description) {
+                        // ✅ VALIDATE URLs if provided
+                        if (folderUrl && !folderUrl.includes('drive.google.com')) {
+                            showToast('❌ Google Drive URL không hợp lệ', 'error');
+                            return;
+                        }
+                        if (scriptUrl && !scriptUrl.includes('script.google.com')) {
+                            showToast('❌ Google Apps Script URL không hợp lệ', 'error');
+                            return;
+                        }
+                        
                         await addDoc(collection(db, 'courses'), { title, description, createdBy: currentUser.id, submissionFolderUrl: folderUrl, scriptUrl });
                         showToast('Tạo khóa học thành công', 'success');
                         document.getElementById('new-course-title').value = '';
@@ -1711,18 +2299,29 @@
                             showToast('Vui lòng chọn ít nhất một kỹ năng sẽ dạy', 'error');
                             return;
                         }
-                        await addDoc(collection(db, 'lessons'), { courseId, title, content, videoUrl, skillsToTeach: selectedSkills, createdAt: serverTimestamp() });
                         
-                        // Clear input
-                        document.getElementById('new-lesson-title').value = '';
-                        document.getElementById('new-lesson-video').value = '';
-                        document.getElementById('new-lesson-content').value = '';
-                        document.querySelectorAll('.lesson-skill-checkbox').forEach(cb => cb.checked = false);
-                        
-                        showToast('Thêm bài học thành công', 'success');
+                        try {
+                            // ✅ VALIDATE video URL if provided
+                            if (videoUrl && !videoUrl.includes('youtube.com') && !videoUrl.includes('youtu.be')) {
+                                showToast('⚠️ URL video phải là YouTube link', 'warning');
+                            }
+                            
+                            await addDoc(collection(db, 'lessons'), { courseId, title, content, videoUrl, skillsToTeach: selectedSkills, createdAt: serverTimestamp() });
+                            
+                            // ✅ Clear input chỉ khi thành công
+                            document.getElementById('new-lesson-title').value = '';
+                            document.getElementById('new-lesson-video').value = '';
+                            document.getElementById('new-lesson-content').value = '';
+                            document.querySelectorAll('.lesson-skill-checkbox').forEach(cb => cb.checked = false);
+                            
+                            showToast('Thêm bài học thành công', 'success');
+                        } catch (error) {
+                            console.error('Error adding lesson:', error);
+                            showToast('Có lỗi khi thêm bài học', 'error');
+                        }
                     } else { showToast("Vui lòng điền đủ tiêu đề và nội dung.", 'error'); }
                 }
-                if (target.closest('.edit-lesson-btn')) { showModal(renderEditLessonModal(target.closest('.edit-lesson-btn').dataset.lessonId)); }
+                if (target.closest('.edit-lesson-btn')) { renderEditLessonModal(target.closest('.edit-lesson-btn').dataset.lessonId); } // ✅ FIXED: Don't wrap renderEditLessonModal with showModal() as it already calls showModal internally
                 if (target.closest('#save-lesson-btn')) {
                     const lessonId = target.closest('#save-lesson-btn').dataset.lessonId;
                     const title = document.getElementById('edit-lesson-title').value;
@@ -1735,6 +2334,11 @@
                     if (selectedSkills.length === 0) {
                         showToast('Vui lòng chọn ít nhất một kỹ năng sẽ dạy', 'error');
                         return;
+                    }
+                    
+                    // ✅ VALIDATE video URL if provided
+                    if (videoUrl && !videoUrl.includes('youtube.com') && !videoUrl.includes('youtu.be')) {
+                        showToast('⚠️ URL video phải là YouTube link', 'warning');
                     }
                     
                     await updateDoc(doc(db, 'lessons', lessonId), { title, videoUrl, content, skillsToTeach: selectedSkills });
@@ -1754,13 +2358,15 @@
                             homeworks.filter(h => h.lessonId === lessonId).forEach(h => batch.delete(doc(db, "homeworks", h.id)));
                             batch.delete(doc(db, 'lessons', lessonId));
                             await batch.commit();
+                            closeModal();
+                            updateTeacherCourseTabs();
                             showToast('Đã xóa bài học', 'success');
                         }
                     );
                 }
                 
                 if (target.closest('.manage-homework-btn')) { 
-                    showModal(renderHomeworkModal(target.closest('.manage-homework-btn').dataset.lessonId)); 
+                    renderHomeworkModal(target.closest('.manage-homework-btn').dataset.lessonId); // ✅ FIXED: Don't wrap renderHomeworkModal with showModal() as it already calls showModal internally
                 }
                 if (target.closest('#save-homework-btn')) {
                     const lessonId = target.closest('#save-homework-btn').dataset.lessonId;
@@ -1854,6 +2460,18 @@
                      const listeningScore = document.getElementById('edit-listening-score').value;
                      const speakingScore = document.getElementById('edit-speaking-score').value;
                      const writingScore = document.getElementById('edit-writing-score').value;
+                     
+                     // ✅ VALIDATE SCORE RANGES
+                     const allScores = [readingScore, listeningScore, speakingScore, writingScore]
+                         .filter(s => s && s !== '')
+                         .map(s => parseFloat(s));
+                     
+                     for (let score of allScores) {
+                         if (isNaN(score) || score < 0 || score > 10) {
+                             showToast('Điểm số phải nằm trong khoảng 0-10', 'error');
+                             return;
+                         }
+                     }
 
                      const newGrades = {
                          reading: skillsToTeach.includes('reading') ? (readingScore ? parseFloat(readingScore) : null) : 0,
@@ -1876,6 +2494,12 @@
                      
                      const activeButton = document.querySelector('.attendance-btn.attendance-btn-active');
                      const newStatus = activeButton ? activeButton.dataset.status : null;
+                     
+                     // ✅ VALIDATE ATTENDANCE STATUS
+                     if (!newStatus) {
+                         showToast('Vui lòng chọn trạng thái điểm danh', 'error');
+                         return;
+                     }
 
                      const dataToSave = {
                          grade: averageScore,
@@ -1928,9 +2552,66 @@
             }
         });
         
+        // ═══════════════════════════════════════════════════════════════════════════════════
+        // 9️⃣ KHU VỰC 9: INPUT & CHANGE EVENT LISTENERS - XỬ LÝ SỰ KIỆN INPUT VÀ CHANGE
+        // ═══════════════════════════════════════════════════════════════════════════════════
         document.body.addEventListener('input', (e) => {
              if (e.target.classList.contains('score-input')) {
                  calculateAverageScore();
+             }
+             // Search functionality for teachers list
+             if (e.target.id === 'teacher-search') {
+                 const searchTerm = e.target.value.toLowerCase();
+                 const teacherItems = document.querySelectorAll('.teacher-item');
+                 let visibleCount = 0;
+                 teacherItems.forEach(item => {
+                     const name = item.dataset.name || '';
+                     const username = item.dataset.username || '';
+                     const matches = name.includes(searchTerm) || username.includes(searchTerm);
+                     item.style.display = matches ? 'block' : 'none';
+                     if (matches) visibleCount++;
+                 });
+                 // Show message if no results
+                 const teacherList = document.getElementById('teacher-list');
+                 if (teacherList && visibleCount === 0) {
+                     let noResultMsg = teacherList.querySelector('.no-result-teacher');
+                     if (!noResultMsg) {
+                         noResultMsg = document.createElement('p');
+                         noResultMsg.className = 'no-result-teacher text-center py-8 text-slate-400';
+                         noResultMsg.innerHTML = '<i class="fas fa-search fa-2x mb-2"></i><br>Không tìm thấy giáo viên nào.';
+                         teacherList.appendChild(noResultMsg);
+                     }
+                 } else {
+                     const noResultMsg = teacherList.querySelector('.no-result-teacher');
+                     if (noResultMsg) noResultMsg.remove();
+                 }
+             }
+             // Search functionality for students list
+             if (e.target.id === 'student-search') {
+                 const searchTerm = e.target.value.toLowerCase();
+                 const studentItems = document.querySelectorAll('.student-item');
+                 let visibleCount = 0;
+                 studentItems.forEach(item => {
+                     const name = item.dataset.name || '';
+                     const username = item.dataset.username || '';
+                     const matches = name.includes(searchTerm) || username.includes(searchTerm);
+                     item.style.display = matches ? 'block' : 'none';
+                     if (matches) visibleCount++;
+                 });
+                 // Show message if no results
+                 const studentList = document.getElementById('student-list');
+                 if (studentList && visibleCount === 0) {
+                     let noResultMsg = studentList.querySelector('.no-result-student');
+                     if (!noResultMsg) {
+                         noResultMsg = document.createElement('p');
+                         noResultMsg.className = 'no-result-student text-center py-8 text-slate-400';
+                         noResultMsg.innerHTML = '<i class="fas fa-search fa-2x mb-2"></i><br>Không tìm thấy học sinh nào.';
+                         studentList.appendChild(noResultMsg);
+                     }
+                 } else {
+                     const noResultMsg = studentList.querySelector('.no-result-student');
+                     if (noResultMsg) noResultMsg.remove();
+                 }
              }
         });
         document.body.addEventListener('change', async (e) => {
@@ -1953,8 +2634,9 @@
              }
         });
 
-                // ═══════════════════════════════════════════════════════════════════════════════════
-        // APP STARTUP
+        
+        // ═══════════════════════════════════════════════════════════════════════════════════
+        // 🚀 KHU VỰC 10: APP STARTUP & FIREBASE LISTENERS - KHỞI ĐỘNG ỨNG DỤNG VÀ LẮN NGHE FIRESTORE
         // ═══════════════════════════════════════════════════════════════════════════════════
         async function startApp() {
             if (!db || !auth) return;
@@ -2042,6 +2724,11 @@
                                         localStorage.removeItem('currentStudentIdForProgress');
                                         localStorage.removeItem('currentActiveTab');
                                         currentUser = null;
+                                        currentView = 'login';
+                                        currentCourseId = null;
+                                        currentLessonId = null;
+                                        currentStudentIdForProgress = null;
+                                        currentActiveTab = 'overview';
                                         navigate();
                                         return;
                                     }
