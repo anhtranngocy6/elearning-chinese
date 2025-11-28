@@ -8,6 +8,9 @@ import {
 } from './shared.js';
 import { updateDoc, doc, deleteDoc, writeBatch, addDoc, collection, serverTimestamp, db } from './firebase.js';
 
+// Global flag để chỉ gắn listener 1 lần duy nhất
+let adminListenersInitialized = false;
+
 // ═══════════════════════════════════════════════════════════════════════════════════
 // HELPER FUNCTION - Render Course Overview Card
 // ═══════════════════════════════════════════════════════════════════════════════════
@@ -58,64 +61,69 @@ const renderCourseOverviewCard = (course, teacher, lessons, enrollments, progres
     }
     
     return `
-    <div class="bg-gradient-to-br ${statusClass} rounded-lg border-2 hover:shadow-lg hover:scale-[1.02] transition-all cursor-pointer view-course-detail-btn p-5" data-id="${course.id}">
-        <div class="flex justify-between items-start mb-4">
-            <div class="flex-grow">
+    <div class="bg-gradient-to-br ${statusClass} rounded-lg border-2 hover:shadow-lg hover:scale-[1.02] transition-all p-4 relative group" data-id="${course.id}">
+        <div class="flex justify-between items-start mb-3">
+            <div class="flex-grow view-course-detail-btn cursor-pointer" data-id="${course.id}">
                 <div class="flex items-center space-x-2 mb-1">
-                    <h3 class="font-bold text-lg text-slate-800">${course.title}</h3>
-                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${statusColor} bg-white/60">
-                        <i class="fas ${statusIcon} mr-1"></i>${statusText}
+                    <h3 class="font-bold text-base text-slate-800">${course.title}</h3>
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold ${statusColor} bg-white/60">
+                        <i class="fas ${statusIcon} mr-0.5"></i>${statusText}
                     </span>
                 </div>
-                <p class="text-sm text-slate-600"><i class="fas fa-chalkboard-teacher mr-1"></i>GV: <strong>${teacher?.name || 'N/A'}</strong></p>
+                <p class="text-xs text-slate-600"><i class="fas fa-chalkboard-teacher mr-1"></i>GV: <strong>${teacher?.displayName || teacher?.name || 'N/A'}</strong></p>
             </div>
-            <div class="text-right">
-                <div class="text-2xl font-bold text-slate-800">${avgProgress}%</div>
-                <div class="text-xs text-slate-500">Tiến độ</div>
-            </div>
-        </div>
-        
-        <div class="mb-4">
-            <div class="w-full bg-white/50 rounded-full h-2.5">
-                <div class="bg-gradient-to-r from-purple-500 to-pink-500 h-2.5 rounded-full transition-all" style="width: ${avgProgress}%"></div>
-            </div>
-        </div>
-        
-        <div class="grid grid-cols-2 gap-3 mb-3">
-            <div class="bg-white/70 p-2.5 rounded-lg text-center">
-                <div class="text-xs text-slate-500 mb-0.5">Học sinh</div>
-                <div class="text-lg font-bold text-slate-800">${studentCount}</div>
-            </div>
-            <div class="bg-white/70 p-2.5 rounded-lg text-center">
-                <div class="text-xs text-slate-500 mb-0.5">Bài học</div>
-                <div class="text-lg font-bold text-slate-800">${lessonCount}</div>
-            </div>
-            <div class="bg-white/70 p-2.5 rounded-lg text-center">
-                <div class="text-xs text-slate-500 mb-0.5">Đã nộp</div>
-                <div class="text-lg font-bold text-green-600">${submitted}</div>
-            </div>
-            <div class="bg-white/70 p-2.5 rounded-lg text-center">
-                <div class="text-xs text-slate-500 mb-0.5">Đã chấm</div>
-                <div class="text-lg font-bold text-blue-600">${graded}</div>
+            <div class="flex items-center space-x-2">
+                <div class="text-right">
+                    <div class="text-xl font-bold text-slate-800">${avgProgress}%</div>
+                    <div class="text-xs text-slate-500">Tiến độ</div>
+                </div>
+                <button class="delete-course-btn text-red-500 hover:text-red-700 hover:bg-red-50 p-1.5 rounded-lg transition-colors opacity-0 group-hover:opacity-100" data-id="${course.id}" title="Xóa khóa học" onclick="event.stopPropagation(); event.preventDefault();">
+                    <i class="fas fa-trash-alt text-sm"></i>
+                </button>
             </div>
         </div>
         
-        <div class="border-t border-white/50 pt-3">
-            <div class="text-xs text-slate-600 mb-2">
-                <i class="fas fa-medal text-amber-500 mr-1"></i><strong>Năng lực GV:</strong>
+        <div class="mb-3">
+            <div class="w-full bg-white/50 rounded-full h-2">
+                <div class="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full transition-all" style="width: ${avgProgress}%"></div>
             </div>
-            <div class="grid grid-cols-3 gap-2 text-xs">
+        </div>
+        
+        <div class="grid grid-cols-4 gap-2 mb-2">
+            <div class="bg-white/70 p-2 rounded text-center">
+                <div class="text-xs text-slate-500 mb-0.5">HS</div>
+                <div class="text-base font-bold text-slate-800">${studentCount}</div>
+            </div>
+            <div class="bg-white/70 p-2 rounded text-center">
+                <div class="text-xs text-slate-500 mb-0.5">Bài</div>
+                <div class="text-base font-bold text-slate-800">${lessonCount}</div>
+            </div>
+            <div class="bg-white/70 p-2 rounded text-center">
+                <div class="text-xs text-slate-500 mb-0.5">Nộp</div>
+                <div class="text-base font-bold text-green-600">${submitted}</div>
+            </div>
+            <div class="bg-white/70 p-2 rounded text-center">
+                <div class="text-xs text-slate-500 mb-0.5">Chấm</div>
+                <div class="text-base font-bold text-blue-600">${graded}</div>
+            </div>
+        </div>
+        
+        <div class="border-t border-white/50 pt-2">
+            <div class="text-xs text-slate-600 mb-1 flex items-center">
+                <i class="fas fa-medal text-amber-500 mr-1"></i><strong>Năng lực GV</strong>
+            </div>
+            <div class="grid grid-cols-3 gap-1.5 text-xs">
                 <div class="bg-white/50 p-1.5 rounded text-center">
                     <div class="font-bold text-slate-800">${teacherCourses.length}</div>
-                    <div class="text-slate-600">Khóa học</div>
+                    <div class="text-slate-600">Khóa</div>
                 </div>
                 <div class="bg-white/50 p-1.5 rounded text-center">
                     <div class="font-bold text-slate-800">${teacherTotalStudents}</div>
-                    <div class="text-slate-600">Học sinh</div>
+                    <div class="text-slate-600">HS</div>
                 </div>
                 <div class="bg-white/50 p-1.5 rounded text-center">
                     <div class="font-bold text-slate-800">${teacherTotalLessons}</div>
-                    <div class="text-slate-600">Bài học</div>
+                    <div class="text-slate-600">Bài</div>
                 </div>
             </div>
         </div>
@@ -127,8 +135,8 @@ const renderCourseOverviewCard = (course, teacher, lessons, enrollments, progres
 // ═══════════════════════════════════════════════════════════════════════════════════
 
 export const renderAdminDashboard = (appContainerEl = document.getElementById('app')) => {
-    console.log('🔐 renderAdminDashboard called');
     document.title = "Admin Dashboard | SmartEdu x AT";
+    // KHÔNG reset flag - giữ nguyên để listener chỉ gắn 1 lần
     const users = getUsers();
     const courses = getCourses();
     const lessons = getLessons();
@@ -194,7 +202,7 @@ export const renderAdminDashboard = (appContainerEl = document.getElementById('a
                                          <div class="p-4 bg-gradient-to-r from-slate-50 to-blue-50 rounded-lg border border-slate-200 hover:border-blue-300 hover:shadow-md transition-all teacher-item" data-name="${t.name.toLowerCase()}" data-username="${t.username.toLowerCase()}">
                                              <div class="flex justify-between items-start">
                                                  <div class="flex-grow">
-                                                     <p class="font-semibold text-slate-800">${t.name}</p>
+                                                     <p class="font-semibold text-slate-800"><i class="fas fa-chalkboard-teacher text-blue-600 mr-1"></i>${t.displayName || t.name}</p>
                                                      <p class="text-xs text-slate-500 font-mono bg-slate-100 inline-block px-2 py-1 rounded mt-1">@${t.username}</p>
                                                  </div>
                                                  <div class="flex space-x-2">
@@ -227,7 +235,7 @@ export const renderAdminDashboard = (appContainerEl = document.getElementById('a
                                      <input type="password" id="new-student-password" placeholder="Mật khẩu ban đầu" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
                                      <select id="admin-teacher-select" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
                                          <option value="">-- Chọn giáo viên --</option>
-                                         ${teachers.map(t => `<option value="${t.id}">${t.name}</option>`).join('')}
+                                         ${teachers.map(t => `<option value="${t.id}">${t.displayName || t.name}</option>`).join('')}
                                      </select>
                                      <select id="admin-course-select" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:bg-slate-100 disabled:cursor-not-allowed" disabled>
                                          <option value="">-- Chọn khoá học --</option>
@@ -249,7 +257,7 @@ export const renderAdminDashboard = (appContainerEl = document.getElementById('a
                                          <div class="p-4 bg-gradient-to-r from-slate-50 to-green-50 rounded-lg border border-slate-200 hover:border-green-300 hover:shadow-md transition-all student-item" data-name="${s.name.toLowerCase()}" data-username="${s.username.toLowerCase()}">
                                              <div class="flex justify-between items-start">
                                                  <div class="flex-grow">
-                                                     <p class="font-semibold text-slate-800">${s.name}</p>
+                                                     <p class="font-semibold text-slate-800"><i class="fas fa-user-graduate text-green-600 mr-1"></i>${s.displayName || s.name}</p>
                                                      <p class="text-xs text-slate-500 font-mono bg-slate-100 inline-block px-2 py-1 rounded mt-1">@${s.username}</p>
                                                  </div>
                                                  <div class="flex space-x-2">
@@ -276,13 +284,13 @@ export const renderAdminDashboard = (appContainerEl = document.getElementById('a
                      <!-- TAB: TỔNG QUAN -->
                      <div id="admin-tab-overview" class="admin-tab-content hidden">
                          <div class="bg-white rounded-xl shadow-lg overflow-hidden">
-                             <div class="bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 p-6 text-white">
-                                 <h2 class="text-2xl font-bold flex items-center"><i class="fas fa-chart-line mr-2"></i>Tổng quan Khóa học</h2>
+                             <div class="bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 p-4 text-white">
+                                 <h2 class="text-xl font-bold flex items-center"><i class="fas fa-chart-line mr-2"></i>Tổng quan Khóa học</h2>
                                  <p class="text-blue-100 mt-1 text-sm">Thống kê hiệu suất và tiến độ học tập</p>
                              </div>
-                             <div class="p-6">
+                             <div class="p-4">
                                  ${courses.length > 0 ? `
-                                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 max-h-[600px] overflow-y-auto pr-2">
+                                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-[700px] overflow-y-auto pr-2">
                                      ${courses.map(c => renderCourseOverviewCard(c, users.find(u => u.id === c.createdBy), lessons, enrollments, progress, users, courses)).join('')}
                                  </div>
                                  ` : '<p class="text-center py-12 text-slate-400"><i class="fas fa-inbox fa-2x mb-2"></i><br>Chưa có khóa học nào.</p>'}
@@ -298,10 +306,13 @@ export const renderAdminDashboard = (appContainerEl = document.getElementById('a
     // Tab switching functionality
     setTimeout(() => {
         const tabBtns = document.querySelectorAll('.admin-tab-btn');
+        
+        // Get saved tab from localStorage, default to 'management'
+        const savedTab = localStorage.getItem('adminCurrentTab') || 'management';
+        
         tabBtns.forEach(btn => {
             btn.addEventListener('click', () => {
                 const tabName = btn.dataset.tab;
-                console.log('📋 Admin tab clicked:', tabName);
                 
                 // Hide all tabs
                 document.querySelectorAll('.admin-tab-content').forEach(tab => {
@@ -327,12 +338,19 @@ export const renderAdminDashboard = (appContainerEl = document.getElementById('a
                 // Save session state
                 saveSessionToLocalStorage();
             });
+            
+            // Activate saved tab on load
+            if (btn.dataset.tab === savedTab) {
+                btn.click();
+            }
         });
+        
+        // Initialize admin listeners
+        initAdminListeners();
     }, 100);
     
     // Save session state when dashboard is rendered
     saveSessionToLocalStorage();
-    console.log('✅ renderAdminDashboard completed, state saved');
 };
 
 export const renderCourseDetailModal = (courseId) => {
@@ -383,7 +401,7 @@ export const renderCourseDetailModal = (courseId) => {
                         <div class="p-3 bg-gradient-to-r from-green-50 to-slate-50 rounded-lg border border-green-100 hover:border-green-300 hover:shadow-md transition-all">
                             <div class="flex justify-between items-center">
                                 <div class="flex-grow">
-                                    <p class="text-sm font-medium text-slate-800">${s.name}</p>
+                                    <p class="text-sm font-medium text-slate-800"><i class="fas fa-user-graduate text-green-600 mr-1"></i>${s.displayName || s.name}</p>
                                     <p class="text-xs text-slate-500 font-mono">@${s.username}</p>
                                 </div>
                                 <button class="delete-student-from-course text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded-lg transition-colors" data-student-id="${s.id}" data-course-id="${courseId}" title="Xóa học sinh khỏi khóa học">
@@ -408,7 +426,57 @@ export const renderEditStudentModal = (studentId) => {
     const student = users.find(u => u.id === studentId);
     if (!student) return;
     const studentEnrollments = enrollments.filter(e => e.studentId === studentId).map(e => e.courseId);
-    const modalContent = `<div class="bg-white w-full max-w-lg rounded-xl shadow-lg p-6 fade-in" id="edit-student-modal"><h2 class="text-2xl font-bold mb-4">Chỉnh sửa ghi danh cho ${student.name}</h2><p class="text-slate-600 mb-6">Chọn các khoá học mà học sinh này sẽ tham gia.</p><div class="space-y-3 max-h-60 overflow-y-auto pr-2">${courses.map(course => { const isEnrolled = studentEnrollments.includes(course.id); const teacher = users.find(u => u.id === course.createdBy); return `<label class="flex items-center p-3 bg-slate-50 rounded-lg cursor-pointer hover:bg-slate-100"><input type="checkbox" class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500" data-course-id="${course.id}" ${isEnrolled ? 'checked' : ''}><div class="ml-4"><span class="font-medium text-slate-800">${course.title}</span><p class="text-sm text-slate-500">GV: ${teacher?.name}</p></div></label>`; }).join('')}</div><div class="mt-6 flex justify-end space-x-3"><button class="cancel-modal-btn px-4 py-2 bg-slate-200 text-slate-800 rounded-lg hover:bg-slate-300">Huỷ</button><button id="save-enrollment-btn" data-student-id="${studentId}" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Lưu thay đổi</button></div></div>`;
+    const modalContent = `<div class="bg-white w-full max-w-lg rounded-xl shadow-lg p-6 fade-in" id="edit-student-modal"><h2 class="text-2xl font-bold mb-4">Chỉnh sửa ghi danh cho ${student.name}</h2><p class="text-slate-600 mb-6">Chọn các khoá học mà học sinh này sẽ tham gia.</p><div class="space-y-3 max-h-60 overflow-y-auto pr-2">${courses.map(course => { const isEnrolled = studentEnrollments.includes(course.id); const teacher = users.find(u => u.id === course.createdBy); return `<label class="flex items-center p-3 bg-slate-50 rounded-lg cursor-pointer hover:bg-slate-100"><input type="checkbox" class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500" data-course-id="${course.id}" ${isEnrolled ? 'checked' : ''}><div class="ml-4">                            <span class="font-medium text-slate-800">${course.title}</span><p class="text-sm text-slate-500">GV: ${teacher?.displayName || teacher?.name}</p></div></label>`; }).join('')}</div><div class="mt-6 flex justify-end space-x-3"><button class="cancel-modal-btn px-4 py-2 bg-slate-200 text-slate-800 rounded-lg hover:bg-slate-300">Huỷ</button><button id="save-enrollment-btn" data-student-id="${studentId}" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Lưu thay đổi</button></div></div>`;
+    return modalContent;
+};
+
+export const renderDeleteCourseConfirmModal = (courseId, courseName) => {
+    const enrollments = getEnrollments();
+    const progress = getProgress();
+    const lessons = getLessons();
+    
+    const courseEnrollments = enrollments.filter(e => e.courseId === courseId);
+    const courseLessons = lessons.filter(l => l.courseId === courseId);
+    const courseProgress = progress.filter(p => courseLessons.some(l => l.id === p.lessonId));
+    
+    const modalContent = `
+    <div class="bg-white w-full max-w-md rounded-xl shadow-lg p-8 fade-in">
+        <div class="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-lg">
+            <div class="flex items-start">
+                <i class="fas fa-exclamation-triangle text-red-600 text-xl mt-1 mr-3 flex-shrink-0"></i>
+                <div>
+                    <h2 class="text-lg font-bold text-red-800 mb-2">⚠️ Xác nhận Xóa Khóa học</h2>
+                    <p class="text-red-700 font-semibold">${courseName}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-sm">
+            <p class="text-yellow-800 mb-2 font-semibold">⚠️ Dữ liệu sẽ bị xóa:</p>
+            <ul class="text-yellow-700 space-y-1 ml-4">
+                <li>✗ Khóa học và ${courseLessons.length} bài học</li>
+                <li>✗ Ghi danh của ${courseEnrollments.length} học sinh</li>
+                <li>✗ Tiến độ học tập (${courseProgress.length} bản ghi)</li>
+                <li>✗ Điểm số và bình luận của giáo viên</li>
+            </ul>
+            <p class="text-yellow-800 font-semibold mt-3">Hành động này không thể hoàn tác!</p>
+        </div>
+
+        <div class="space-y-3 mb-6">
+            <label for="admin-password-course-confirm" class="block text-sm font-semibold text-slate-700">Nhập mật khẩu Admin để xác nhận:</label>
+            <input type="password" id="admin-password-course-confirm" class="w-full p-3 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent" placeholder="••••••••">
+        </div>
+
+        <div id="delete-course-error" class="text-red-500 text-center mb-4 text-sm font-medium hidden bg-red-50 p-3 rounded-lg"></div>
+
+        <div class="flex justify-end space-x-3">
+            <button class="cancel-modal-btn px-4 py-2 bg-slate-200 text-slate-800 rounded-lg hover:bg-slate-300 font-semibold transition-colors">Huỷ</button>
+            <button id="confirm-delete-course-btn" data-course-id="${courseId}" class="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-semibold transition-colors flex items-center gap-2">
+                <i class="fas fa-trash-alt"></i>Xóa vĩnh viễn
+            </button>
+        </div>
+    </div>
+    `;
     return modalContent;
 };
 
@@ -498,7 +566,7 @@ export const renderViewUserInfoModal = (userId, userRole) => {
         contentHtml = `
             <div class="bg-white w-full max-w-lg rounded-xl shadow-lg p-6 fade-in">
                 <div class="flex justify-between items-center mb-4 pb-3 border-b">
-                    <h2 class="text-xl font-bold text-slate-800"><i class="fas fa-user-tie text-blue-600 mr-2"></i>${user.name}</h2>
+                    <h2 class="text-xl font-bold text-slate-800"><i class="fas fa-chalkboard-teacher text-blue-600 mr-2"></i>${user.displayName || user.name}</h2>
                     <button class="cancel-modal-btn text-slate-400 hover:text-slate-800 text-2xl font-light">&times;</button>
                 </div>
                 
@@ -561,7 +629,7 @@ export const renderViewUserInfoModal = (userId, userRole) => {
         contentHtml = `
             <div class="bg-white w-full max-w-lg rounded-xl shadow-lg p-6 fade-in">
                 <div class="flex justify-between items-center mb-4 pb-3 border-b">
-                    <h2 class="text-xl font-bold text-slate-800"><i class="fas fa-user-graduate text-green-600 mr-2"></i>${user.name}</h2>
+                    <h2 class="text-xl font-bold text-slate-800"><i class="fas fa-user-graduate text-green-600 mr-2"></i>${user.displayName || user.name}</h2>
                     <button class="cancel-modal-btn text-slate-400 hover:text-slate-800 text-2xl font-light">&times;</button>
                 </div>
                 
@@ -639,15 +707,52 @@ export const handleAdminClickEvents = async (e) => {
         const password = document.getElementById('new-teacher-password').value;
         if (name && password) {
             const username = generateUsername(name, 'teacher');
-            try {
-                await addDoc(collection(db, 'users'), { name, username, password, role: 'teacher', createdAt: serverTimestamp() });
-                document.getElementById('new-teacher-name').value = '';
-                document.getElementById('new-teacher-password').value = '';
-                showToast(`✅ Thêm giáo viên ${name} thành công! Username: ${username}`, 'success');
-            } catch (error) {
-                console.error('Error adding teacher:', error);
-                showToast('Có lỗi khi thêm giáo viên', 'error');
-            }
+            const displayName = `GV. ${name}`;
+            renderConfirmModal(
+                'Xác nhận Thêm Giáo viên',
+                `Bạn có chắc chắn muốn thêm giáo viên này?<br><br><strong>Tên:</strong> ${name}<br><strong>Username:</strong> @${username}<br><strong>Mật khẩu:</strong> ${password}`,
+                'Xác nhận',
+                'bg-blue-600 hover:bg-blue-700',
+                async () => {
+                    try {
+                        const newTeacher = { name, displayName, username, password, role: 'teacher', createdAt: serverTimestamp() };
+                        await addDoc(collection(db, 'users'), newTeacher);
+                        document.getElementById('new-teacher-name').value = '';
+                        document.getElementById('new-teacher-password').value = '';
+                        closeModal();
+                        showToast(`✅ Thêm giáo viên ${name} thành công! Username: ${username}`, 'success');
+                        // Cập nhật dữ liệu local mà không refresh toàn bộ dashboard
+                        const updatedUsers = getUsers();
+                        const teacherList = document.getElementById('teacher-list');
+                        if (teacherList) {
+                            const noResultMsg = teacherList.querySelector('.no-result-teacher');
+                            if (noResultMsg) noResultMsg.remove();
+                            // Thêm giáo viên mới vào đầu danh sách
+                            const newTeacherHtml = `
+                                <div class="p-4 bg-gradient-to-r from-slate-50 to-blue-50 rounded-lg border border-slate-200 hover:border-blue-300 hover:shadow-md transition-all teacher-item" data-name="${name.toLowerCase()}" data-username="${username.toLowerCase()}">
+                                    <div class="flex justify-between items-start">
+                                        <div class="flex-grow">
+                                            <p class="font-semibold text-slate-800"><i class="fas fa-chalkboard-teacher text-blue-600 mr-1"></i>${displayName}</p>
+                                            <p class="text-xs text-slate-500 font-mono bg-slate-100 inline-block px-2 py-1 rounded mt-1">@${username}</p>
+                                        </div>
+                                        <div class="flex space-x-2">
+                                            <button class="view-user-info-btn text-blue-500 hover:text-blue-700 hover:bg-blue-50 p-2 rounded-lg transition-colors" data-id="${updatedUsers[updatedUsers.length - 1]?.id}" data-role="teacher" title="Xem thông tin">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="delete-user-btn text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded-lg transition-colors" data-id="${updatedUsers[updatedUsers.length - 1]?.id}" title="Xóa giáo viên">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                            teacherList.insertAdjacentHTML('afterbegin', newTeacherHtml);
+                        }
+                    } catch (error) {
+                        showToast('Có lỗi khi thêm giáo viên', 'error');
+                    }
+                }
+            );
         } else {
             showToast('Vui lòng điền đủ tên và mật khẩu', 'error');
         }
@@ -661,19 +766,59 @@ export const handleAdminClickEvents = async (e) => {
         const courseId = document.getElementById('admin-course-select').value;
         if (name && password && teacherId && courseId) {
             const username = generateUsername(name, 'student');
-            try {
-                const userRef = await addDoc(collection(db, 'users'), { name, username, password, role: 'student', createdAt: serverTimestamp() });
-                await addDoc(collection(db, 'enrollments'), { studentId: userRef.id, courseId });
-                document.getElementById('new-student-name').value = '';
-                document.getElementById('new-student-password').value = '';
-                document.getElementById('admin-teacher-select').value = '';
-                document.getElementById('admin-course-select').value = '';
-                document.getElementById('admin-course-select').disabled = true;
-                showToast(`✅ Thêm học sinh ${name} thành công! Username: ${username}`, 'success');
-            } catch (error) {
-                console.error('Error adding student:', error);
-                showToast('Có lỗi khi thêm học sinh', 'error');
-            }
+            const displayName = `HS. ${name}`;
+            const course = courses.find(c => c.id === courseId);
+            const teacher = users.find(u => u.id === teacherId);
+            renderConfirmModal(
+                'Xác nhận Thêm Học sinh',
+                `Bạn có chắc chắn muốn thêm học sinh này?<br><br><strong>Tên:</strong> ${name}<br><strong>Username:</strong> @${username}<br><strong>Mật khẩu:</strong> ${password}<br><strong>Giáo viên:</strong> ${teacher?.name}<br><strong>Khóa học:</strong> ${course?.title}`,
+                'Xác nhận',
+                'bg-green-600 hover:bg-green-700',
+                async () => {
+                    try {
+                        const userRef = await addDoc(collection(db, 'users'), { name, displayName, username, password, role: 'student', createdAt: serverTimestamp() });
+                        await addDoc(collection(db, 'enrollments'), { studentId: userRef.id, courseId });
+                        document.getElementById('new-student-name').value = '';
+                        document.getElementById('new-student-password').value = '';
+                        document.getElementById('admin-teacher-select').value = '';
+                        document.getElementById('admin-course-select').value = '';
+                        document.getElementById('admin-course-select').disabled = true;
+                        closeModal();
+                        showToast(`✅ Thêm học sinh ${name} thành công! Username: ${username}`, 'success');
+                        // Cập nhật dữ liệu local mà không refresh toàn bộ dashboard
+                        const studentList = document.getElementById('student-list');
+                        if (studentList) {
+                            const noResultMsg = studentList.querySelector('.no-result-student');
+                            if (noResultMsg) noResultMsg.remove();
+                            // Thêm học sinh mới vào đầu danh sách
+                            const newStudentHtml = `
+                                <div class="p-4 bg-gradient-to-r from-slate-50 to-green-50 rounded-lg border border-slate-200 hover:border-green-300 hover:shadow-md transition-all student-item" data-name="${name.toLowerCase()}" data-username="${username.toLowerCase()}">
+                                    <div class="flex justify-between items-start">
+                                        <div class="flex-grow">
+                                            <p class="font-semibold text-slate-800"><i class="fas fa-user-graduate text-green-600 mr-1"></i>${displayName}</p>
+                                            <p class="text-xs text-slate-500 font-mono bg-slate-100 inline-block px-2 py-1 rounded mt-1">@${username}</p>
+                                        </div>
+                                        <div class="flex space-x-2">
+                                            <button class="view-user-info-btn text-blue-500 hover:text-blue-700 hover:bg-blue-50 p-2 rounded-lg transition-colors" data-id="${userRef.id}" data-role="student" title="Xem thông tin">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="edit-student-btn text-amber-500 hover:text-amber-700 hover:bg-amber-50 p-2 rounded-lg transition-colors" data-id="${userRef.id}" title="Chỉnh sửa ghi danh">
+                                                <i class="fas fa-user-edit"></i>
+                                            </button>
+                                            <button class="delete-user-btn text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded-lg transition-colors" data-id="${userRef.id}" title="Xóa học sinh">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                            studentList.insertAdjacentHTML('afterbegin', newStudentHtml);
+                        }
+                    } catch (error) {
+                        showToast('Có lỗi khi thêm học sinh', 'error');
+                    }
+                }
+            );
         } else {
             showToast('Vui lòng điền đủ thông tin (tên, mật khẩu, giáo viên, khoá học)', 'error');
         }
@@ -697,20 +842,30 @@ export const handleAdminClickEvents = async (e) => {
     }
 
     if (target.closest('#confirm-delete-btn')) {
+        e.stopImmediatePropagation();
         const userId = target.closest('#confirm-delete-btn').dataset.userId;
         const password = document.getElementById('admin-password-confirm').value;
         if (password === currentUser.password) {
-            const batch = writeBatch(db);
-            const userToDelete = users.find(u => u.id === userId);
-            if (userToDelete.role === 'student') {
-                enrollments.filter(e => e.studentId === userId).forEach(e => batch.delete(doc(db, "enrollments", e.id)));
-                progress.filter(p => p.studentId === userId).forEach(p => batch.delete(doc(db, "progress", p.id)));
+            try {
+                const batch = writeBatch(db);
+                const userToDelete = users.find(u => u.id === userId);
+                if (userToDelete.role === 'student') {
+                    enrollments.filter(e => e.studentId === userId).forEach(e => batch.delete(doc(db, "enrollments", e.id)));
+                    progress.filter(p => p.studentId === userId).forEach(p => batch.delete(doc(db, "progress", p.id)));
+                }
+                batch.delete(doc(db, "users", userId));
+                await batch.commit();
+                
+                closeModal();
+                showToast('✅ Xóa người dùng thành công!', 'success');
+                
+                // Refresh dashboard
+                setTimeout(() => {
+                    renderAdminDashboard();
+                }, 500);
+            } catch (error) {
+                showToast('❌ Có lỗi khi xóa người dùng', 'error');
             }
-            batch.delete(doc(db, "users", userId));
-            await batch.commit();
-            users = users.filter(u => u.id !== userId);
-            closeModal();
-            showToast('Xóa người dùng thành công!', 'success');
         } else {
             document.getElementById('delete-error').textContent = 'Mật khẩu không chính xác!';
             document.getElementById('delete-error').classList.remove('hidden');
@@ -725,15 +880,19 @@ export const handleAdminClickEvents = async (e) => {
 
     if (target.closest('#save-enrollment-btn')) {
         const studentId = target.closest('#save-enrollment-btn').dataset.studentId;
-        const batch = writeBatch(db);
-        enrollments.filter(e => e.studentId === studentId).forEach(e => batch.delete(doc(db, "enrollments", e.id)));
-        document.querySelectorAll('#edit-student-modal input[type="checkbox"]:checked').forEach(box => {
-            const newEnrollmentRef = doc(collection(db, "enrollments"));
-            batch.set(newEnrollmentRef, { studentId: studentId, courseId: box.dataset.courseId });
-        });
-        await batch.commit();
-        closeModal();
-        showToast('Cập nhật ghi danh thành công!', 'success');
+        try {
+            const batch = writeBatch(db);
+            enrollments.filter(e => e.studentId === studentId).forEach(e => batch.delete(doc(db, "enrollments", e.id)));
+            document.querySelectorAll('#edit-student-modal input[type="checkbox"]:checked').forEach(box => {
+                const newEnrollmentRef = doc(collection(db, "enrollments"));
+                batch.set(newEnrollmentRef, { studentId: studentId, courseId: box.dataset.courseId });
+            });
+            await batch.commit();
+            closeModal();
+            showToast('✅ Cập nhật ghi danh thành công!', 'success');
+        } catch (error) {
+            showToast('❌ Có lỗi khi cập nhật ghi danh', 'error');
+        }
         return true;
     }
 
@@ -761,11 +920,74 @@ export const handleAdminClickEvents = async (e) => {
                         closeModal();
                         showToast(`✅ Reset mật khẩu thành công! Mật khẩu mới: 123456`, 'success');
                     } catch (error) {
-                        console.error('Error resetting password:', error);
                         showToast('❌ Có lỗi xảy ra khi reset mật khẩu!', 'error');
                     }
                 }
             );
+        }
+        return true;
+    }
+
+    if (target.closest('.delete-course-btn')) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        const courseId = target.closest('.delete-course-btn').dataset.id;
+        const courseToDelete = courses.find(c => c.id === courseId);
+        if (courseToDelete) {
+            showModal(renderDeleteCourseConfirmModal(courseId, courseToDelete.title));
+        }
+        return true;
+    }
+
+    if (target.closest('#confirm-delete-course-btn')) {
+        const courseId = target.closest('#confirm-delete-course-btn').dataset.courseId;
+        const password = document.getElementById('admin-password-course-confirm').value;
+        
+        if (password === currentUser.password) {
+            try {
+                const batch = writeBatch(db);
+                
+                // Xóa tất cả bài học của khóa học
+                const courseLessons = lessons.filter(l => l.courseId === courseId);
+                courseLessons.forEach(lesson => {
+                    batch.delete(doc(db, 'lessons', lesson.id));
+                });
+                
+                // Xóa tất cả ghi danh
+                const courseEnrollments = enrollments.filter(e => e.courseId === courseId);
+                courseEnrollments.forEach(enrollment => {
+                    batch.delete(doc(db, 'enrollments', enrollment.id));
+                });
+                
+                // Xóa tất cả tiến độ liên quan
+                const courseProgress = progress.filter(p => courseLessons.some(l => l.id === p.lessonId));
+                courseProgress.forEach(prog => {
+                    batch.delete(doc(db, 'progress', prog.id));
+                });
+                
+                // Xóa khóa học
+                batch.delete(doc(db, 'courses', courseId));
+                
+                await batch.commit();
+                
+                // Update local data
+                const updatedCourses = courses.filter(c => c.id !== courseId);
+                setCourses(updatedCourses);
+                
+                closeModal();
+                showToast('✅ Xóa khóa học thành công!', 'success');
+                
+                // Refresh dashboard
+                setTimeout(() => {
+                    renderAdminDashboard();
+                }, 500);
+            } catch (error) {
+                showToast('❌ Có lỗi khi xóa khóa học', 'error');
+            }
+        } else {
+            document.getElementById('delete-course-error').textContent = 'Mật khẩu không chính xác!';
+            document.getElementById('delete-course-error').classList.remove('hidden');
         }
         return true;
     }
@@ -800,7 +1022,6 @@ export const handleAdminClickEvents = async (e) => {
                     await batch.commit();
                     showToast(`✅ Đã xóa ${student?.name} khỏi khóa học`, 'success');
                 } catch (error) {
-                    console.error('Error deleting student from course:', error);
                     showToast('Có lỗi khi xóa học sinh', 'error');
                 }
             }
@@ -816,6 +1037,18 @@ export const handleAdminClickEvents = async (e) => {
 // ═══════════════════════════════════════════════════════════════════════════════════
 
 export const initAdminListeners = () => {
+    // Chỉ gắn listener 1 lần duy nhất
+    if (adminListenersInitialized) {
+        return;
+    }
+    
+    adminListenersInitialized = true;
+    
+    // Main click handler - gắn 1 lần duy nhất
+    document.body.addEventListener('click', async (e) => {
+        await handleAdminClickEvents(e);
+    }, true);
+
     // Teacher search listener
     document.body.addEventListener('input', (e) => {
         if (e.target.id === 'teacher-search') {
@@ -829,7 +1062,6 @@ export const initAdminListeners = () => {
                 item.style.display = matches ? 'block' : 'none';
                 if (matches) visibleCount++;
             });
-            // Show message if no results
             const teacherList = document.getElementById('teacher-list');
             if (teacherList && visibleCount === 0) {
                 let noResultMsg = teacherList.querySelector('.no-result-teacher');
@@ -859,7 +1091,6 @@ export const initAdminListeners = () => {
                 item.style.display = matches ? 'block' : 'none';
                 if (matches) visibleCount++;
             });
-            // Show message if no results
             const studentList = document.getElementById('student-list');
             if (studentList && visibleCount === 0) {
                 let noResultMsg = studentList.querySelector('.no-result-student');
