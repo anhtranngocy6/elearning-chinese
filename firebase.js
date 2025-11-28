@@ -17,13 +17,10 @@ const firebaseConfig = {
     measurementId: "G-VM1MSE4DM3"
 };
 
-console.log('🔥 Firebase - Initializing...');
-
 try {
     const app = initializeApp(firebaseConfig);
     auth = getAuth(app);
     db = getFirestore(app);
-    console.log('✅ Firebase initialized successfully');
 } catch (e) {
     console.error("❌ Firebase initialization error:", e);
     document.getElementById('loading-overlay').innerHTML = '<p class="text-red-500">Lỗi kết nối Firebase. Vui lòng kiểm tra cấu hình.</p>';
@@ -57,23 +54,19 @@ export async function setupFirebaseListeners(callbacks) {
         return;
     }
 
-    console.log('📡 Firebase Listeners - Setting up...');
     let initialLoadComplete = false;
     let allListenersSetUp = false;
 
     onAuthStateChanged(auth, async (user) => {
-        console.log('🔐 Auth state changed - user:', user ? 'exists' : 'null');
         if (user) {
             const collectionsToWatch = ['users', 'courses', 'lessons', 'homeworks', 'progress', 'enrollments'];
             const initialLoads = new Set();
             const collectionData = {};
-            console.log('📚 Watching collections:', collectionsToWatch);
 
             // Timeout fallback: nếu sau 5s chưa load hết, vẫn render login screen
             const loadTimeout = setTimeout(() => {
                 if (!initialLoadComplete && allListenersSetUp) {
                     initialLoadComplete = true;
-                    console.warn('⚠️ Load timeout - hiển thị login screen');
                     
                     setTimeout(() => {
                         const loadingOverlay = document.getElementById('loading-overlay');
