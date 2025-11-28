@@ -61,10 +61,7 @@ import {
 //   - teacher.js: initTeacherListeners() - score input, filter change
 // ═══════════════════════════════════════════════════════════════════════════════════
 
-console.log('🚀 SmartEdu App - Initializing...');
-
 // Auth listeners
-console.log('📍 Initializing auth listeners...');
 initAuthListeners({
     getUsers,
     setCurrentUser,
@@ -81,14 +78,12 @@ initAuthListeners({
 });
 
 // Global listeners
-console.log('📍 Initializing global listeners...');
 initGlobalListeners({
     handleCancelSubmission,
     closeModal
 });
 
 // Role-specific click dispatcher
-console.log('📍 Initializing role dispatcher listeners...');
 initRoleDispatcherListeners({
     handleAdminClickEvents,
     handleTeacherClickEvents,
@@ -97,20 +92,16 @@ initRoleDispatcherListeners({
 });
 
 // Admin listeners (search, select)
-console.log('📍 Initializing admin listeners...');
 initAdminListeners();
 
 // Teacher listeners (score input, filters)
-console.log('📍 Initializing teacher listeners...');
 initTeacherListeners();
 
 // ═══════════════════════════════════════════════════════════════════════════════════
 // 🚀 FIREBASE INITIALIZATION & SESSION MANAGEMENT
 // ═══════════════════════════════════════════════════════════════════════════════════
-console.log('📡 Setting up Firebase listeners...');
 setupFirebaseListeners({
     updateCollectionData: (colName, dataArray) => {
-        console.log(`📥 Data updated for collection: ${colName} (${dataArray.length} items)`);
         if (colName === 'users') setUsers(dataArray);
         else if (colName === 'courses') setCourses(dataArray);
         else if (colName === 'lessons') setLessons(dataArray);
@@ -119,7 +110,6 @@ setupFirebaseListeners({
         else if (colName === 'enrollments') setEnrollments(dataArray);
     },
     restoreSession: (foundUser) => {
-        console.log('♻️ Restoring session for user:', foundUser.name);
         setCurrentUser(foundUser);
         
         // Khôi phục trạng thái view từ localStorage
@@ -128,17 +118,6 @@ setupFirebaseListeners({
         const savedLessonId = localStorage.getItem('currentLessonId');
         const savedStudentId = localStorage.getItem('currentStudentIdForProgress');
         const savedActiveTab = localStorage.getItem('currentActiveTab');
-        
-        console.log('📋 READ from localStorage:', {
-            currentView: savedView,
-            currentCourseId: savedCourseId,
-            currentActiveTab: savedActiveTab
-        });
-        console.log('📋 Type checks:', {
-            viewIsValid: !!(savedView && savedView !== 'login' && savedView !== ''),
-            courseIdIsValid: !!(savedCourseId && savedCourseId !== ''),
-            tabIsValid: !!(savedActiveTab && savedActiveTab !== '')
-        });
         
         // Chỉ khôi phục nếu có giá trị hợp lệ
         if (savedView && savedView !== 'login' && savedView !== '') {
@@ -149,12 +128,9 @@ setupFirebaseListeners({
             // Set activeTab - use saved value if exists, otherwise default to 'overview'
             setCurrentActiveTab(savedActiveTab && savedActiveTab !== '' ? savedActiveTab : 'overview');
             
-            console.log('✅ Session restored - view:', savedView, 'activeTab:', savedActiveTab || 'overview');
-            
             // Đặt cờ để navigate() biết đây là lần khôi phục đầu tiên
             setIsFirstNavigationAfterRestore(true);
         } else {
-            console.log('⚠️ No saved view found, defaulting to dashboard');
             // Nếu không có saved view, mặc định là dashboard
             setCurrentView('dashboard');
             setCurrentActiveTab('overview');
@@ -165,14 +141,12 @@ setupFirebaseListeners({
     clearSession: () => {
         clearAllSessionState();
         clearCurrentUser();
-        console.log('🧹 Session cleared');
     },
     navigate: () => navigate(),
     updateUI: () => updateUI(),
     getCurrentUser: () => getCurrentUser(),
     updateCurrentUser: (refreshedUser) => { setCurrentUser(refreshedUser); },
     handleUserDeleted: () => {
-        console.log('⚠️ Current user was deleted, clearing session');
         clearAllSessionState();
         clearCurrentUser();
         setCurrentView('login');
