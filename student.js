@@ -70,7 +70,7 @@ export const renderCourseCard = (course) => {
              <div class="p-6 flex-grow">
                  <p class="text-sm text-blue-500 font-semibold">${teacher?.name || 'Unknown Teacher'}</p>
                  <h3 class="font-bold text-xl mt-1 text-slate-800">${course.title}</h3>
-                 <p class="text-sm text-slate-600 mt-2 h-10">${course.description}</p>
+                 <p class="text-sm text-slate-600 mt-2 line-clamp-2 whitespace-pre-wrap break-words">${course.description}</p>
              </div>
              <div class="px-6 pb-6">
                  <div class="flex justify-between items-center mb-2">
@@ -102,19 +102,22 @@ export const renderStudentCourseView = (courseId, isRestoring = false) => {
     if (!course) return renderStudentDashboard(); // Fallback
     const courseLessons = lessons.filter(l => l.courseId === courseId).sort((a,b) => (a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0));
     document.title = course.title;
-    appContainer.innerHTML = `<div class="w-full max-w-7xl mx-auto fade-in">${renderHeader(course.title, true)}<div class="bg-white p-8 mt-6 rounded-xl shadow-lg">
-         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-             <div>
-                 <h2 class="text-2xl font-bold">Nội dung khoá học</h2>
-                 <p class="text-slate-600">${course.description}</p>
+    appContainer.innerHTML = `<div class="w-full max-w-7xl mx-auto fade-in">${renderHeader(course.title, true)}<div class="sticky top-20 z-20 bg-gradient-to-b from-white to-white/95 shadow-md rounded-xl mb-6 mt-6">
+         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 p-5 pt-6">
+             <div class="flex-1">
+                 <h2 class="text-2xl font-bold text-slate-800">Nội dung khoá học</h2>
              </div>
-         <div class="flex-shrink-0 flex items-center space-x-2">
-                  <button class="view-course-folder-btn bg-yellow-50 text-yellow-700 font-semibold px-4 py-2 rounded-lg hover:bg-yellow-100 transition-colors" data-course-id="${courseId}"><i class="fab fa-google-drive mr-2"></i>Thư mục lớp học</button>
-                 <button class="view-my-progress-btn bg-blue-50 text-blue-600 font-semibold px-4 py-2 rounded-lg hover:bg-blue-100 transition-colors" data-course-id="${courseId}">
-                     <i class="fas fa-chart-line mr-2"></i>Xem tiến độ
+             <div class="flex-shrink-0 flex items-center gap-2 w-full sm:w-auto flex-wrap sm:flex-nowrap">
+                 <button class="flex-1 sm:flex-none view-course-folder-btn bg-gradient-to-r from-yellow-50 to-yellow-100 text-yellow-700 font-semibold px-4 py-2.5 rounded-lg hover:shadow-md transition-all border border-yellow-200" data-course-id="${courseId}"><i class="fab fa-google-drive mr-2"></i>Thư mục</button>
+                 <button class="flex-1 sm:flex-none view-my-progress-btn bg-gradient-to-r from-blue-50 to-blue-100 text-blue-700 font-semibold px-4 py-2.5 rounded-lg hover:shadow-md transition-all border border-blue-200" data-course-id="${courseId}">
+                     <i class="fas fa-chart-line mr-2"></i>Tiến độ
                  </button>
              </div>
          </div>
+         <div class="px-5 pt-5 pb-5 border-t border-slate-100">
+             <p class="text-sm text-slate-600 whitespace-pre-wrap break-words">${course.description || 'Không có mô tả'}</p>
+         </div>
+    </div><div class="bg-white p-8 rounded-xl shadow-lg">
 
          <div class="space-y-3">${courseLessons.map((lesson, index) => { 
              const progressRecord = progress.find(p => p.lessonId === lesson.id && p.studentId === currentUser.id);

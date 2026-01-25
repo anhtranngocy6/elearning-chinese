@@ -858,6 +858,57 @@ export const handleAdminClickEvents = async (e) => {
         return true;
     }
 
+    if (target.closest('.delete-course-btn')) {
+        const courseId = target.closest('.delete-course-btn').dataset.id;
+        const course = courses.find(c => c.id === courseId);
+        if (course) {
+            showModal(renderDeleteCourseConfirmModal(courseId, course.title));
+        }
+        return true;
+    }
+
+    if (target.closest('#confirm-delete-course-btn')) {
+        e.stopImmediatePropagation();
+        const courseId = target.closest('#confirm-delete-course-btn').dataset.courseId;
+        const password = document.getElementById('admin-password-course-confirm').value;
+        if (password === currentUser.password) {
+            try {
+                const batch = writeBatch(db);
+                const courseLessons = lessons.filter(l => l.courseId === courseId);
+                const courseEnrollments = enrollments.filter(e => e.courseId === courseId);
+                const courseProgress = progress.filter(p => courseLessons.some(l => l.id === p.lessonId));
+                
+                // Xóa tất cả progress của khóa học
+                courseProgress.forEach(p => batch.delete(doc(db, "progress", p.id)));
+                
+                // Xóa tất cả ghi danh của khóa học
+                courseEnrollments.forEach(e => batch.delete(doc(db, "enrollments", e.id)));
+                
+                // Xóa tất cả bài học của khóa học
+                courseLessons.forEach(l => batch.delete(doc(db, "lessons", l.id)));
+                
+                // Xóa khóa học
+                batch.delete(doc(db, "courses", courseId));
+                
+                await batch.commit();
+                
+                closeModal();
+                showToast('✅ Xóa khóa học thành công!', 'success');
+                
+                // Refresh dashboard
+                setTimeout(() => {
+                    renderAdminDashboard();
+                }, 500);
+            } catch (error) {
+                showToast('❌ Có lỗi khi xóa khóa học: ' + error.message, 'error');
+            }
+        } else {
+            document.getElementById('delete-course-error').textContent = 'Mật khẩu không chính xác!';
+            document.getElementById('delete-course-error').classList.remove('hidden');
+        }
+        return true;
+    }
+
     return false;
 };
 
