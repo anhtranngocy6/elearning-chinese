@@ -345,15 +345,120 @@ export const renderTeacherCourseTabs = {
         const lessons = getLessons();
         const homeworks = getHomeworks();
         const courseLessons = lessons.filter(l => l.courseId === courseId).sort((a,b) => (a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0));
+        
+        // Calculate skill distribution
+        const skillCount = { reading: 0, listening: 0, speaking: 0, writing: 0 };
+        let totalSkillSlots = 0;
+        
+        courseLessons.forEach(l => {
+            const skillsToTeach = l.skillsToTeach || [];
+            skillsToTeach.forEach(skill => {
+                if (skill in skillCount) {
+                    skillCount[skill]++;
+                    totalSkillSlots++;
+                }
+            });
+        });
+        
+        // Calculate percentages and find highest/lowest skills
+        const skillPercentages = {};
+        let maxPercentage = 0;
+        let minPercentage = 100;
+        let maxSkill = '';
+        let minSkill = '';
+        
+        Object.keys(skillCount).forEach(skill => {
+            const percentageNum = totalSkillSlots > 0 ? (skillCount[skill] / totalSkillSlots) * 100 : 0;
+            const percentage = percentageNum.toFixed(1);
+            skillPercentages[skill] = percentage;
+            if (skillCount[skill] > 0) {
+                if (percentageNum >= maxPercentage) {
+                    maxPercentage = percentageNum;
+                    maxSkill = skill;
+                }
+                if (percentageNum <= minPercentage) {
+                    minPercentage = percentageNum;
+                    minSkill = skill;
+                }
+            }
+        });
+        
+        // Map skill names
+        const skillNames = { reading: 'Đọc', listening: 'Nghe', speaking: 'Nói', writing: 'Viết' };
+        const maxSkillName = skillNames[maxSkill] || '';
+        const minSkillName = skillNames[minSkill] || '';
+        
+        const skillStatsHtml = totalSkillSlots > 0 ? `
+            <div class="mb-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border-2 border-blue-200">
+                <h4 class="text-lg font-bold text-slate-800 mb-4">📊 Thống kê Kỹ năng</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="p-3 bg-white rounded-lg shadow-sm border-l-4 border-blue-500">
+                            <p class="text-xs text-slate-500">Nghe</p>
+                            <p class="text-2xl font-bold text-blue-600">${skillCount.listening}</p>
+                            <p class="text-xs text-slate-600">${skillPercentages.listening}%</p>
+                        </div>
+                        <div class="p-3 bg-white rounded-lg shadow-sm border-l-4 border-purple-500">
+                            <p class="text-xs text-slate-500">Nói</p>
+                            <p class="text-2xl font-bold text-purple-600">${skillCount.speaking}</p>
+                            <p class="text-xs text-slate-600">${skillPercentages.speaking}%</p>
+                        </div>
+                        <div class="p-3 bg-white rounded-lg shadow-sm border-l-4 border-green-500">
+                            <p class="text-xs text-slate-500">Đọc</p>
+                            <p class="text-2xl font-bold text-green-600">${skillCount.reading}</p>
+                            <p class="text-xs text-slate-600">${skillPercentages.reading}%</p>
+                        </div>
+                        <div class="p-3 bg-white rounded-lg shadow-sm border-l-4 border-orange-500">
+                            <p class="text-xs text-slate-500">Viết</p>
+                            <p class="text-2xl font-bold text-orange-600">${skillCount.writing}</p>
+                            <p class="text-xs text-slate-600">${skillPercentages.writing}%</p>
+                        </div>
+                    </div>
+                    <div class="p-4 bg-gradient-to-br from-amber-50 to-orange-50 rounded-lg border-2 border-amber-300 flex flex-col justify-center">
+                        <div class="mb-4">
+                            <p class="text-sm font-semibold text-slate-700 mb-3">📈 Kỹ năng cao nhất & thấp nhất:</p>
+                            <div class="space-y-2">
+                                <div class="flex justify-between items-center p-2 bg-white rounded border-l-4 border-green-500">
+                                    <span class="text-sm font-medium">🔼 Cao nhất:</span>
+                                    <span class="text-lg font-bold text-green-600">${maxSkillName} (${maxPercentage.toFixed(1)}%)</span>
+                                </div>
+                                <div class="flex justify-between items-center p-2 bg-white rounded border-l-4 border-red-500">
+                                    <span class="text-sm font-medium">🔽 Thấp nhất:</span>
+                                    <span class="text-lg font-bold text-red-600">${minSkillName} (${minPercentage.toFixed(1)}%)</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="p-3 bg-blue-100 rounded border-l-4 border-blue-500">
+                            <p class="text-xs text-blue-800 font-semibold">💡 Khuyến nghị:</p>
+                            <p class="text-xs text-blue-700 mt-1">Hãy thêm bài học tập trung vào <strong>${minSkillName}</strong> để cân bằng hơn với <strong>${maxSkillName}</strong></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="text-xs text-slate-600 space-y-1">
+                    <p><strong>Tổng kỹ năng:</strong> ${totalSkillSlots} (từ ${courseLessons.length} bài học)</p>
+                </div>
+            </div>
+        ` : '';
+        
         return `
         <div>
             <h3 class="text-xl font-bold mb-4">Danh sách bài học</h3>
+            ${skillStatsHtml}
             ${courseLessons.map(l => {
                 const hasHomework = homeworks.some(h => h.lessonId === l.id && h.title && h.description);
                 const homeworkButtonClass = hasHomework ? 'text-green-600 hover:text-green-800' : 'text-red-500 hover:text-red-700';
+                const skillsDisplay = (l.skillsToTeach || []).map(skill => {
+                    const skillNames = { reading: 'Đọc', listening: 'Nghe', speaking: 'Nói', writing: 'Viết' };
+                    const skillColors = { reading: 'bg-green-100 text-green-700', listening: 'bg-blue-100 text-blue-700', speaking: 'bg-purple-100 text-purple-700', writing: 'bg-orange-100 text-orange-700' };
+                    return `<span class="inline-block px-2 py-1 rounded text-xs font-semibold ${skillColors[skill]}">${skillNames[skill]}</span>`;
+                }).join(' ');
+                
                 return `
                 <div class="p-3 bg-slate-50 rounded-lg mb-2 flex justify-between items-center">
-                    <span class="font-medium">${l.title}</span>
+                    <div class="flex-1">
+                        <span class="font-medium">${l.title}</span>
+                        <div class="mt-1 flex gap-2">${skillsDisplay}</div>
+                    </div>
                     <div class="space-x-4">
                         <button class="manage-homework-btn ${homeworkButtonClass} text-sm" data-lesson-id="${l.id}"><i class="fas fa-tasks mr-1"></i>Bài tập</button>
                         <button class="edit-lesson-btn text-gray-500 hover:text-blue-700 text-sm" data-lesson-id="${l.id}"><i class="fas fa-edit mr-1"></i>Chỉnh sửa</button>
@@ -462,11 +567,21 @@ export const renderEditProgressModal = (studentId, lessonId) => {
     if (!student || !lesson) return;
 
     const progressRecord = progress.find(p => p.lessonId === lesson.id && p.studentId === student.id) || {};
-    const { attendanceStatus = '', comment = '', submittedAt = null, isDeadlineMissed = false } = progressRecord;
+    const { attendanceStatus = '', comment = '', submittedAt = null, isDeadlineMissed = false, grade = null } = progressRecord;
     const course = getCourses().find(c => c.id === lesson.courseId);
     const hasSubmitted = !!submittedAt;
 
-    const modalContent = `<div class="bg-white w-full max-w-lg md:max-w-2xl rounded-xl shadow-lg p-8 fade-in max-h-[85vh] overflow-y-auto"><h2 class="text-2xl font-bold mb-2">Cập nhật tiến độ học tập</h2><p class="text-slate-600 mb-8">Học sinh: <strong class="font-semibold">${student.name}</strong></p><div class="space-y-8"><div><p class="block text-sm font-medium text-slate-600 mb-2">Bài học: <strong class="font-semibold text-slate-800">${lesson.title}</strong></p></div><div><label class="block text-sm font-medium text-slate-600 mb-2">Trạng thái nộp bài:</label><div class="flex flex-wrap items-center gap-2"><span class="px-3 py-1 rounded-full ${hasSubmitted ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'} font-semibold text-sm">${hasSubmitted ? '✅ Đã nộp' : '❌ Chưa nộp'}</span>${!hasSubmitted ? `<button id="mark-deadline-missed-btn" class="deadline-missed-btn text-sm px-3 py-1 border rounded-full ${isDeadlineMissed ? 'bg-blue-600 text-white font-bold' : 'bg-white hover:bg-blue-50 text-blue-600 border-blue-300 hover:border-blue-600'} transition-colors" data-is-deadline-missed="${isDeadlineMissed ? 'true' : 'false'}">⏰ Hết hạn nộp</button>` : ''}</div></div><div><label class="block text-sm font-medium text-slate-600 mb-2">Điểm danh:</label><div class="flex flex-wrap items-center gap-2 attendance-btn-group"><button data-status="present" class="attendance-btn text-sm px-3 py-1 border rounded-full ${attendanceStatus === 'present' ? 'attendance-btn-active' : 'bg-white hover:bg-slate-100'}">Có mặt</button><button data-status="absent_excused" class="attendance-btn text-sm px-3 py-1 border rounded-full ${attendanceStatus === 'absent_excused' ? 'attendance-btn-active bg-yellow-500' : 'bg-white hover:bg-slate-100'}">Vắng có phép</button><button data-status="absent_unexcused" class="attendance-btn text-sm px-3 py-1 border rounded-full ${attendanceStatus === 'absent_unexcused' ? 'attendance-btn-active bg-red-500' : 'bg-white hover:bg-slate-100'}">Vắng không phép</button><button data-status="late" class="attendance-btn text-sm px-3 py-1 border rounded-full ${attendanceStatus === 'late' ? 'attendance-btn-active bg-orange-500' : 'bg-white hover:bg-slate-100'}">Không đúng giờ</button></div></div>${course?.courseFolderUrl ? `<div><label class="block text-sm font-medium text-slate-600 mb-2">Bài tập đã nộp:</label><a href="${course.courseFolderUrl}" target="_blank" class="inline-flex items-center bg-yellow-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-yellow-600 transition-colors"><i class="fab fa-google-drive mr-2"></i>Mở thư mục bài tập</a></div>` : ''}<div class="space-y-6"><div><label class="block text-sm font-medium text-slate-600 mb-2">Điểm số:</label><div class="grid grid-cols-2 md:grid-cols-4 gap-4" id="grade-inputs">${lesson.skillsToTeach?.includes('reading') ? `<div><label for="edit-reading-score" class="block text-xs text-slate-500">Đọc</label><input type="number" id="edit-reading-score" class="score-input w-full p-2 border rounded text-center font-bold" value="${progressRecord.grades?.reading ?? ''}"></div>` : `<div style="display: none;"><input type="hidden" id="edit-reading-score" value="0"></div>`}${lesson.skillsToTeach?.includes('listening') ? `<div><label for="edit-listening-score" class="block text-xs text-slate-500">Nghe</label><input type="number" id="edit-listening-score" class="score-input w-full p-2 border rounded text-center font-bold" value="${progressRecord.grades?.listening ?? ''}"></div>` : `<div style="display: none;"><input type="hidden" id="edit-listening-score" value="0"></div>`}${lesson.skillsToTeach?.includes('speaking') ? `<div><label for="edit-speaking-score" class="block text-xs text-slate-500">Nói</label><input type="number" id="edit-speaking-score" class="score-input w-full p-2 border rounded text-center font-bold" value="${progressRecord.grades?.speaking ?? ''}"></div>` : `<div style="display: none;"><input type="hidden" id="edit-speaking-score" value="0"></div>`}${lesson.skillsToTeach?.includes('writing') ? `<div><label for="edit-writing-score" class="block text-xs text-slate-500">Viết</label><input type="number" id="edit-writing-score" class="score-input w-full p-2 border rounded text-center font-bold" value="${progressRecord.grades?.writing ?? ''}"></div>` : `<div style="display: none;"><input type="hidden" id="edit-writing-score" value="0"></div>`}</div><div class="mt-4"><span class="text-sm font-medium text-slate-600">Điểm trung bình: </span><span id="average-score-display" class="font-bold text-2xl text-blue-600">--</span></div></div><div><label for="edit-comment-input" class="block text-sm font-medium text-slate-600 mb-1">Nhận xét:</label><textarea id="edit-comment-input" class="w-full p-3 border rounded-lg text-sm h-40" placeholder="Nhập nhận xét…">${comment}</textarea></div></div></div><div class="mt-8 flex justify-end space-x-3"><button class="cancel-modal-btn px-4 py-2 bg-slate-200 text-slate-800 rounded-lg hover:bg-slate-300">Huỷ</button><button id="save-progress-btn" data-student-id="${studentId}" data-lesson-id="${lessonId}" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold">Lưu thay đổi</button></div></div>`;
+    // Determine submission status: graded, not graded, not submitted, deadline missed
+    let submissionStatus = 'not_submitted';
+    if (isDeadlineMissed && !hasSubmitted) {
+        submissionStatus = 'deadline_missed';
+    } else if (hasSubmitted && grade !== null && grade !== undefined && grade !== '') {
+        submissionStatus = 'graded';
+    } else if (hasSubmitted && (grade === null || grade === undefined || grade === '')) {
+        submissionStatus = 'not_graded';
+    }
+
+    const modalContent = `<div class="bg-white w-full max-w-lg md:max-w-2xl rounded-xl shadow-lg p-8 fade-in max-h-[85vh] overflow-y-auto"><h2 class="text-2xl font-bold mb-2">Cập nhật tiến độ học tập</h2><p class="text-slate-600 mb-8">Học sinh: <strong class="font-semibold">${student.name}</strong></p><div class="space-y-8"><div><p class="block text-sm font-medium text-slate-600 mb-2">Bài học: <strong class="font-semibold text-slate-800">${lesson.title}</strong></p></div><div><label class="block text-sm font-medium text-slate-600 mb-3">Trạng thái nộp bài:</label><div class="flex flex-wrap items-center gap-2 submission-status-group"><button data-submission-status="graded" class="submission-status-btn text-sm px-4 py-2 border rounded-full transition-all ${submissionStatus === 'graded' ? 'bg-green-500 text-white border-green-600 font-bold' : 'bg-white text-slate-700 border-slate-300 hover:border-green-400'}"><i class="fas fa-check-circle mr-2"></i>Đã chấm</button><button data-submission-status="not_graded" class="submission-status-btn text-sm px-4 py-2 border rounded-full transition-all ${submissionStatus === 'not_graded' ? 'bg-yellow-400 text-white border-yellow-600 font-bold' : 'bg-white text-slate-700 border-slate-300 hover:border-yellow-300'}"><i class="fas fa-hourglass-half mr-2"></i>Chưa chấm</button><button data-submission-status="not_submitted" class="submission-status-btn text-sm px-4 py-2 border rounded-full transition-all ${submissionStatus === 'not_submitted' ? 'bg-red-500 text-white border-red-600 font-bold' : 'bg-white text-slate-700 border-slate-300 hover:border-red-300'}"><i class="fas fa-times-circle mr-2"></i>Chưa nộp</button><button data-submission-status="deadline_missed" class="submission-status-btn text-sm px-4 py-2 border rounded-full transition-all ${submissionStatus === 'deadline_missed' ? 'bg-blue-600 text-white border-blue-700 font-bold' : 'bg-white text-slate-700 border-slate-300 hover:border-blue-400'}"><i class="fas fa-clock mr-2"></i>Hết hạn nộp</button></div></div><div><label class="block text-sm font-medium text-slate-600 mb-2">Điểm danh:</label><div class="flex flex-wrap items-center gap-2 attendance-btn-group"><button data-status="present" class="attendance-btn text-sm px-3 py-1 border rounded-full ${attendanceStatus === 'present' ? 'attendance-btn-active' : 'bg-white hover:bg-slate-100'}">Có mặt</button><button data-status="absent_excused" class="attendance-btn text-sm px-3 py-1 border rounded-full ${attendanceStatus === 'absent_excused' ? 'attendance-btn-active bg-yellow-500' : 'bg-white hover:bg-slate-100'}">Vắng có phép</button><button data-status="absent_unexcused" class="attendance-btn text-sm px-3 py-1 border rounded-full ${attendanceStatus === 'absent_unexcused' ? 'attendance-btn-active bg-red-500' : 'bg-white hover:bg-slate-100'}">Vắng không phép</button><button data-status="late" class="attendance-btn text-sm px-3 py-1 border rounded-full ${attendanceStatus === 'late' ? 'attendance-btn-active bg-orange-500' : 'bg-white hover:bg-slate-100'}">Không đúng giờ</button></div></div>${course?.courseFolderUrl ? `<div><label class="block text-sm font-medium text-slate-600 mb-2">Bài tập đã nộp:</label><a href="${course.courseFolderUrl}" target="_blank" class="inline-flex items-center bg-yellow-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-yellow-600 transition-colors"><i class="fab fa-google-drive mr-2"></i>Mở thư mục bài tập</a></div>` : ''}<div class="space-y-6"><div><label class="block text-sm font-medium text-slate-600 mb-2">Điểm số:</label><div class="grid grid-cols-2 md:grid-cols-4 gap-4" id="grade-inputs">${lesson.skillsToTeach?.includes('reading') ? `<div><label for="edit-reading-score" class="block text-xs text-slate-500">Đọc</label><input type="number" id="edit-reading-score" class="score-input w-full p-2 border rounded text-center font-bold" value="${progressRecord.grades?.reading ?? ''}"></div>` : `<div style="display: none;"><input type="hidden" id="edit-reading-score" value="0"></div>`}${lesson.skillsToTeach?.includes('listening') ? `<div><label for="edit-listening-score" class="block text-xs text-slate-500">Nghe</label><input type="number" id="edit-listening-score" class="score-input w-full p-2 border rounded text-center font-bold" value="${progressRecord.grades?.listening ?? ''}"></div>` : `<div style="display: none;"><input type="hidden" id="edit-listening-score" value="0"></div>`}${lesson.skillsToTeach?.includes('speaking') ? `<div><label for="edit-speaking-score" class="block text-xs text-slate-500">Nói</label><input type="number" id="edit-speaking-score" class="score-input w-full p-2 border rounded text-center font-bold" value="${progressRecord.grades?.speaking ?? ''}"></div>` : `<div style="display: none;"><input type="hidden" id="edit-speaking-score" value="0"></div>`}${lesson.skillsToTeach?.includes('writing') ? `<div><label for="edit-writing-score" class="block text-xs text-slate-500">Viết</label><input type="number" id="edit-writing-score" class="score-input w-full p-2 border rounded text-center font-bold" value="${progressRecord.grades?.writing ?? ''}"></div>` : `<div style="display: none;"><input type="hidden" id="edit-writing-score" value="0"></div>`}</div><div class="mt-4"><span class="text-sm font-medium text-slate-600">Điểm trung bình: </span><span id="average-score-display" class="font-bold text-2xl text-blue-600">--</span></div></div><div><label for="edit-comment-input" class="block text-sm font-medium text-slate-600 mb-1">Nhận xét:</label><textarea id="edit-comment-input" class="w-full p-3 border rounded-lg text-sm h-40" placeholder="Nhập nhận xét…">${comment}</textarea></div></div></div><div class="mt-8 flex justify-end space-x-3"><button class="cancel-modal-btn px-4 py-2 bg-slate-200 text-slate-800 rounded-lg hover:bg-slate-300">Huỷ</button><button id="save-progress-btn" data-student-id="${studentId}" data-lesson-id="${lessonId}" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold">Lưu thay đổi</button></div></div>`;
     showModal(modalContent);
     calculateAverageScore();
 };
@@ -879,25 +994,60 @@ export const handleTeacherClickEvents = async (e) => {
         const newComment = document.getElementById('edit-comment-input').value;
         const activeButton = document.querySelector('.attendance-btn.attendance-btn-active');
         const newStatus = activeButton ? activeButton.dataset.status : null;
-        const isDeadlineMissedBtn = document.querySelector('.deadline-missed-btn');
-        const isDeadlineMissed = isDeadlineMissedBtn ? (isDeadlineMissedBtn.dataset.isDeadlineMissed === 'true') : false;
+        const submissionStatusBtn = document.querySelector('.submission-status-btn.submission-status-active');
+        const submissionStatus = submissionStatusBtn ? submissionStatusBtn.dataset.submissionStatus : null;
         
         if (!newStatus) {
             showToast('Vui lòng chọn trạng thái điểm danh', 'error');
             return true;
         }
+        
+        if (!submissionStatus) {
+            showToast('Vui lòng chọn trạng thái nộp bài', 'error');
+            return true;
+        }
 
+        // Convert submission status to submittedAt and isDeadlineMissed fields
+        let submittedAt = null;
+        let isDeadlineMissed = false;
+        
+        if (submissionStatus === 'graded' || submissionStatus === 'not_graded') {
+            submittedAt = existingRecord.submittedAt || new Date().toISOString();
+            isDeadlineMissed = false;
+        } else if (submissionStatus === 'deadline_missed') {
+            submittedAt = null;
+            isDeadlineMissed = true;
+        } else if (submissionStatus === 'not_submitted') {
+            submittedAt = null;
+            isDeadlineMissed = false;
+        }
+
+        // Build data to save
         const dataToSave = {
-            grade: averageScore,
-            grades: newGrades,
+            grade: submissionStatus === 'graded' ? averageScore : null,
+            grades: submissionStatus === 'graded' ? newGrades : null,
             comment: newComment,
             attendanceStatus: newStatus,
             studentId,
             lessonId,
             courseId: getCurrentCourseId(),
-            ...(existingRecord.submittedAt && { submittedAt: existingRecord.submittedAt }),
-            ...(isDeadlineMissed && { isDeadlineMissed: true })
         };
+        
+        // Handle submittedAt field
+        if (submittedAt) {
+            dataToSave.submittedAt = submittedAt;
+        } else {
+            // Delete submittedAt if it exists
+            dataToSave.submittedAt = deleteField();
+        }
+        
+        // Handle isDeadlineMissed field
+        if (isDeadlineMissed) {
+            dataToSave.isDeadlineMissed = true;
+        } else {
+            // Delete isDeadlineMissed if it exists
+            dataToSave.isDeadlineMissed = deleteField();
+        }
 
         const docId = existingRecord.id || `${lessonId}_${studentId}`;
         
@@ -938,21 +1088,35 @@ export const initTeacherListeners = () => {
         }
     });
 
-    // Deadline missed button listener
+    // Submission status button listener
     document.body.addEventListener('click', (e) => {
-        if (e.target.closest('.deadline-missed-btn')) {
-            const btn = e.target.closest('.deadline-missed-btn');
-            const currentState = btn.dataset.isDeadlineMissed === 'true';
-            const newState = !currentState;
-            btn.dataset.isDeadlineMissed = newState ? 'true' : 'false';
+        if (e.target.closest('.submission-status-btn')) {
+            const group = e.target.closest('.submission-status-group');
+            if (!group) return;
             
-            if (newState) {
-                btn.classList.add('bg-blue-600', 'text-white', 'font-bold');
-                btn.classList.remove('bg-white', 'hover:bg-blue-50', 'text-blue-600', 'border-blue-300', 'hover:border-blue-600');
-            } else {
-                btn.classList.add('bg-white', 'hover:bg-blue-50', 'text-blue-600', 'border-blue-300', 'hover:border-blue-600');
-                btn.classList.remove('bg-blue-600', 'text-white', 'font-bold');
+            group.querySelectorAll('.submission-status-btn').forEach(btn => {
+                btn.classList.remove('submission-status-active', 'bg-green-500', 'text-white', 'border-green-600', 'font-bold', 'bg-yellow-400', 'border-yellow-600', 'bg-red-500', 'border-red-600', 'bg-blue-600', 'border-blue-700');
+                btn.classList.add('bg-white', 'text-slate-700', 'border-slate-300');
+            });
+            
+            const btn = e.target.closest('.submission-status-btn');
+            const status = btn.dataset.submissionStatus;
+            
+            btn.classList.add('submission-status-active', 'text-white', 'font-bold');
+            btn.classList.remove('bg-white', 'text-slate-700', 'border-slate-300');
+            
+            if (status === 'graded') {
+                btn.classList.add('bg-green-500', 'border-green-600');
+            } else if (status === 'not_graded') {
+                btn.classList.add('bg-yellow-400', 'border-yellow-600');
+            } else if (status === 'not_submitted') {
+                btn.classList.add('bg-red-500', 'border-red-600');
+            } else if (status === 'deadline_missed') {
+                btn.classList.add('bg-blue-600', 'border-blue-700');
             }
+            
+            // Update average score and enable/disable inputs
+            calculateAverageScore();
         }
     });
 

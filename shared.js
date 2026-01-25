@@ -176,17 +176,38 @@ export const getYoutubeEmbedUrl = (url) => {
 // ═══════════════════════════════════════════════════════════════════════════════════
 
 export const calculateAverageScore = () => {
-    const scores = [];
+    const submissionStatusBtn = document.querySelector('.submission-status-btn.submission-status-active');
+    const submissionStatus = submissionStatusBtn ? submissionStatusBtn.dataset.submissionStatus : null;
+    
     const readingInput = document.getElementById('edit-reading-score');
     const listeningInput = document.getElementById('edit-listening-score');
     const speakingInput = document.getElementById('edit-speaking-score');
     const writingInput = document.getElementById('edit-writing-score');
-
-    // Chỉ tính kỹ năng có input field (không bị ẩn)
-    if (readingInput && readingInput.offsetParent !== null && readingInput.value) scores.push(parseFloat(readingInput.value));
-    if (listeningInput && listeningInput.offsetParent !== null && listeningInput.value) scores.push(parseFloat(listeningInput.value));
-    if (speakingInput && speakingInput.offsetParent !== null && speakingInput.value) scores.push(parseFloat(speakingInput.value));
-    if (writingInput && writingInput.offsetParent !== null && writingInput.value) scores.push(parseFloat(writingInput.value));
+    
+    // Enable/disable score inputs based on submission status
+    const scoreInputs = [readingInput, listeningInput, speakingInput, writingInput];
+    const isGraded = submissionStatus === 'graded';
+    
+    scoreInputs.forEach(input => {
+        if (input && input.offsetParent !== null) {
+            input.disabled = !isGraded;
+            if (!isGraded) {
+                input.classList.add('opacity-50', 'cursor-not-allowed');
+            } else {
+                input.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        }
+    });
+    
+    const scores = [];
+    
+    // Chỉ tính điểm khi trạng thái là "Đã chấm"
+    if (isGraded) {
+        if (readingInput && readingInput.offsetParent !== null && readingInput.value) scores.push(parseFloat(readingInput.value));
+        if (listeningInput && listeningInput.offsetParent !== null && listeningInput.value) scores.push(parseFloat(listeningInput.value));
+        if (speakingInput && speakingInput.offsetParent !== null && speakingInput.value) scores.push(parseFloat(speakingInput.value));
+        if (writingInput && writingInput.offsetParent !== null && writingInput.value) scores.push(parseFloat(writingInput.value));
+    }
     
     const averageDisplay = document.getElementById('average-score-display');
     if (!averageDisplay) return;
