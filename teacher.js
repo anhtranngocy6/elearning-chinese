@@ -1,6 +1,6 @@
 // teacher.js - Teacher dashboard and course management functions
 
-import { renderHeader, showToast, showModal, closeModal, renderCharts, getSkillColorClass, calculateAverageScore, renderConfirmModal, saveSessionToLocalStorage } from './shared.js';
+import { renderHeader, showToast, showModal, closeModal, renderCharts, getSkillColorClass, calculateAverageScore, renderConfirmModal, saveSessionToLocalStorage, calculateSkillAverages } from './shared.js';
 import { 
     getUsers, setCourses, getLessons, setLessons,
     getProgress, getEnrollments, getHomeworks,
@@ -17,18 +17,15 @@ import { navigate } from './navigation.js';
 // ═══════════════════════════════════════════════════════════════════════════════════
 
 export const renderTeacherDashboard = (appContainerEl = document.getElementById('app')) => {
-    console.log('🏠 renderTeacherDashboard called - currentView:', getCurrentView());
     if (getCurrentView() !== 'course' && getCurrentView() !== 'studentProgress' && getCurrentView() !== 'studentReport') {
-        console.log('📝 Setting view to dashboard');
         setCurrentView('dashboard');
         saveSessionToLocalStorage();
     }
     document.title = "Teacher Dashboard | SmartEdu x AT";
-    console.log('✅ renderTeacherDashboard completed');
     const users = getUsers();
     const myCourses = getCourses().filter(c => c.createdBy === getCurrentUser().id);
     const currentUser = getCurrentUser();
-    appContainerEl.innerHTML = `<div class="w-full max-w-7xl mx-auto fade-in">${renderHeader('Teacher Dashboard')}<div class="grid grid-cols-1 md:grid-cols-3 gap-8 mt-6"><div class="md:col-span-2 bg-white p-6 rounded-xl shadow-lg"><h2 class="text-2xl font-bold mb-4">Khoá học của tôi</h2><div class="space-y-3">${myCourses.length > 0 ? myCourses.map(c => `<div class="p-4 bg-slate-50 rounded-lg flex justify-between items-center"><div><h3 class="font-semibold text-lg">${c.title}</h3><p class="text-sm text-slate-500 truncate">${c.description}</p></div><div class="space-x-2 flex-shrink-0"><button class="edit-course-btn text-gray-500 hover:text-blue-700" data-id="${c.id}" title="Chỉnh sửa thông tin"><i class="fas fa-pen"></i></button><button class="manage-course-btn bg-blue-50 text-blue-600 px-4 py-1 rounded-full border border-blue-200 font-semibold text-sm hover:bg-blue-100" data-id="${c.id}">Quản lý</button></div></div>`).join('') : '<p class="text-slate-500">Bạn chưa tạo khoá học nào.</p>'}</div></div><div class="bg-white p-6 rounded-xl shadow-lg h-fit"><h2 class="text-2xl font-bold mb-4">Tạo khoá học mới</h2><div class="space-y-3"><input type="text" id="new-course-title" placeholder="Tiêu đề khoá học" class="w-full p-2 border rounded-lg"><textarea id="new-course-desc" placeholder="Mô tả khoá học" class="w-full p-2 border rounded-lg h-24"></textarea><input type="text" id="new-course-script-url" placeholder="URL Google Apps Script Web App (bắt buộc)" class="w-full p-2 border rounded-lg" title="URL để tạo folder khóa học tự động"><button id="add-course-btn" class="w-full bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700">Tạo mới</button></div></div></div></div>`;
+    appContainerEl.innerHTML = `<div class="w-full max-w-7xl mx-auto fade-in">${renderHeader('Teacher Dashboard')}<div class="grid grid-cols-1 md:grid-cols-3 gap-8 mt-6"><div class="md:col-span-2 bg-white p-6 rounded-xl shadow-lg"><h2 class="text-2xl font-bold mb-4">Khoá học của tôi</h2><div class="space-y-3">${myCourses.length > 0 ? myCourses.map(c => `<div class="p-4 bg-slate-50 rounded-lg flex justify-between items-start gap-4"><div class="flex-1 min-w-0"><h3 class="font-semibold text-lg">${c.title}</h3><p class="text-sm text-slate-500 line-clamp-2 mt-1">${c.description}</p></div><div class="space-x-2 flex-shrink-0 flex"><button class="edit-course-btn text-gray-500 hover:text-blue-700" data-id="${c.id}" title="Chỉnh sửa thông tin"><i class="fas fa-pen"></i></button><button class="manage-course-btn bg-blue-50 text-blue-600 px-4 py-1 rounded-full border border-blue-200 font-semibold text-sm hover:bg-blue-100 whitespace-nowrap" data-id="${c.id}">Quản lý</button></div></div>`).join('') : '<p class="text-slate-500">Bạn chưa tạo khoá học nào.</p>'}</div></div><div class="bg-white p-6 rounded-xl shadow-lg h-fit"><h2 class="text-2xl font-bold mb-4">Tạo khoá học mới</h2><div class="space-y-3"><input type="text" id="new-course-title" placeholder="Tiêu đề khoá học" class="w-full p-2 border rounded-lg"><textarea id="new-course-desc" placeholder="Mô tả khoá học" class="w-full p-2 border rounded-lg h-24"></textarea><input type="text" id="new-course-script-url" placeholder="URL Google Apps Script Web App (bắt buộc)" class="w-full p-2 border rounded-lg" title="URL để tạo folder khóa học tự động"><button id="add-course-btn" class="w-full bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700">Tạo mới</button></div></div></div></div>`;
 };
 
 export const renderEditCourseModal = (courseId) => {
@@ -74,7 +71,6 @@ export const renderEditCourseModal = (courseId) => {
 };
 
 export const renderTeacherCourseManagement = (courseId, isRestoring = false) => {
-    console.log('🔧 renderTeacherCourseManagement called - courseId:', courseId, 'isRestoring:', isRestoring);
     if (!isRestoring) {
         setCurrentView('course');
     }
@@ -85,7 +81,6 @@ export const renderTeacherCourseManagement = (courseId, isRestoring = false) => 
     
     const appContainer = document.getElementById('app');
     const currentActiveTab = getCurrentActiveTab();
-    console.log('📍 Current active tab in renderTeacherCourseManagement:', currentActiveTab);
     appContainer.innerHTML = `
          <div class="w-full max-w-7xl mx-auto fade-in">
              ${renderHeader(course.title, true)}
@@ -167,7 +162,7 @@ export const renderTeacherCourseTabs = {
             : allLessonsWithHomework.filter(l => l.id === overviewFilterLessonId);
         
         // ...existing code...
-        let totalSubmissions = 0, totalGraded = 0;
+        let totalSubmissions = 0, totalGraded = 0, totalDeadlineMissedForGrading = 0;
         let totalPresent = 0, totalLate = 0, totalAbsentExcused = 0, totalAbsentUnexcused = 0;
         const totalPossibleSubmissions = enrolledStudents.length * lessonsForStats.length;
         const totalAttendanceSlots = enrolledStudents.length * allLessonsInCourse.length;
@@ -177,6 +172,8 @@ export const renderTeacherCourseTabs = {
         enrolledStudents.forEach(student => {
             lessonsForStats.forEach(lesson => {
                 const progressRecord = progress.find(p => p.studentId === student.id && p.lessonId === lesson.id);
+                
+                // Nếu đã nộp
                 if (progressRecord?.submittedAt) {
                     totalSubmissions++;
                     if (progressRecord.grade != null) {
@@ -188,6 +185,16 @@ export const renderTeacherCourseTabs = {
                             allWritingScores.push(progressRecord.grades.writing ?? 0);
                         }
                     }
+                }
+                // Nếu chưa nộp nhưng giáo viên đánh dấu hết hạn → tính 0
+                else if (!progressRecord?.submittedAt && progressRecord?.isDeadlineMissed) {
+                    totalSubmissions++;
+                    totalGraded++;
+                    totalDeadlineMissedForGrading++;
+                    allReadingScores.push(0);
+                    allListeningScores.push(0);
+                    allSpeakingScores.push(0);
+                    allWritingScores.push(0);
                 }
             });
             allLessonsInCourse.forEach(lesson => {
@@ -214,7 +221,7 @@ export const renderTeacherCourseTabs = {
         
         const chartData = {
             submission: { labels: ['Đã nộp', 'Chưa nộp'], datasets: [{ data: [totalSubmissions, totalPossibleSubmissions > totalSubmissions ? totalPossibleSubmissions - totalSubmissions : 0], backgroundColor: ['#3b82f6', '#e2e8f0']}] },
-            grading: { labels: ['Đã chấm', 'Chưa chấm'], datasets: [{ data: [totalGraded, totalSubmissions - totalGraded], backgroundColor: ['#22c55e', '#facc15']}] },
+            grading: { labels: ['Đã chấm', 'Chưa chấm', 'Hết hạn chấm'], datasets: [{ data: [totalGraded - totalDeadlineMissedForGrading, totalSubmissions - totalGraded, totalDeadlineMissedForGrading], backgroundColor: ['#22c55e', '#facc15', '#3b82f6']}] },
             attendance: { labels: ['Có mặt', 'Đi trễ', 'Vắng có phép', 'Vắng không phép', 'Chưa điểm danh'], datasets: [{ data: [totalPresent, totalLate, totalAbsentExcused, totalAbsentUnexcused, totalNotRecorded], backgroundColor: ['#22c55e', '#f97316', '#facc15', '#ef4444', '#e2e8f0'] }] },
             skills: { labels: ['Đọc', 'Nghe', 'Nói', 'Viết'], datasets: [{ label: 'Điểm trung bình', data: [classAvgReading, classAvgListening, classAvgSpeaking, classAvgWriting], backgroundColor: 'rgba(59, 130, 246, 0.2)', borderColor: 'rgba(59, 130, 246, 1)', pointBackgroundColor: 'rgba(59, 130, 246, 1)', }] }
         };
@@ -223,7 +230,7 @@ export const renderTeacherCourseTabs = {
             ? allLessonsWithHomework 
             : allLessonsWithHomework.filter(l => l.id === overviewFilterLessonId);
 
-        const filterMessage = "Nhấn vào ô để chỉnh sửa nhanh. 🟢 Xanh = đã chấm | 🟡 Vàng = chưa chấm | 🔴 Đỏ = chưa nộp";
+        const filterMessage = "Nhấn vào ô để chỉnh sửa nhanh. 🟢 Xanh = đã chấm | 🟡 Vàng = chưa chấm | 🔴 Đỏ = chưa nộp | 🔵 Xanh dương = hết hạn nộp";
 
         // Heatmap view (12 bài 1 dòng, xuống hàng khi vượt quá)
         const heatmapView = enrolledStudents.length > 0 
@@ -235,6 +242,7 @@ export const renderTeacherCourseTabs = {
                         <div class="flex items-center gap-3"><div class="w-4 h-4 bg-green-400 rounded-full shadow-md"></div><span>Đã chấm</span></div>
                         <div class="flex items-center gap-3"><div class="w-4 h-4 bg-yellow-300 rounded-full shadow-md"></div><span>Chưa chấm</span></div>
                         <div class="flex items-center gap-3"><div class="w-4 h-4 bg-red-400 rounded-full shadow-md"></div><span>Chưa nộp</span></div>
+                        <div class="flex items-center gap-3"><div class="w-4 h-4 bg-blue-600 rounded-full shadow-md"></div><span>Hết hạn nộp</span></div>
                     </div>
                 </div>
 
@@ -266,30 +274,26 @@ export const renderTeacherCourseTabs = {
                                     scoredCount++;
                                 }
                             }
+                            // Nếu hết hạn nộp → tính 0
+                            else if (progressRecord?.isDeadlineMissed) {
+                                dotClass = 'bg-blue-600';
+                                tooltipText = '⏰ Hết hạn nộp';
+                                totalScore += 0;
+                                scoredCount++;
+                            }
                             
                             return '<div class="flex flex-col items-center edit-progress-shortcut-btn cursor-pointer group" data-student-id="' + student.id + '" data-lesson-id="' + lesson.id + '" title="' + tooltipText + ' - ' + lesson.title + '"><div class="w-6 h-6 rounded-full ' + dotClass + ' hover:scale-125 transition-all shadow-md ring-1 ring-offset-1 ring-white hover:ring-blue-400 group-hover:shadow-lg"></div><span class="text-xs font-bold text-slate-700 mt-1">' + (idx + 1) + '</span></div>';
                         }).join('');
                         
                         const avgScore = scoredCount > 0 ? (totalScore / scoredCount).toFixed(1) : '--';
                         
-                        // Calculate skill averages for this student
-                        const studentSkillTotals = { reading: 0, listening: 0, speaking: 0, writing: 0 };
-                        let gradedCount = 0;
-                        lessonsForTable.forEach(lesson => {
-                            const pRecord = progress.find(p => p.studentId === student.id && p.lessonId === lesson.id && p.submittedAt && p.grade != null);
-                            if (pRecord) {
-                                studentSkillTotals.reading += pRecord.grades?.reading ?? 0;
-                                studentSkillTotals.listening += pRecord.grades?.listening ?? 0;
-                                studentSkillTotals.speaking += pRecord.grades?.speaking ?? 0;
-                                studentSkillTotals.writing += pRecord.grades?.writing ?? 0;
-                                gradedCount++;
-                            }
-                        });
-                        
-                        const readingAvg = gradedCount > 0 ? (studentSkillTotals.reading / gradedCount).toFixed(1) : '--';
-                        const listeningAvg = gradedCount > 0 ? (studentSkillTotals.listening / gradedCount).toFixed(1) : '--';
-                        const speakingAvg = gradedCount > 0 ? (studentSkillTotals.speaking / gradedCount).toFixed(1) : '--';
-                        const writingAvg = gradedCount > 0 ? (studentSkillTotals.writing / gradedCount).toFixed(1) : '--';
+                        // Calculate skill averages using shared utility function
+                        const studentProgress = progress.filter(p => p.studentId === student.id && lessonsForTable.some(l => l.id === p.lessonId));
+                        const skillAverages = calculateSkillAverages(lessonsForTable, studentProgress);
+                        const readingAvg = skillAverages.reading;
+                        const listeningAvg = skillAverages.listening;
+                        const speakingAvg = skillAverages.speaking;
+                        const writingAvg = skillAverages.writing;
                         
                         const skillsHtml = `<div class="flex flex-col gap-6 items-center justify-center">
                             <div class="flex gap-6">
@@ -458,10 +462,11 @@ export const renderEditProgressModal = (studentId, lessonId) => {
     if (!student || !lesson) return;
 
     const progressRecord = progress.find(p => p.lessonId === lesson.id && p.studentId === student.id) || {};
-    const { attendanceStatus = '', comment = '' } = progressRecord;
+    const { attendanceStatus = '', comment = '', submittedAt = null, isDeadlineMissed = false } = progressRecord;
     const course = getCourses().find(c => c.id === lesson.courseId);
+    const hasSubmitted = !!submittedAt;
 
-    const modalContent = `<div class="bg-white w-full max-w-lg md:max-w-2xl rounded-xl shadow-lg p-8 fade-in max-h-[85vh] overflow-y-auto"><h2 class="text-2xl font-bold mb-2">Cập nhật tiến độ học tập</h2><p class="text-slate-600 mb-8">Học sinh: <strong class="font-semibold">${student.name}</strong></p><div class="space-y-8"><div><p class="block text-sm font-medium text-slate-600 mb-2">Bài học: <strong class="font-semibold text-slate-800">${lesson.title}</strong></p></div><div><label class="block text-sm font-medium text-slate-600 mb-2">Điểm danh:</label><div class="flex flex-wrap items-center gap-2 attendance-btn-group"><button data-status="present" class="attendance-btn text-sm px-3 py-1 border rounded-full ${attendanceStatus === 'present' ? 'attendance-btn-active' : 'bg-white hover:bg-slate-100'}">Có mặt</button><button data-status="absent_excused" class="attendance-btn text-sm px-3 py-1 border rounded-full ${attendanceStatus === 'absent_excused' ? 'attendance-btn-active bg-yellow-500' : 'bg-white hover:bg-slate-100'}">Vắng có phép</button><button data-status="absent_unexcused" class="attendance-btn text-sm px-3 py-1 border rounded-full ${attendanceStatus === 'absent_unexcused' ? 'attendance-btn-active bg-red-500' : 'bg-white hover:bg-slate-100'}">Vắng không phép</button><button data-status="late" class="attendance-btn text-sm px-3 py-1 border rounded-full ${attendanceStatus === 'late' ? 'attendance-btn-active bg-orange-500' : 'bg-white hover:bg-slate-100'}">Không đúng giờ</button></div></div>${course?.courseFolderUrl ? `<div><label class="block text-sm font-medium text-slate-600 mb-2">Bài tập đã nộp:</label><a href="${course.courseFolderUrl}" target="_blank" class="inline-flex items-center bg-yellow-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-yellow-600 transition-colors"><i class="fab fa-google-drive mr-2"></i>Mở thư mục bài tập</a></div>` : ''}<div class="space-y-6"><div><label class="block text-sm font-medium text-slate-600 mb-2">Điểm số:</label><div class="grid grid-cols-2 md:grid-cols-4 gap-4" id="grade-inputs">${lesson.skillsToTeach?.includes('reading') ? `<div><label for="edit-reading-score" class="block text-xs text-slate-500">Đọc</label><input type="number" id="edit-reading-score" class="score-input w-full p-2 border rounded text-center font-bold" value="${progressRecord.grades?.reading ?? ''}"></div>` : `<div style="display: none;"><input type="hidden" id="edit-reading-score" value="0"></div>`}${lesson.skillsToTeach?.includes('listening') ? `<div><label for="edit-listening-score" class="block text-xs text-slate-500">Nghe</label><input type="number" id="edit-listening-score" class="score-input w-full p-2 border rounded text-center font-bold" value="${progressRecord.grades?.listening ?? ''}"></div>` : `<div style="display: none;"><input type="hidden" id="edit-listening-score" value="0"></div>`}${lesson.skillsToTeach?.includes('speaking') ? `<div><label for="edit-speaking-score" class="block text-xs text-slate-500">Nói</label><input type="number" id="edit-speaking-score" class="score-input w-full p-2 border rounded text-center font-bold" value="${progressRecord.grades?.speaking ?? ''}"></div>` : `<div style="display: none;"><input type="hidden" id="edit-speaking-score" value="0"></div>`}${lesson.skillsToTeach?.includes('writing') ? `<div><label for="edit-writing-score" class="block text-xs text-slate-500">Viết</label><input type="number" id="edit-writing-score" class="score-input w-full p-2 border rounded text-center font-bold" value="${progressRecord.grades?.writing ?? ''}"></div>` : `<div style="display: none;"><input type="hidden" id="edit-writing-score" value="0"></div>`}</div><div class="mt-4"><span class="text-sm font-medium text-slate-600">Điểm trung bình: </span><span id="average-score-display" class="font-bold text-2xl text-blue-600">--</span></div></div><div><label for="edit-comment-input" class="block text-sm font-medium text-slate-600 mb-1">Nhận xét:</label><textarea id="edit-comment-input" class="w-full p-3 border rounded-lg text-sm h-40" placeholder="Nhập nhận xét…">${comment}</textarea></div></div></div><div class="mt-8 flex justify-end space-x-3"><button class="cancel-modal-btn px-4 py-2 bg-slate-200 text-slate-800 rounded-lg hover:bg-slate-300">Huỷ</button><button id="save-progress-btn" data-student-id="${studentId}" data-lesson-id="${lessonId}" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold">Lưu thay đổi</button></div></div>`;
+    const modalContent = `<div class="bg-white w-full max-w-lg md:max-w-2xl rounded-xl shadow-lg p-8 fade-in max-h-[85vh] overflow-y-auto"><h2 class="text-2xl font-bold mb-2">Cập nhật tiến độ học tập</h2><p class="text-slate-600 mb-8">Học sinh: <strong class="font-semibold">${student.name}</strong></p><div class="space-y-8"><div><p class="block text-sm font-medium text-slate-600 mb-2">Bài học: <strong class="font-semibold text-slate-800">${lesson.title}</strong></p></div><div><label class="block text-sm font-medium text-slate-600 mb-2">Trạng thái nộp bài:</label><div class="flex flex-wrap items-center gap-2"><span class="px-3 py-1 rounded-full ${hasSubmitted ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'} font-semibold text-sm">${hasSubmitted ? '✅ Đã nộp' : '❌ Chưa nộp'}</span>${!hasSubmitted ? `<button id="mark-deadline-missed-btn" class="deadline-missed-btn text-sm px-3 py-1 border rounded-full ${isDeadlineMissed ? 'bg-blue-600 text-white font-bold' : 'bg-white hover:bg-blue-50 text-blue-600 border-blue-300 hover:border-blue-600'} transition-colors" data-is-deadline-missed="${isDeadlineMissed ? 'true' : 'false'}">⏰ Hết hạn nộp</button>` : ''}</div></div><div><label class="block text-sm font-medium text-slate-600 mb-2">Điểm danh:</label><div class="flex flex-wrap items-center gap-2 attendance-btn-group"><button data-status="present" class="attendance-btn text-sm px-3 py-1 border rounded-full ${attendanceStatus === 'present' ? 'attendance-btn-active' : 'bg-white hover:bg-slate-100'}">Có mặt</button><button data-status="absent_excused" class="attendance-btn text-sm px-3 py-1 border rounded-full ${attendanceStatus === 'absent_excused' ? 'attendance-btn-active bg-yellow-500' : 'bg-white hover:bg-slate-100'}">Vắng có phép</button><button data-status="absent_unexcused" class="attendance-btn text-sm px-3 py-1 border rounded-full ${attendanceStatus === 'absent_unexcused' ? 'attendance-btn-active bg-red-500' : 'bg-white hover:bg-slate-100'}">Vắng không phép</button><button data-status="late" class="attendance-btn text-sm px-3 py-1 border rounded-full ${attendanceStatus === 'late' ? 'attendance-btn-active bg-orange-500' : 'bg-white hover:bg-slate-100'}">Không đúng giờ</button></div></div>${course?.courseFolderUrl ? `<div><label class="block text-sm font-medium text-slate-600 mb-2">Bài tập đã nộp:</label><a href="${course.courseFolderUrl}" target="_blank" class="inline-flex items-center bg-yellow-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-yellow-600 transition-colors"><i class="fab fa-google-drive mr-2"></i>Mở thư mục bài tập</a></div>` : ''}<div class="space-y-6"><div><label class="block text-sm font-medium text-slate-600 mb-2">Điểm số:</label><div class="grid grid-cols-2 md:grid-cols-4 gap-4" id="grade-inputs">${lesson.skillsToTeach?.includes('reading') ? `<div><label for="edit-reading-score" class="block text-xs text-slate-500">Đọc</label><input type="number" id="edit-reading-score" class="score-input w-full p-2 border rounded text-center font-bold" value="${progressRecord.grades?.reading ?? ''}"></div>` : `<div style="display: none;"><input type="hidden" id="edit-reading-score" value="0"></div>`}${lesson.skillsToTeach?.includes('listening') ? `<div><label for="edit-listening-score" class="block text-xs text-slate-500">Nghe</label><input type="number" id="edit-listening-score" class="score-input w-full p-2 border rounded text-center font-bold" value="${progressRecord.grades?.listening ?? ''}"></div>` : `<div style="display: none;"><input type="hidden" id="edit-listening-score" value="0"></div>`}${lesson.skillsToTeach?.includes('speaking') ? `<div><label for="edit-speaking-score" class="block text-xs text-slate-500">Nói</label><input type="number" id="edit-speaking-score" class="score-input w-full p-2 border rounded text-center font-bold" value="${progressRecord.grades?.speaking ?? ''}"></div>` : `<div style="display: none;"><input type="hidden" id="edit-speaking-score" value="0"></div>`}${lesson.skillsToTeach?.includes('writing') ? `<div><label for="edit-writing-score" class="block text-xs text-slate-500">Viết</label><input type="number" id="edit-writing-score" class="score-input w-full p-2 border rounded text-center font-bold" value="${progressRecord.grades?.writing ?? ''}"></div>` : `<div style="display: none;"><input type="hidden" id="edit-writing-score" value="0"></div>`}</div><div class="mt-4"><span class="text-sm font-medium text-slate-600">Điểm trung bình: </span><span id="average-score-display" class="font-bold text-2xl text-blue-600">--</span></div></div><div><label for="edit-comment-input" class="block text-sm font-medium text-slate-600 mb-1">Nhận xét:</label><textarea id="edit-comment-input" class="w-full p-3 border rounded-lg text-sm h-40" placeholder="Nhập nhận xét…">${comment}</textarea></div></div></div><div class="mt-8 flex justify-end space-x-3"><button class="cancel-modal-btn px-4 py-2 bg-slate-200 text-slate-800 rounded-lg hover:bg-slate-300">Huỷ</button><button id="save-progress-btn" data-student-id="${studentId}" data-lesson-id="${lessonId}" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold">Lưu thay đổi</button></div></div>`;
     showModal(modalContent);
     calculateAverageScore();
 };
@@ -769,13 +774,10 @@ export const handleTeacherClickEvents = async (e) => {
 
     if(target.closest('.tab-btn')) {
         const tabName = target.dataset.tab;
-        console.log('🔘 TAB BUTTON CLICKED:', tabName);
         setCurrentActiveTab(tabName);
         
         // Save ALL state to localStorage for F5 restore
         saveSessionToLocalStorage();
-        
-        console.log('💾 Session saved after tab change');
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.classList.remove('tab-active');
             btn.classList.add('text-gray-500', 'hover:text-gray-700');
@@ -877,6 +879,8 @@ export const handleTeacherClickEvents = async (e) => {
         const newComment = document.getElementById('edit-comment-input').value;
         const activeButton = document.querySelector('.attendance-btn.attendance-btn-active');
         const newStatus = activeButton ? activeButton.dataset.status : null;
+        const isDeadlineMissedBtn = document.querySelector('.deadline-missed-btn');
+        const isDeadlineMissed = isDeadlineMissedBtn ? (isDeadlineMissedBtn.dataset.isDeadlineMissed === 'true') : false;
         
         if (!newStatus) {
             showToast('Vui lòng chọn trạng thái điểm danh', 'error');
@@ -891,7 +895,8 @@ export const handleTeacherClickEvents = async (e) => {
             studentId,
             lessonId,
             courseId: getCurrentCourseId(),
-            ...(existingRecord.submittedAt && { submittedAt: existingRecord.submittedAt })
+            ...(existingRecord.submittedAt && { submittedAt: existingRecord.submittedAt }),
+            ...(isDeadlineMissed && { isDeadlineMissed: true })
         };
 
         const docId = existingRecord.id || `${lessonId}_${studentId}`;
@@ -911,13 +916,10 @@ export const handleTeacherClickEvents = async (e) => {
 
     if (target.closest('.manage-course-btn')) {
         const courseId = target.closest('.manage-course-btn').dataset.id;
-        console.log('📌 Manage course clicked - courseId:', courseId);
         setOverviewFilterLessonId('all');
         setCurrentCourseId(courseId);
         setCurrentView('course');
-        console.log('📝 State set - about to navigate()');
         navigate();
-        console.log('✅ navigate() completed');
         return true;
     }
 
@@ -933,6 +935,24 @@ export const initTeacherListeners = () => {
     document.body.addEventListener('input', (e) => {
         if (e.target.classList.contains('score-input')) {
             calculateAverageScore();
+        }
+    });
+
+    // Deadline missed button listener
+    document.body.addEventListener('click', (e) => {
+        if (e.target.closest('.deadline-missed-btn')) {
+            const btn = e.target.closest('.deadline-missed-btn');
+            const currentState = btn.dataset.isDeadlineMissed === 'true';
+            const newState = !currentState;
+            btn.dataset.isDeadlineMissed = newState ? 'true' : 'false';
+            
+            if (newState) {
+                btn.classList.add('bg-blue-600', 'text-white', 'font-bold');
+                btn.classList.remove('bg-white', 'hover:bg-blue-50', 'text-blue-600', 'border-blue-300', 'hover:border-blue-600');
+            } else {
+                btn.classList.add('bg-white', 'hover:bg-blue-50', 'text-blue-600', 'border-blue-300', 'hover:border-blue-600');
+                btn.classList.remove('bg-blue-600', 'text-white', 'font-bold');
+            }
         }
     });
 

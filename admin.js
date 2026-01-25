@@ -159,19 +159,19 @@ export const renderAdminDashboard = (appContainerEl = document.getElementById('a
                  </div>
 
                  <!-- Tabs Navigation -->
-                 <div class="flex space-x-1 mb-6 border-b border-slate-300 bg-white rounded-t-xl px-6 pt-4">
-                     <button class="admin-tab-btn tab-active px-6 py-3 font-semibold text-blue-600 border-b-2 border-blue-600 hover:text-blue-700 transition-colors" data-tab="management">
+                 <div class="flex space-x-1 mb-6 border-b border-slate-300 bg-white rounded-t-xl px-6 pt-4 overflow-x-auto">
+                     <button class="admin-tab-btn tab-active px-6 py-3 font-semibold text-blue-600 border-b-2 border-blue-600 hover:text-blue-700 transition-colors whitespace-nowrap" data-tab="management">
                          <i class="fas fa-users mr-2"></i>Quản lý
                      </button>
-                     <button class="admin-tab-btn px-6 py-3 font-semibold text-slate-600 border-b-2 border-transparent hover:text-slate-800 transition-colors" data-tab="overview">
-                         <i class="fas fa-chart-bar mr-2"></i>Tổng quan
+                     <button class="admin-tab-btn px-6 py-3 font-semibold text-slate-600 border-b-2 border-transparent hover:text-slate-800 transition-colors whitespace-nowrap" data-tab="overview">
+                         <i class="fas fa-chart-bar mr-2"></i>Tổng quan Khóa
                      </button>
                  </div>
 
                  <!-- Tab Content -->
                  <div id="admin-tabs-content">
                      <!-- TAB: QUẢN LÝ -->
-                     <div id="admin-tab-management" class="admin-tab-content">
+                     <div id="admin-tab-management" class="admin-tab-content hidden">
                          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                      <!-- QUẢN LÝ GIÁO VIÊN -->
                      <div class="bg-white rounded-xl shadow-lg overflow-hidden">
@@ -281,7 +281,7 @@ export const renderAdminDashboard = (appContainerEl = document.getElementById('a
                          </div>
                      </div>
 
-                     <!-- TAB: TỔNG QUAN -->
+                     <!-- TAB: TỔNG QUAN KHÓA HỌC -->
                      <div id="admin-tab-overview" class="admin-tab-content hidden">
                          <div class="bg-white rounded-xl shadow-lg overflow-hidden">
                              <div class="bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 p-4 text-white">
@@ -351,71 +351,6 @@ export const renderAdminDashboard = (appContainerEl = document.getElementById('a
     
     // Save session state when dashboard is rendered
     saveSessionToLocalStorage();
-};
-
-export const renderCourseDetailModal = (courseId) => {
-    const courses = getCourses();
-    const lessons = getLessons();
-    const users = getUsers();
-    const enrollments = getEnrollments();
-    
-    const course = courses.find(c => c.id === courseId);
-    if (!course) return;
-    const courseLessons = lessons.filter(l => l.courseId === courseId).sort((a, b) => (a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0));
-    const enrolledStudentIds = enrollments.filter(e => e.courseId === courseId).map(e => e.studentId);
-    const enrolledStudents = users.filter(u => enrolledStudentIds.includes(u.id));
-    const modalContent = `
-    <div class="bg-white w-full max-w-3xl rounded-xl shadow-lg p-8 fade-in max-h-[80vh] overflow-y-auto">
-        <div class="flex justify-between items-center border-b pb-4 mb-6">
-            <div>
-                <h2 class="text-3xl font-bold text-slate-800">${course.title}</h2>
-                <p class="text-sm text-slate-500 mt-1">Chi tiết khóa học</p>
-            </div>
-            <button class="cancel-modal-btn text-slate-400 hover:text-slate-800 text-3xl font-light hover:bg-slate-100 p-2 rounded-lg transition-colors">&times;</button>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <!-- Bài học -->
-            <div>
-                <h3 class="font-bold text-lg mb-4 flex items-center text-blue-600">
-                    <i class="fas fa-list-check mr-2"></i>Danh sách bài học (${courseLessons.length})
-                </h3>
-                <div class="space-y-2 max-h-96 overflow-y-auto pr-2">
-                    ${courseLessons.length > 0 ? courseLessons.map((l, idx) => `
-                        <div class="p-3 bg-gradient-to-r from-blue-50 to-slate-50 rounded-lg border border-blue-100 hover:border-blue-300 hover:shadow-md transition-all">
-                            <div class="flex items-start">
-                                <span class="text-sm font-medium text-slate-800">${l.title}</span>
-                            </div>
-                        </div>
-                    `).join('') : '<p class="text-sm text-slate-500 py-8 text-center">Chưa có bài học nào.</p>'}
-                </div>
-            </div>
-
-            <!-- Học sinh tham gia -->
-            <div>
-                <h3 class="font-bold text-lg mb-4 flex items-center text-green-600">
-                    <i class="fas fa-users mr-2"></i>Học sinh tham gia (${enrolledStudents.length})
-                </h3>
-                <div class="space-y-2 max-h-96 overflow-y-auto pr-2">
-                    ${enrolledStudents.length > 0 ? enrolledStudents.map(s => `
-                        <div class="p-3 bg-gradient-to-r from-green-50 to-slate-50 rounded-lg border border-green-100 hover:border-green-300 hover:shadow-md transition-all">
-                            <div class="flex justify-between items-center">
-                                <div class="flex-grow">
-                                    <p class="text-sm font-medium text-slate-800"><i class="fas fa-user-graduate text-green-600 mr-1"></i>${s.displayName || s.name}</p>
-                                    <p class="text-xs text-slate-500 font-mono">@${s.username}</p>
-                                </div>
-                                <button class="delete-student-from-course text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded-lg transition-colors" data-student-id="${s.id}" data-course-id="${courseId}" title="Xóa học sinh khỏi khóa học">
-                                    <i class="fas fa-trash-alt text-sm"></i>
-                                </button>
-                            </div>
-                        </div>
-                    `).join('') : '<p class="text-sm text-slate-500 py-8 text-center">Chưa có học sinh nào.</p>'}
-                </div>
-            </div>
-        </div>
-    </div>
-    `;
-    return modalContent;
 };
 
 export const renderEditStudentModal = (studentId) => {
@@ -896,11 +831,6 @@ export const handleAdminClickEvents = async (e) => {
         return true;
     }
 
-    if (target.closest('.view-course-detail-btn')) {
-        showModal(renderCourseDetailModal(target.closest('.view-course-detail-btn').dataset.id));
-        return true;
-    }
-
     if (target.closest('.reset-password-btn')) {
         const userId = target.closest('.reset-password-btn').dataset.userId;
         const userToReset = users.find(u => u.id === userId);
@@ -925,107 +855,6 @@ export const handleAdminClickEvents = async (e) => {
                 }
             );
         }
-        return true;
-    }
-
-    if (target.closest('.delete-course-btn')) {
-        e.preventDefault();
-        e.stopPropagation();
-        e.stopImmediatePropagation();
-        const courseId = target.closest('.delete-course-btn').dataset.id;
-        const courseToDelete = courses.find(c => c.id === courseId);
-        if (courseToDelete) {
-            showModal(renderDeleteCourseConfirmModal(courseId, courseToDelete.title));
-        }
-        return true;
-    }
-
-    if (target.closest('#confirm-delete-course-btn')) {
-        const courseId = target.closest('#confirm-delete-course-btn').dataset.courseId;
-        const password = document.getElementById('admin-password-course-confirm').value;
-        
-        if (password === currentUser.password) {
-            try {
-                const batch = writeBatch(db);
-                
-                // Xóa tất cả bài học của khóa học
-                const courseLessons = lessons.filter(l => l.courseId === courseId);
-                courseLessons.forEach(lesson => {
-                    batch.delete(doc(db, 'lessons', lesson.id));
-                });
-                
-                // Xóa tất cả ghi danh
-                const courseEnrollments = enrollments.filter(e => e.courseId === courseId);
-                courseEnrollments.forEach(enrollment => {
-                    batch.delete(doc(db, 'enrollments', enrollment.id));
-                });
-                
-                // Xóa tất cả tiến độ liên quan
-                const courseProgress = progress.filter(p => courseLessons.some(l => l.id === p.lessonId));
-                courseProgress.forEach(prog => {
-                    batch.delete(doc(db, 'progress', prog.id));
-                });
-                
-                // Xóa khóa học
-                batch.delete(doc(db, 'courses', courseId));
-                
-                await batch.commit();
-                
-                // Update local data
-                const updatedCourses = courses.filter(c => c.id !== courseId);
-                setCourses(updatedCourses);
-                
-                closeModal();
-                showToast('✅ Xóa khóa học thành công!', 'success');
-                
-                // Refresh dashboard
-                setTimeout(() => {
-                    renderAdminDashboard();
-                }, 500);
-            } catch (error) {
-                showToast('❌ Có lỗi khi xóa khóa học', 'error');
-            }
-        } else {
-            document.getElementById('delete-course-error').textContent = 'Mật khẩu không chính xác!';
-            document.getElementById('delete-course-error').classList.remove('hidden');
-        }
-        return true;
-    }
-
-    if (target.closest('.delete-student-from-course')) {
-        const btn = target.closest('.delete-student-from-course');
-        const studentId = btn.dataset.studentId;
-        const courseId = btn.dataset.courseId;
-        const student = users.find(u => u.id === studentId);
-        
-        renderConfirmModal(
-            'Xác nhận xóa học sinh khỏi khóa học',
-            `Bạn có chắc chắn muốn xóa <strong>${student?.name}</strong> khỏi khóa học này?<br><br>Tất cả tiến độ học tập và điểm số của học sinh trong khóa học này sẽ bị xóa.`,
-            'Xóa',
-            'bg-red-600 hover:bg-red-700',
-            async () => {
-                try {
-                    const batch = writeBatch(db);
-                    
-                    // Xóa ghi danh
-                    const enrollmentToDelete = enrollments.find(e => e.studentId === studentId && e.courseId === courseId);
-                    if (enrollmentToDelete) {
-                        batch.delete(doc(db, 'enrollments', enrollmentToDelete.id));
-                    }
-                    
-                    // Xóa tiến độ trong khóa học này
-                    const courseLessons = lessons.filter(l => l.courseId === courseId);
-                    progress.filter(p => p.studentId === studentId && courseLessons.some(l => l.id === p.lessonId)).forEach(p => {
-                        batch.delete(doc(db, 'progress', p.id));
-                    });
-                    
-                    await batch.commit();
-                    showToast(`✅ Đã xóa ${student?.name} khỏi khóa học`, 'success');
-                } catch (error) {
-                    showToast('Có lỗi khi xóa học sinh', 'error');
-                }
-            }
-        );
         return true;
     }
 

@@ -429,3 +429,54 @@ export const setProgress = (data) => { progress = data; };
 
 export const getEnrollments = () => enrollments;
 export const setEnrollments = (data) => { enrollments = data; };
+
+// ═══════════════════════════════════════════════════════════════════════════════════
+// SCORE CALCULATION UTILITIES - HÀM TÍNH ĐIỂM CHUNG
+// ═══════════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Calculate skill averages (reading, listening, speaking, writing)
+ * 
+ * Logic:
+ * - Count assignments that are: (1) Submitted + Graded OR (2) Marked as deadline missed
+ * - Do NOT count: unsubmitted assignments or submitted-but-ungraded assignments
+ * 
+ * @param {Array} lessonsForCalculation - Array of lesson objects to calculate from
+ * @param {Array} studentProgress - Array of progress records for the student
+ * @returns {Object} { reading, listening, speaking, writing, count } - Averages and total count
+ * 
+ * @example
+ * const result = calculateSkillAverages(lessons, progress);
+ * console.log(result.reading); // Average reading score
+ * console.log(result.count);   // Total lessons counted
+ */
+export const calculateSkillAverages = (lessonsForCalculation, studentProgress) => {
+    const skillTotals = { reading: 0, listening: 0, speaking: 0, writing: 0 };
+    let gradedCount = 0;
+    
+    lessonsForCalculation.forEach(lesson => {
+        const progressRecord = studentProgress.find(p => p.lessonId === lesson.id);
+        
+        // Điều kiện 1: Đã nộp + Được chấm (có grade) → tính điểm thực
+        if (progressRecord?.submittedAt && progressRecord?.grade != null) {
+            skillTotals.reading += progressRecord.grades?.reading ?? 0;
+            skillTotals.listening += progressRecord.grades?.listening ?? 0;
+            skillTotals.speaking += progressRecord.grades?.speaking ?? 0;
+            skillTotals.writing += progressRecord.grades?.writing ?? 0;
+            gradedCount++;
+        } 
+        // Điều kiện 2: Được đánh dấu hết hạn nộp → tính 0 (không cần cộng vì 0 không thay đổi)
+        else if (progressRecord?.isDeadlineMissed) {
+            gradedCount++;
+        }
+    });
+    
+    return {
+        reading: gradedCount > 0 ? (skillTotals.reading / gradedCount).toFixed(1) : '--',
+        listening: gradedCount > 0 ? (skillTotals.listening / gradedCount).toFixed(1) : '--',
+        speaking: gradedCount > 0 ? (skillTotals.speaking / gradedCount).toFixed(1) : '--',
+        writing: gradedCount > 0 ? (skillTotals.writing / gradedCount).toFixed(1) : '--',
+        count: gradedCount,
+        totalSkills: skillTotals
+    };
+};
