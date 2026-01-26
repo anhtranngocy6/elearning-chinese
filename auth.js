@@ -5,10 +5,10 @@
 export const renderLoginScreen = (appContainer) => {
     document.title = "Đăng nhập | SmartEdu x AT";
     appContainer.innerHTML = `
-     <div class="min-h-screen flex flex-col items-center justify-center bg-slate-100 bg-cover bg-center" style="background-image: url('https://placehold.co/1920x1080/e2e8f0/e2e8f0?text=.')">
-         <div class="w-full max-w-md bg-white/80 backdrop-blur-xl p-8 rounded-2xl shadow-2xl fade-in">
+     <div class="fixed inset-0 flex flex-col items-start pl-12 justify-end pb-12 bg-slate-100 bg-cover bg-center" style="background-image: url('./background.jpg')">
+         <div class="w-full max-w-md bg-white/60 backdrop-blur-xl p-8 rounded-2xl shadow-2xl fade-in" style="margin-left: 4cm;">
              <div class="text-center mb-8">
-                 <i class="fas fa-graduation-cap text-5xl text-blue-600"></i>
+                 <i class="fas fa-graduation-cap text-5xl" style="color: #A9768A;"></i>
                  <h1 class="text-4xl font-bold text-slate-800 mt-2">SmartEdu x AT</h1>
                  <p class="text-slate-500">Trí Thức - Sáng Tạo - Dẫn Dắt</p>
              </div>
@@ -22,7 +22,7 @@ export const renderLoginScreen = (appContainer) => {
                      <label for="password-input" class="block text-sm font-medium text-slate-600 mb-1">Mật khẩu:</label>
                      <input type="password" id="password-input" class="w-full p-3 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 transition-shadow" placeholder="******">
                  </div>
-                 <button id="login-btn" class="w-full bg-blue-600 text-white font-semibold p-3 rounded-lg hover:bg-blue-700 transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5">Đăng nhập</button>
+                 <button id="login-btn" class="w-full text-white font-semibold p-3 rounded-lg transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5" style="background-color: #A9768A;" onmouseover="this.style.backgroundColor='#8B5A6F'" onmouseout="this.style.backgroundColor='#A9768A'">Đăng nhập</button>
              </div>
          </div>
      </div>`;
