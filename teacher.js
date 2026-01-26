@@ -371,15 +371,17 @@ export const renderTeacherCourseTabs = {
             const percentageNum = totalSkillSlots > 0 ? (skillCount[skill] / totalSkillSlots) * 100 : 0;
             const percentage = percentageNum.toFixed(1);
             skillPercentages[skill] = percentage;
-            if (skillCount[skill] > 0) {
-                if (percentageNum >= maxPercentage) {
-                    maxPercentage = percentageNum;
-                    maxSkill = skill;
-                }
-                if (percentageNum <= minPercentage) {
-                    minPercentage = percentageNum;
-                    minSkill = skill;
-                }
+            
+            // Tìm kỹ năng cao nhất (chỉ trong các kỹ năng được dạy)
+            if (skillCount[skill] > 0 && percentageNum >= maxPercentage) {
+                maxPercentage = percentageNum;
+                maxSkill = skill;
+            }
+            
+            // Tìm kỹ năng thấp nhất (bao gồm cả kỹ năng 0%)
+            if (percentageNum <= minPercentage) {
+                minPercentage = percentageNum;
+                minSkill = skill;
             }
         });
         
@@ -389,52 +391,35 @@ export const renderTeacherCourseTabs = {
         const minSkillName = skillNames[minSkill] || '';
         
         const skillStatsHtml = totalSkillSlots > 0 ? `
-            <div class="mb-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border-2 border-blue-200">
-                <h4 class="text-lg font-bold text-slate-800 mb-4">📊 Thống kê Kỹ năng</h4>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                    <div class="grid grid-cols-2 gap-3">
-                        <div class="p-3 bg-white rounded-lg shadow-sm border-l-4 border-blue-500">
-                            <p class="text-xs text-slate-500">Nghe</p>
-                            <p class="text-2xl font-bold text-blue-600">${skillCount.listening}</p>
-                            <p class="text-xs text-slate-600">${skillPercentages.listening}%</p>
-                        </div>
-                        <div class="p-3 bg-white rounded-lg shadow-sm border-l-4 border-purple-500">
-                            <p class="text-xs text-slate-500">Nói</p>
-                            <p class="text-2xl font-bold text-purple-600">${skillCount.speaking}</p>
-                            <p class="text-xs text-slate-600">${skillPercentages.speaking}%</p>
-                        </div>
-                        <div class="p-3 bg-white rounded-lg shadow-sm border-l-4 border-green-500">
-                            <p class="text-xs text-slate-500">Đọc</p>
-                            <p class="text-2xl font-bold text-green-600">${skillCount.reading}</p>
-                            <p class="text-xs text-slate-600">${skillPercentages.reading}%</p>
-                        </div>
-                        <div class="p-3 bg-white rounded-lg shadow-sm border-l-4 border-orange-500">
-                            <p class="text-xs text-slate-500">Viết</p>
-                            <p class="text-2xl font-bold text-orange-600">${skillCount.writing}</p>
-                            <p class="text-xs text-slate-600">${skillPercentages.writing}%</p>
-                        </div>
-                    </div>
-                    <div class="p-4 bg-gradient-to-br from-amber-50 to-orange-50 rounded-lg border-2 border-amber-300 flex flex-col justify-center">
-                        <div class="mb-4">
-                            <p class="text-sm font-semibold text-slate-700 mb-3">📈 Kỹ năng cao nhất & thấp nhất:</p>
-                            <div class="space-y-2">
-                                <div class="flex justify-between items-center p-2 bg-white rounded border-l-4 border-green-500">
-                                    <span class="text-sm font-medium">🔼 Cao nhất:</span>
-                                    <span class="text-lg font-bold text-green-600">${maxSkillName} (${maxPercentage.toFixed(1)}%)</span>
-                                </div>
-                                <div class="flex justify-between items-center p-2 bg-white rounded border-l-4 border-red-500">
-                                    <span class="text-sm font-medium">🔽 Thấp nhất:</span>
-                                    <span class="text-lg font-bold text-red-600">${minSkillName} (${minPercentage.toFixed(1)}%)</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="p-3 bg-blue-100 rounded border-l-4 border-blue-500">
-                            <p class="text-xs text-blue-800 font-semibold">💡 Khuyến nghị:</p>
-                            <p class="text-xs text-blue-700 mt-1">Hãy thêm bài học tập trung vào <strong>${minSkillName}</strong> để cân bằng hơn với <strong>${maxSkillName}</strong></p>
-                        </div>
+            <div class="mb-6 p-4 bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl border-2 border-amber-300">
+                <div class="mb-4">
+                    <p class="text-lg font-bold text-slate-800 mb-4">🏆 Xếp hạng kỹ năng</p>
+                    <div class="space-y-2">
+                        ${(() => {
+                            const skillsArr = [
+                                { name: 'Đọc', key: 'reading', percentage: parseFloat(skillPercentages.reading), count: skillCount.reading, icon: '📖', bgColor: 'bg-green-50', borderColor: 'border-green-500', textColor: 'text-green-700' },
+                                { name: 'Nghe', key: 'listening', percentage: parseFloat(skillPercentages.listening), count: skillCount.listening, icon: '🎧', bgColor: 'bg-blue-50', borderColor: 'border-blue-500', textColor: 'text-blue-700' },
+                                { name: 'Nói', key: 'speaking', percentage: parseFloat(skillPercentages.speaking), count: skillCount.speaking, icon: '🎤', bgColor: 'bg-purple-50', borderColor: 'border-purple-500', textColor: 'text-purple-700' },
+                                { name: 'Viết', key: 'writing', percentage: parseFloat(skillPercentages.writing), count: skillCount.writing, icon: '✍️', bgColor: 'bg-orange-50', borderColor: 'border-orange-500', textColor: 'text-orange-700' }
+                            ].sort((a, b) => b.percentage - a.percentage);
+                            
+                            return skillsArr.map((skill, idx) => {
+                                return `<div class="flex items-center justify-between p-3 ${skill.bgColor} rounded-lg border-l-4 ${skill.borderColor} shadow-sm">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-xl">${skill.icon}</span>
+                                        <span class="font-medium ${skill.textColor}">${skill.name} <span class="text-sm">(${skill.count}/${courseLessons.length})</span></span>
+                                    </div>
+                                    <div class="text-lg font-bold ${skill.textColor}">${skill.percentage.toFixed(1)}%</div>
+                                </div>`;
+                            }).join('');
+                        })()}
                     </div>
                 </div>
-                <div class="text-xs text-slate-600 space-y-1">
+                <div class="p-3 bg-blue-100 rounded border-l-4 border-blue-500">
+                    <p class="text-xs text-blue-800 font-semibold">💡 Khuyến nghị:</p>
+                    <p class="text-xs text-blue-700 mt-1">Hãy thêm bài học tập trung vào <strong>${minSkillName}</strong> để cân bằng hơn với <strong>${maxSkillName}</strong></p>
+                </div>
+                <div class="text-xs text-slate-600 space-y-1 mt-3">
                     <p><strong>Tổng kỹ năng:</strong> ${totalSkillSlots} (từ ${courseLessons.length} bài học)</p>
                 </div>
             </div>
