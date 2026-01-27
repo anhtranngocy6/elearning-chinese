@@ -16,7 +16,7 @@ export const renderLoginScreen = (appContainer) => {
 
             <div class="absolute inset-0 bg-white/30 lg:bg-transparent z-0 pointer-events-none"></div>
 
-            <div class="relative z-10 w-full flex flex-col items-center lg:items-start lg:pl-10 xl:pl-24">
+            <div class="relative z-10 w-full flex flex-col items-center lg:items-start lg:pl-16 xl:pl-24">
                 
                 <div class="w-full max-w-xs sm:max-w-sm xl:max-w-md px-4 sm:px-0 bg-white/90 lg:bg-white/70 backdrop-blur-xl p-6 lg:p-8 rounded-2xl shadow-2xl fade-in" id="login-box">
                     <div class="text-center mb-6 lg:mb-8">
