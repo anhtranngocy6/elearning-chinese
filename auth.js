@@ -4,40 +4,52 @@
 // ═══════════════════════════════════════════════════════════════════════════════════
 export const renderLoginScreen = (appContainer) => {
     document.title = "Đăng nhập | SmartEdu x AT";
+    
     appContainer.innerHTML = `
-     <div class="fixed inset-0 flex flex-col items-center sm:items-start sm:pl-6 lg:pl-12 justify-center sm:justify-end pb-4 sm:pb-8 lg:pb-12 bg-slate-100 bg-cover bg-center" style="background-image: url('./background.jpg')">
-         <div class="w-full max-w-xs sm:max-w-sm lg:max-w-md px-4 sm:px-0 bg-white/60 backdrop-blur-xl p-5 sm:p-6 lg:p-8 rounded-2xl shadow-2xl fade-in" style="margin-bottom: 0;" id="login-box">
-             <div class="text-center mb-5 sm:mb-6 lg:mb-8">
-                 <i class="fas fa-graduation-cap text-3xl sm:text-4xl lg:text-5xl" style="color: #A9768A;"></i>
-                 <h1 class="text-xl sm:text-2xl lg:text-4xl font-bold text-slate-800 mt-2">SmartEdu x AT</h1>
-                 <p class="text-xs sm:text-sm text-slate-500">Trí Thức - Sáng Tạo - Dẫn Dắt</p>
-             </div>
-             <div id="login-error" class="text-red-500 text-center mb-3 sm:mb-4 hidden text-xs sm:text-sm"></div>
-             <div class="space-y-3 sm:space-y-3 lg:space-y-4">
-                 <div>
-                     <label for="username-input" class="block text-xs sm:text-sm font-medium text-slate-600 mb-1">Tên đăng nhập:</label>
-                     <input type="text" id="username-input" class="w-full p-2 sm:p-2.5 lg:p-3 text-sm sm:text-sm lg:text-base bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 transition-shadow" placeholder="ví dụ: hs.annv">
-                 </div>
-                 <div>
-                     <label for="password-input" class="block text-xs sm:text-sm font-medium text-slate-600 mb-1">Mật khẩu:</label>
-                     <input type="password" id="password-input" class="w-full p-2 sm:p-2.5 lg:p-3 text-sm sm:text-sm lg:text-base bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 transition-shadow" placeholder="******">
-                 </div>
-                 <button id="login-btn" class="w-full text-white font-semibold p-2 sm:p-2.5 lg:p-3 text-sm sm:text-sm lg:text-base rounded-lg transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5" style="background-color: #A9768A;" onmouseover="this.style.backgroundColor='#8B5A6F'" onmouseout="this.style.backgroundColor='#A9768A'">Đăng nhập</button>
-             </div>
-         </div>
-     </div>
-     <style>
-        @media (min-width: 640px) {
-            #login-box {
-                margin-left: 1.5rem;
-            }
+    <div class="fixed inset-0 w-screen h-screen overflow-y-auto overflow-x-hidden bg-white">
+        
+        <div class="relative min-h-full w-full flex flex-col justify-center pb-4 pt-44 lg:pt-60">
+            
+            <img src="./background.jpg" 
+                 class="absolute inset-0 w-full h-full min-h-full object-cover object-[70%_center] lg:object-[100%_center] xl:object-right pointer-events-none z-0 transition-all duration-500" 
+                 alt="Background">
+
+            <div class="absolute inset-0 bg-white/30 lg:bg-transparent z-0 pointer-events-none"></div>
+
+            <div class="relative z-10 w-full flex flex-col items-center lg:items-start lg:pl-10 xl:pl-24">
+                
+                <div class="w-full max-w-xs sm:max-w-sm xl:max-w-md px-4 sm:px-0 bg-white/90 lg:bg-white/70 backdrop-blur-xl p-6 lg:p-8 rounded-2xl shadow-2xl fade-in" id="login-box">
+                    <div class="text-center mb-6 lg:mb-8">
+                        <i class="fas fa-graduation-cap text-4xl lg:text-5xl" style="color: #A9768A;"></i>
+                        <h1 class="text-2xl lg:text-3xl xl:text-4xl font-bold text-slate-800 mt-2">SmartEdu x AT</h1>
+                        <p class="text-sm text-slate-500">Trí Thức - Sáng Tạo - Dẫn Dắt</p>
+                    </div>
+                    
+                    <div id="login-error" class="text-red-500 text-center mb-4 hidden text-sm"></div>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label for="username-input" class="block text-sm font-medium text-slate-600 mb-1">Tên đăng nhập:</label>
+                            <input type="text" id="username-input" class="w-full p-3 text-base bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 transition-shadow" placeholder="ví dụ: hs.annv">
+                        </div>
+                        <div>
+                            <label for="password-input" class="block text-sm font-medium text-slate-600 mb-1">Mật khẩu:</label>
+                            <input type="password" id="password-input" class="w-full p-3 text-base bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 transition-shadow" placeholder="******">
+                        </div>
+                        <button id="login-btn" class="w-full text-white font-semibold p-3 text-base rounded-lg transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5" style="background-color: #A9768A;" onmouseover="this.style.backgroundColor='#8B5A6F'" onmouseout="this.style.backgroundColor='#A9768A'">Đăng nhập</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <style>
+        /* CSS tinh chỉnh vị trí ảnh nền mượt mà cho từng loại màn hình */
+        @media (max-width: 1023px) {
+            /* Trên màn hình nhỏ, ưu tiên hiển thị con ngựa, chấp nhận che chữ */
+            img { object-position: 70% center !important; }
         }
-        @media (min-width: 1024px) {
-            #login-box {
-                margin-left: 4cm;
-            }
-        }
-     </style>`;
+    </style>`;
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════════
