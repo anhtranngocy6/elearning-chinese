@@ -45,14 +45,20 @@ export const renderStudentDashboard = () => {
     const courses = getCourses();
     const enrollments = getEnrollments();
     const appContainer = document.getElementById('app');
-    
+
     if (currentView !== 'course' && currentView !== 'lesson' && currentView !== 'myProgress') {
         setCurrentView('dashboard');
     }
     document.title = "Student Dashboard | SmartEdu x AT";
     const myCourseIds = enrollments.filter(e => e.studentId === currentUser.id).map(e => e.courseId);
     const myCourses = courses.filter(c => myCourseIds.includes(c.id));
-    appContainer.innerHTML = `<div class="w-full max-w-7xl mx-auto fade-in">${renderHeader('Các khoá học của tôi')}<main class="mt-6"><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">${myCourses.length > 0 ? myCourses.map(c => renderCourseCard(c)).join('') : '<p class="text-slate-500 md:col-span-3 text-center py-8">Bạn chưa được ghi danh vào khoá học nào.</p>'}</div></main></div>`;
+    // Add Tết background styling
+    appContainer.style.backgroundImage = 'url("tet_background.png")';
+    appContainer.style.backgroundRepeat = 'repeat';
+    appContainer.style.backgroundAttachment = 'fixed';
+    appContainer.style.position = 'relative';
+
+    appContainer.innerHTML = `<div style="min-height: 100vh; padding: 1rem;" class="fade-in"><div class="w-full max-w-7xl mx-auto">${renderHeader('Các khoá học của tôi')}<main class="mt-6"><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">${myCourses.length > 0 ? myCourses.map(c => renderCourseCard(c)).join('') : '<p class="text-slate-500 md:col-span-3 text-center py-8">Bạn chưa được ghi danh vào khoá học nào.</p>'}</div></main></div></div>`;
 };
 
 export const renderCourseCard = (course) => {
@@ -60,7 +66,7 @@ export const renderCourseCard = (course) => {
     const users = getUsers();
     const lessons = getLessons();
     const progress = getProgress();
-    
+
     const teacher = users.find(u => u.id === course.createdBy);
     const courseLessons = lessons.filter(l => l.courseId === course.id);
     const completedLessons = progress.filter(p => p.studentId === currentUser.id && courseLessons.some(l => l.id === p.lessonId) && p.submittedAt).length;
@@ -93,16 +99,22 @@ export const renderStudentCourseView = (courseId, isRestoring = false) => {
     const lessons = getLessons();
     const progress = getProgress();
     const appContainer = document.getElementById('app');
-    
+
     if (!isRestoring) {
         setCurrentView('course');
     }
     setCurrentCourseId(courseId);
     const course = courses.find(c => c.id === courseId);
     if (!course) return renderStudentDashboard(); // Fallback
-    const courseLessons = lessons.filter(l => l.courseId === courseId).sort((a,b) => (a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0));
+    const courseLessons = lessons.filter(l => l.courseId === courseId).sort((a, b) => (a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0));
     document.title = course.title;
-    appContainer.innerHTML = `<div class="w-full max-w-7xl mx-auto fade-in">${renderHeader(course.title, true)}<div class="sticky top-20 z-20 bg-gradient-to-b from-white to-white/95 shadow-md rounded-xl mb-6 mt-6">
+    // Add Tết background styling
+    appContainer.style.backgroundImage = 'url("tet_background.png")';
+    appContainer.style.backgroundRepeat = 'repeat';
+    appContainer.style.backgroundAttachment = 'fixed';
+    appContainer.style.position = 'relative';
+
+    appContainer.innerHTML = `<div style="min-height: 100vh; padding: 1rem;" class="fade-in"><div class="w-full max-w-7xl mx-auto">${renderHeader(course.title, true)}<div class="sticky top-20 z-20 bg-gradient-to-b from-white to-white/95 shadow-md rounded-xl mb-6 mt-6">
          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 p-5 pt-6">
              <div class="flex-1">
                  <h2 class="text-2xl font-bold text-slate-800">Nội dung khoá học</h2>
@@ -119,12 +131,12 @@ export const renderStudentCourseView = (courseId, isRestoring = false) => {
          </div>
     </div><div class="bg-white p-8 rounded-xl shadow-lg">
 
-         <div class="space-y-3">${courseLessons.map((lesson, index) => { 
-             const progressRecord = progress.find(p => p.lessonId === lesson.id && p.studentId === currentUser.id);
-             const isSubmitted = !!progressRecord?.submittedAt;
-             
-             return `<div class="p-4 bg-slate-100 rounded-lg flex justify-between items-center"><div class="flex items-center"><span class="mr-4 font-bold text-slate-400 text-lg">${index + 1}</span>${isSubmitted ? '<i class="fas fa-check-circle text-green-500 mr-3"></i>' : '<i class="far fa-circle text-blue-500 mr-3"></i>'}<span class="font-medium ${isSubmitted ? 'text-slate-500' : ''}">${lesson.title}</span></div><button class="view-lesson-btn bg-white text-blue-600 px-4 py-1 rounded-full border border-blue-200 font-semibold text-sm hover:bg-blue-50" data-lesson-id="${lesson.id}">${isSubmitted ? 'Xem lại' : 'Bắt đầu'}</button></div>` 
-         }).join('') || '<p class="text-slate-500 text-center py-4">Chưa có bài học nào trong khóa học này.</p>'}</div></div></div>`;
+         <div class="space-y-3">${courseLessons.map((lesson, index) => {
+        const progressRecord = progress.find(p => p.lessonId === lesson.id && p.studentId === currentUser.id);
+        const isSubmitted = !!progressRecord?.submittedAt;
+
+        return `<div class="p-4 bg-slate-100 rounded-lg flex justify-between items-center"><div class="flex items-center"><span class="mr-4 font-bold text-slate-400 text-lg">${index + 1}</span>${isSubmitted ? '<i class="fas fa-check-circle text-green-500 mr-3"></i>' : '<i class="far fa-circle text-blue-500 mr-3"></i>'}<span class="font-medium ${isSubmitted ? 'text-slate-500' : ''}">${lesson.title}</span></div><button class="view-lesson-btn bg-white text-blue-600 px-4 py-1 rounded-full border border-blue-200 font-semibold text-sm hover:bg-blue-50" data-lesson-id="${lesson.id}">${isSubmitted ? 'Xem lại' : 'Bắt đầu'}</button></div>`
+    }).join('') || '<p class="text-slate-500 text-center py-4">Chưa có bài học nào trong khóa học này.</p>'}</div></div></div></div>`;
 };
 
 export const renderLessonView = (lessonId, isRestoring = false) => {
@@ -134,7 +146,7 @@ export const renderLessonView = (lessonId, isRestoring = false) => {
     const homeworks = getHomeworks();
     const progress = getProgress();
     const appContainer = document.getElementById('app');
-    
+
     if (!isRestoring && getCurrentView() !== 'lesson') {
         setCurrentView('lesson');
     }
@@ -149,11 +161,17 @@ export const renderLessonView = (lessonId, isRestoring = false) => {
     const isDeadlineMissed = progressRecord?.isDeadlineMissed;
     const embedUrl = getYoutubeEmbedUrl(lesson.videoUrl);
 
-    appContainer.innerHTML = `<div class="w-full max-w-7xl mx-auto fade-in">${renderHeader(lesson.title, true)}<div class="bg-white p-6 md:p-8 mt-6 rounded-xl shadow-lg">${embedUrl ? `<div class="video-container shadow-md mb-8"><iframe src="${embedUrl}" frameborder="0" allowfullscreen></iframe></div>` : ''}<h2 class="text-3xl font-bold mb-4 text-slate-800">Nội dung bài học</h2><div class="prose max-w-none text-slate-700 mb-8 whitespace-pre-wrap">${lesson.content || '<p><em>Chưa có nội dung cho bài học này.</em></p>'}</div>
+    // Add Tết background styling
+    appContainer.style.backgroundImage = 'url("tet_background.png")';
+    appContainer.style.backgroundRepeat = 'repeat';
+    appContainer.style.backgroundAttachment = 'fixed';
+    appContainer.style.position = 'relative';
+
+    appContainer.innerHTML = `<div style="min-height: 100vh; padding: 1rem;" class="fade-in"><div class="w-full max-w-7xl mx-auto">${renderHeader(lesson.title, true)}<div class="bg-white p-6 md:p-8 mt-6 rounded-xl shadow-lg">${embedUrl ? `<div class="video-container shadow-md mb-8"><iframe src="${embedUrl}" frameborder="0" allowfullscreen></iframe></div>` : ''}<h2 class="text-3xl font-bold mb-4 text-slate-800">Nội dung bài học</h2><div class="prose max-w-none text-slate-700 mb-8 whitespace-pre-wrap">${lesson.content || '<p><em>Chưa có nội dung cho bài học này.</em></p>'}</div>
         
-        ${homework ? `<hr class="my-8"><div class="p-6 bg-slate-50 rounded-lg"><h2 class="text-2xl font-bold mb-2">Bài tập: ${homework.title}</h2><p class="text-slate-600 mb-6 whitespace-pre-wrap">${homework.description}</p>${currentUser.role === 'student' ? (hasSubmitted ? `<div class="p-4 border rounded-lg ${progressRecord.grade !== null && progressRecord.grade !== undefined ? 'bg-green-50 border-green-300' : 'bg-blue-50 border-blue-200'}"><div class="flex justify-between items-start"><div class="flex items-start"><i class="fas fa-check-circle ${progressRecord.grade !== null && progressRecord.grade !== undefined ? 'text-green-600' : 'text-blue-600'} mr-3 fa-lg mt-1"></i><div><p class="font-bold ${progressRecord.grade !== null && progressRecord.grade !== undefined ? 'text-green-800' : 'text-blue-800'}">Bạn đã nộp bài.</p><p class="mt-2"><strong>Điểm:</strong> ${progressRecord.grade !== null && progressRecord.grade !== undefined ? `<span class="font-bold text-lg">${progressRecord.grade}</span>` : 'Chưa được chấm'}</p>                     </div></div><div class="flex gap-2 flex-col sm:flex-row flex-wrap">${(progressRecord.grade === null || progressRecord.grade === undefined) ? `<button class="cancel-submission-btn bg-gray-200 text-gray-700 text-xs font-semibold px-3 py-1 rounded-full hover:bg-gray-300" data-lesson-id="${lesson.id}">Hủy xác nhận</button>` : ''}<button class="view-lesson-folder-btn bg-blue-100 text-blue-700 text-xs font-semibold px-3 py-1 rounded-full hover:bg-blue-200 transition-colors" data-lesson-id="${lesson.id}"><i class="fab fa-google-drive mr-1"></i>Thư mục bài tập của tôi</button></div></div>${progressRecord.comment ? `<div class="border-t pt-3 mt-3"><p class="font-semibold text-slate-700">Nhận xét của giáo viên:</p><p class="text-slate-600 whitespace-pre-wrap mt-1">${progressRecord.comment}</p></div>` : ''}</div>`: isDeadlineMissed ? `<div class="p-4 border-l-4 border-red-500 bg-red-50 rounded-lg"><div class="flex items-start gap-3"><i class="fas fa-times-circle text-red-600 text-2xl mt-1 flex-shrink-0"></i><div><p class="font-bold text-red-800 text-lg">⏰ Hết hạn nộp bài</p><p class="text-red-700 mt-2">Giáo viên đã đóng hạn nộp bài cho bài tập này. Bạn không thể nộp bài nữa.</p></div></div></div>` : `<div class="flex items-center space-x-3"><button class="confirm-submission-btn bg-blue-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors" data-lesson-id="${lesson.id}"><i class="fas fa-upload mr-2"></i>Nộp Bài</button><p class="text-slate-600 text-sm">Nhấn nút để tải file bài làm lên hệ thống</p></div>`) : ''}</div>` : ''}
+        ${homework ? `<hr class="my-8"><div class="p-6 bg-slate-50 rounded-lg"><h2 class="text-2xl font-bold mb-2">Bài tập: ${homework.title}</h2><p class="text-slate-600 mb-6 whitespace-pre-wrap">${homework.description}</p>${currentUser.role === 'student' ? (hasSubmitted ? `<div class="p-4 border rounded-lg ${progressRecord.grade !== null && progressRecord.grade !== undefined ? 'bg-green-50 border-green-300' : 'bg-blue-50 border-blue-200'}"><div class="flex justify-between items-start"><div class="flex items-start"><i class="fas fa-check-circle ${progressRecord.grade !== null && progressRecord.grade !== undefined ? 'text-green-600' : 'text-blue-600'} mr-3 fa-lg mt-1"></i><div><p class="font-bold ${progressRecord.grade !== null && progressRecord.grade !== undefined ? 'text-green-800' : 'text-blue-800'}">Bạn đã nộp bài.</p><p class="mt-2"><strong>Điểm:</strong> ${progressRecord.grade !== null && progressRecord.grade !== undefined ? `<span class="font-bold text-lg">${progressRecord.grade}</span>` : 'Chưa được chấm'}</p>                     </div></div><div class="flex gap-2 flex-col sm:flex-row flex-wrap">${(progressRecord.grade === null || progressRecord.grade === undefined) ? `<button class="cancel-submission-btn bg-gray-200 text-gray-700 text-xs font-semibold px-3 py-1 rounded-full hover:bg-gray-300" data-lesson-id="${lesson.id}">Hủy xác nhận</button>` : ''}<button class="view-lesson-folder-btn bg-blue-100 text-blue-700 text-xs font-semibold px-3 py-1 rounded-full hover:bg-blue-200 transition-colors" data-lesson-id="${lesson.id}"><i class="fab fa-google-drive mr-1"></i>Thư mục bài tập của tôi</button></div></div>${progressRecord.comment ? `<div class="border-t pt-3 mt-3"><p class="font-semibold text-slate-700">Nhận xét của giáo viên:</p><p class="text-slate-600 whitespace-pre-wrap mt-1">${progressRecord.comment}</p></div>` : ''}</div>` : isDeadlineMissed ? `<div class="p-4 border-l-4 border-red-500 bg-red-50 rounded-lg"><div class="flex items-start gap-3"><i class="fas fa-times-circle text-red-600 text-2xl mt-1 flex-shrink-0"></i><div><p class="font-bold text-red-800 text-lg">⏰ Hết hạn nộp bài</p><p class="text-red-700 mt-2">Giáo viên đã đóng hạn nộp bài cho bài tập này. Bạn không thể nộp bài nữa.</p></div></div></div>` : `<div class="flex items-center space-x-3"><button class="confirm-submission-btn bg-blue-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors" data-lesson-id="${lesson.id}"><i class="fas fa-upload mr-2"></i>Nộp Bài</button><p class="text-slate-600 text-sm">Nhấn nút để tải file bài làm lên hệ thống</p></div>`) : ''}</div>` : ''}
         
-        </div></div>`;
+        </div></div></div>`;
 };
 
 export const generateStudentProgressReport = (studentId, courseId, isTeacher = false) => {
@@ -162,7 +180,7 @@ export const generateStudentProgressReport = (studentId, courseId, isTeacher = f
     const homeworks = getHomeworks();
     const progress = getProgress();
     const users = getUsers();
-    
+
     const course = courses.find(c => c.id === courseId);
     if (!course) return { html: '', chartData: {} };
 
@@ -174,7 +192,7 @@ export const generateStudentProgressReport = (studentId, courseId, isTeacher = f
     const totalGraded = studentProgress.filter(p => p.submittedAt && p.grade != null && lessonsWithHomework.some(l => l.id === p.lessonId)).length;
     const totalDeadlineMissedForGrading = studentProgress.filter(p => p.isDeadlineMissed && lessonsWithHomework.some(l => l.id === p.lessonId)).length;
     const totalPossibleSubmissions = lessonsWithHomework.length;
-    
+
     const totalPresent = studentProgress.filter(p => p.attendanceStatus === 'present').length;
     const totalLate = studentProgress.filter(p => p.attendanceStatus === 'late').length;
     const totalAbsentExcused = studentProgress.filter(p => p.attendanceStatus === 'absent_excused').length;
@@ -189,15 +207,15 @@ export const generateStudentProgressReport = (studentId, courseId, isTeacher = f
     const listeningAvg = skillAverages.listening;
     const speakingAvg = skillAverages.speaking;
     const writingAvg = skillAverages.writing;
-    
+
     // For backward compatibility with existing code
     const readingScores = [readingAvg === '--' ? 0 : parseFloat(readingAvg)];
     const listeningScores = [listeningAvg === '--' ? 0 : parseFloat(listeningAvg)];
     const speakingScores = [speakingAvg === '--' ? 0 : parseFloat(speakingAvg)];
     const writingScores = [writingAvg === '--' ? 0 : parseFloat(writingAvg)];
     const calculateAverage = (scores) => scores.length > 0 ? (scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(1) : 0;
-    
-    
+
+
     const chartData = {
         submission: { labels: ['Đã nộp', 'Chưa nộp'], datasets: [{ data: [totalSubmissions, totalPossibleSubmissions > totalSubmissions ? totalPossibleSubmissions - totalSubmissions : 0], backgroundColor: ['#3b82f6', '#e2e8f0'] }] },
         grading: { labels: ['Đã chấm', 'Chưa chấm', 'Hết hạn chấm'], datasets: [{ data: [totalGraded, totalSubmissions - totalGraded - totalDeadlineMissedForGrading, totalDeadlineMissedForGrading], backgroundColor: ['#22c55e', '#facc15', '#3b82f6'] }] },
@@ -205,10 +223,10 @@ export const generateStudentProgressReport = (studentId, courseId, isTeacher = f
         skills: { labels: ['Đọc', 'Nghe', 'Nói', 'Viết'], datasets: [{ label: 'Điểm trung bình', data: [readingAvg === '--' ? 0 : readingAvg, listeningAvg === '--' ? 0 : listeningAvg, speakingAvg === '--' ? 0 : speakingAvg, writingAvg === '--' ? 0 : writingAvg], backgroundColor: 'rgba(59, 130, 246, 0.2)', borderColor: 'rgba(59, 130, 246, 1)', pointBackgroundColor: 'rgba(59, 130, 246, 1)' }] }
     };
 
-    const progressHTML = courseLessons.sort((a,b) => (a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0)).map(lesson => {
+    const progressHTML = courseLessons.sort((a, b) => (a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0)).map(lesson => {
         const progressRecord = studentProgress.find(p => p.lessonId === lesson.id) || {};
         const { attendanceStatus, grade, submittedAt: submitted, isDeadlineMissed } = progressRecord;
-        
+
         const attendanceMap = {
             present: { text: 'Có mặt', class: 'bg-blue-500 text-white' },
             absent_excused: { text: 'Vắng có phép', class: 'bg-yellow-500 text-white' },
@@ -257,12 +275,12 @@ export const generateStudentProgressReport = (studentId, courseId, isTeacher = f
              </div>
         `;
     }).join('');
-    
+
     // Calculate overall average score from all graded submissions + deadline missed
     const allGradedRecords = studentProgress.filter(p => (p.submittedAt && p.grade != null) || p.isDeadlineMissed && lessonsWithHomework.some(l => l.id === p.lessonId));
     const allGrades = allGradedRecords.map(p => p.isDeadlineMissed ? 0 : parseFloat(p.grade));
     const overallAverage = allGrades.length > 0 ? (allGrades.reduce((a, b) => a + b, 0) / allGrades.length).toFixed(1) : '--';
-    
+
     const fullHTML = `
         <div class="p-6 bg-gradient-to-br from-slate-50 to-blue-50 rounded-xl shadow-lg mb-6 border border-blue-100">
             <h3 class="text-xl font-bold mb-6 text-slate-800">📊 Tổng quan kết quả học tập</h3>
@@ -312,7 +330,6 @@ export const generateStudentProgressReport = (studentId, courseId, isTeacher = f
                 </div>
                 `}
             </div>
-        </div>
         
         <div class="p-6 bg-white rounded-xl shadow-lg mb-6">
             <h3 class="text-xl font-bold mb-4">Biểu đồ thống kê</h3>
@@ -326,7 +343,7 @@ export const generateStudentProgressReport = (studentId, courseId, isTeacher = f
         <h3 class="text-xl font-bold mb-4">Chi tiết từng buổi học</h3>
         <div class="space-y-4">${courseLessons.length > 0 ? progressHTML : '<p class="text-slate-500 text-center py-8">Chưa có bài học nào trong khóa học này.</p>'}</div>
     `;
-    
+
     return { html: fullHTML, chartData };
 };
 
@@ -334,7 +351,7 @@ export const renderMyProgressView = (courseId, isRestoring = false) => {
     const currentUser = getCurrentUser();
     const courses = getCourses();
     const appContainer = document.getElementById('app');
-    
+
     if (!isRestoring) {
         setCurrentView('myProgress');
     }
@@ -344,13 +361,19 @@ export const renderMyProgressView = (courseId, isRestoring = false) => {
     document.title = `Tiến độ của tôi: ${course.title}`;
     const { html, chartData } = generateStudentProgressReport(currentUser.id, courseId, false);
 
+    // Add Tết background styling
+    appContainer.style.backgroundImage = 'url("tet_background.png")';
+    appContainer.style.backgroundRepeat = 'repeat';
+    appContainer.style.backgroundAttachment = 'fixed';
+    appContainer.style.position = 'relative';
+
     appContainer.innerHTML = `
-         <div class="w-full max-w-7xl mx-auto fade-in">
+         <div style="min-height: 100vh; padding: 1rem;" class="fade-in"><div class="w-full max-w-7xl mx-auto">
              ${renderHeader(`Tiến độ của tôi`, true)}
              <main class="mt-6">
                  ${html}
              </main>
-         </div>
+         </div></div>
     `;
     setTimeout(() => renderCharts(chartData, 'report-'), 50);
 };
@@ -362,9 +385,9 @@ export const renderMyProgressView = (courseId, isRestoring = false) => {
 export const handleStudentClickEvents = (e) => {
     const currentUser = getCurrentUser();
     const target = e.target;
-    
+
     if (currentUser?.role === 'student') {
-        if (target.closest('.view-course-btn')) { 
+        if (target.closest('.view-course-btn')) {
             setCurrentCourseId(target.closest('.view-course-btn').dataset.id);
             setCurrentView('course');
             saveSessionToLocalStorage();
@@ -410,23 +433,23 @@ export const handleQuickSubmission = (lessonId) => {
     const courses = getCourses();
     const lessons = getLessons();
     const progress = getProgress();
-    
+
     const lesson = lessons.find(l => l.id === lessonId);
     const progressRecord = progress.find(p => p.lessonId === lessonId && p.studentId === currentUser.id);
-    
+
     // Kiểm tra nếu đã hết hạn nộp
     if (progressRecord?.isDeadlineMissed) {
         showToast('❌ Hết hạn nộp bài! Bạn không thể nộp bài nữa.', 'error');
         return;
     }
-    
+
     const course = courses.find(c => c.id === lesson.courseId);
-    
+
     if (!course?.scriptUrl) {
         showToast('Khóa học này chưa được cấu hình GAS Web App URL', 'error');
         return;
     }
-    
+
     // Create submission modal with progress tracking
     const submissionHTML = `
         <div class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
@@ -469,21 +492,21 @@ export const handleQuickSubmission = (lessonId) => {
             </div>
         </div>
     `;
-    
+
     const modalDiv = document.createElement('div');
     modalDiv.id = 'submission-modal';
     modalDiv.innerHTML = submissionHTML;
     document.body.appendChild(modalDiv);
-    
+
     // Handle file selection
     const fileInput = modalDiv.querySelector('#submission-file-input');
     const dropzone = modalDiv.querySelector('#submission-dropzone');
     const filesList = modalDiv.querySelector('#submission-files-list');
     const submitBtn = modalDiv.querySelector('#submission-submit-btn');
     const cancelBtn = modalDiv.querySelector('#submission-cancel-btn');
-    
+
     let selectedFiles = [];
-    
+
     const addFiles = (newFiles) => {
         const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
         Array.from(newFiles).forEach(file => {
@@ -505,17 +528,17 @@ export const handleQuickSubmission = (lessonId) => {
         renderFilesList();
         submitBtn.disabled = selectedFiles.length === 0;
     };
-    
+
     const renderFilesList = () => {
         filesList.innerHTML = selectedFiles.map((fileObj, idx) => {
             const statusClass = fileObj.status === 'success' ? 'bg-green-50 border-green-200' :
-                               fileObj.status === 'error' ? 'bg-red-50 border-red-200' :
-                               fileObj.status === 'uploading' ? 'bg-blue-50 border-blue-200' : 'bg-gray-50 border-gray-200';
-            
+                fileObj.status === 'error' ? 'bg-red-50 border-red-200' :
+                    fileObj.status === 'uploading' ? 'bg-blue-50 border-blue-200' : 'bg-gray-50 border-gray-200';
+
             const statusIcon = fileObj.status === 'success' ? '✓' :
-                              fileObj.status === 'error' ? '✗' :
-                              fileObj.status === 'uploading' ? '⏳' : '📄';
-            
+                fileObj.status === 'error' ? '✗' :
+                    fileObj.status === 'uploading' ? '⏳' : '📄';
+
             return `
                 <div class="p-3 border rounded-lg ${statusClass} transition-all">
                     <div class="flex items-center justify-between mb-2">
@@ -542,7 +565,7 @@ export const handleQuickSubmission = (lessonId) => {
             `;
         }).join('');
     };
-    
+
     dropzone.addEventListener('click', () => fileInput.click());
     dropzone.addEventListener('dragover', (e) => {
         e.preventDefault();
@@ -556,11 +579,11 @@ export const handleQuickSubmission = (lessonId) => {
         dropzone.classList.remove('bg-blue-50', 'border-blue-500');
         addFiles(e.dataTransfer.files);
     });
-    
+
     fileInput.addEventListener('change', (e) => {
         addFiles(e.target.files);
     });
-    
+
     filesList.addEventListener('click', (e) => {
         if (e.target.hasAttribute('data-remove-index')) {
             const idx = parseInt(e.target.getAttribute('data-remove-index'));
@@ -571,17 +594,17 @@ export const handleQuickSubmission = (lessonId) => {
             }
         }
     });
-    
+
     cancelBtn.addEventListener('click', () => {
         modalDiv.remove();
     });
-    
+
     submitBtn.addEventListener('click', async () => {
         if (selectedFiles.length === 0) return;
-        
+
         submitBtn.disabled = true;
         cancelBtn.disabled = true;
-        
+
         try {
             // Create folder structure
             showToast('Đang cấu trúc thư mục...', 'info');
@@ -595,18 +618,18 @@ export const handleQuickSubmission = (lessonId) => {
                     lessonName: lesson.title
                 })
             });
-            
+
             const hierarchyData = await hierarchyRes.json();
             if (hierarchyData.status !== 'success' || !hierarchyData.folderId) {
                 throw new Error(hierarchyData.message || 'Lỗi tạo thư mục');
             }
-            
+
             // Upload files with progress tracking
             let uploadedCount = 0;
             for (let fileIdx = 0; fileIdx < selectedFiles.length; fileIdx++) {
                 const fileObj = selectedFiles[fileIdx];
                 const file = fileObj.file;
-                
+
                 try {
                     const urlRes = await fetch(course.scriptUrl, {
                         method: 'POST',
@@ -617,17 +640,17 @@ export const handleQuickSubmission = (lessonId) => {
                             folderId: hierarchyData.folderId
                         })
                     });
-                    
+
                     const urlData = await urlRes.json();
                     if (urlData.status !== 'success' || !urlData.url) {
                         throw new Error(urlData.message || 'Lỗi lấy upload URL');
                     }
-                    
+
                     // Update status to uploading
                     fileObj.status = 'uploading';
                     fileObj.progress = 0;
                     renderFilesList();
-                    
+
                     // Upload file with XMLHttpRequest to track progress
                     await new Promise((resolve, reject) => {
                         const xhr = new XMLHttpRequest();
@@ -638,12 +661,12 @@ export const handleQuickSubmission = (lessonId) => {
                                 reject(new Error('Timeout tải lên'));
                             }
                         }, 600000); // 10 phút timeout
-                        
+
                         xhr.upload.addEventListener('progress', (event) => {
                             if (event.lengthComputable) {
                                 fileObj.progress = Math.round((event.loaded / event.total) * 100);
                                 renderFilesList();
-                                
+
                                 // Khi progress đạt 100%, coi như upload thành công
                                 if (fileObj.progress === 100 && !uploadCompleted) {
                                     uploadCompleted = true;
@@ -652,7 +675,7 @@ export const handleQuickSubmission = (lessonId) => {
                                 }
                             }
                         });
-                        
+
                         xhr.addEventListener('error', () => {
                             if (!uploadCompleted) {
                                 uploadCompleted = true;
@@ -660,7 +683,7 @@ export const handleQuickSubmission = (lessonId) => {
                                 reject(new Error('Lỗi kết nối mạng'));
                             }
                         });
-                        
+
                         xhr.addEventListener('abort', () => {
                             if (!uploadCompleted) {
                                 uploadCompleted = true;
@@ -668,12 +691,12 @@ export const handleQuickSubmission = (lessonId) => {
                                 reject(new Error('Tải lên bị hủy'));
                             }
                         });
-                        
+
                         xhr.open('PUT', urlData.url, true);
                         xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
                         xhr.send(file);
                     });
-                    
+
                     uploadedCount++;
                     fileObj.status = 'success';
                     fileObj.progress = 100;
@@ -684,7 +707,7 @@ export const handleQuickSubmission = (lessonId) => {
                     // Không hiển thị toast lỗi cho từng file, chỉ cập nhật status
                 }
             }
-            
+
             // Save to Firebase
             const progressRecord = progress.find(p => p.lessonId === lessonId && p.studentId === currentUser.id);
             if (progressRecord) {
@@ -705,19 +728,19 @@ export const handleQuickSubmission = (lessonId) => {
                     attendanceStatus: null
                 }, { merge: true });
             }
-            
+
             // Kiểm tra có file nào fail không
             const failedFiles = selectedFiles.filter(f => f.status === 'error');
             const successFiles = selectedFiles.filter(f => f.status === 'success');
-            
+
             if (successFiles.length > 0) {
                 showToast(`✅ Nộp bài thành công! (${successFiles.length}/${selectedFiles.length} file)`, 'success');
             }
-            
+
             if (failedFiles.length > 0) {
                 showToast(`⚠️ ${failedFiles.length} file tải lên thất bại, nhưng ${successFiles.length} file thành công`, 'warning');
             }
-            
+
             setTimeout(() => {
                 modalDiv.remove();
                 renderLessonView(lessonId);
@@ -740,7 +763,7 @@ export const getCourseFolderUrl = async (course) => {
             showToast('❌ Khóa học chưa được cấu hình GAS Web App URL', 'error');
             return null;
         }
-        
+
         // Gọi create_course_folder (tạo nếu chưa tồn tại, lấy nếu tồn tại)
         const res = await fetch(course.scriptUrl, {
             method: 'POST',
@@ -749,12 +772,12 @@ export const getCourseFolderUrl = async (course) => {
                 className: course.title
             })
         });
-        
+
         const data = await res.json();
         if (data.status === 'success' && data.folderUrl) {
             return data.folderUrl;
         }
-        
+
         showToast(`❌ Không tìm thấy thư mục khóa học`, 'error');
         return null;
     } catch (err) {
@@ -766,15 +789,15 @@ export const getCourseFolderUrl = async (course) => {
 export const handleViewCourseFolderBtn = async (courseId) => {
     const courses = getCourses();
     const course = courses.find(c => c.id === courseId);
-    
+
     if (!course) {
         showToast('❌ Không tìm thấy khóa học', 'error');
         return;
     }
-    
+
     showToast('Đang lấy link thư mục...', 'info');
     const folderUrl = await getCourseFolderUrl(course);
-    
+
     if (folderUrl) {
         window.open(folderUrl, '_blank');
         showToast('✅ Đang mở thư mục lớp học', 'success');
@@ -789,7 +812,7 @@ export const getLessonFolderUrl = async (course, lesson, studentName) => {
             showToast('❌ Khóa học chưa được cấu hình GAS Web App URL', 'error');
             return null;
         }
-        
+
         // Gọi API create_folder_structure để lấy lessonUrl
         const hierarchyRes = await fetch(course.scriptUrl, {
             method: 'POST',
@@ -801,7 +824,7 @@ export const getLessonFolderUrl = async (course, lesson, studentName) => {
                 lessonName: lesson.title
             })
         });
-        
+
         const hierarchyData = await hierarchyRes.json();
         if (hierarchyData.status === 'success' && hierarchyData.lessonUrl) {
             return hierarchyData.lessonUrl;
@@ -809,7 +832,7 @@ export const getLessonFolderUrl = async (course, lesson, studentName) => {
             // Nếu chỉ có folderId, tạo URL từ folderId
             return `https://drive.google.com/drive/folders/${hierarchyData.folderId}`;
         }
-        
+
         showToast(`❌ Không tìm thấy thư mục bài học`, 'error');
         return null;
     } catch (err) {
@@ -822,19 +845,19 @@ export const handleViewLessonFolder = async (lessonId) => {
     const currentUser = getCurrentUser();
     const courses = getCourses();
     const lessons = getLessons();
-    
+
     const lesson = lessons.find(l => l.id === lessonId);
     if (!lesson) return;
-    
+
     const course = courses.find(c => c.id === lesson.courseId);
     if (!course?.scriptUrl) {
         showToast('Khóa học này chưa được cấu hình GAS Web App URL', 'error');
         return;
     }
-    
+
     showToast('Đang lấy link thư mục...', 'info');
     const folderUrl = await getLessonFolderUrl(course, lesson, currentUser.name);
-    
+
     if (folderUrl) {
         window.open(folderUrl, '_blank');
         showToast('✅ Đang mở thư mục bài học', 'success');
@@ -872,26 +895,26 @@ export const handleCancelSubmission = async (lessonId) => {
                             lessonName: lesson.title
                         })
                     });
-                    
+
                     const deleteData = await deleteRes.json();
                     if (deleteData.status === 'success' && deleteData.deleted) {
                         showToast('✅ Đã xóa folder bài học khỏi Google Drive', 'success');
                     } else if (deleteData.status === 'success' && !deleteData.deleted) {
                         showToast('⚠️ Không tìm thấy folder để xóa', 'warning');
                     }
-                } catch (delErr) { 
+                } catch (delErr) {
                     // Error handling silently
                 }
             }
-            
+
             // Remove from Firebase
             if (progressRecord) {
-                await updateDoc(doc(db, 'progress', progressRecord.id), { 
-                    submittedAt: deleteField() 
+                await updateDoc(doc(db, 'progress', progressRecord.id), {
+                    submittedAt: deleteField()
                 });
                 delete progressRecord.submittedAt;
             }
-            
+
             showToast('✓ Đã hủy xác nhận nộp bài', 'success');
             closeModal();
             renderLessonView(lessonId);

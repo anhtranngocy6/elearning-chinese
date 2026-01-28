@@ -1,10 +1,10 @@
 // teacher.js - Teacher dashboard and course management functions
 
 import { renderHeader, showToast, showModal, closeModal, renderCharts, getSkillColorClass, calculateAverageScore, renderConfirmModal, saveSessionToLocalStorage, calculateSkillAverages } from './shared.js';
-import { 
+import {
     getUsers, setCourses, getLessons, setLessons,
     getProgress, getEnrollments, getHomeworks,
-    getCurrentUser, getCurrentView, getCurrentCourseId, getCurrentActiveTab, setCurrentView, 
+    getCurrentUser, getCurrentView, getCurrentCourseId, getCurrentActiveTab, setCurrentView,
     setCurrentCourseId, setCurrentStudentIdForProgress, getOverviewFilterLessonId, setOverviewFilterLessonId,
     getCourses, setCurrentActiveTab
 } from './shared.js';
@@ -25,7 +25,13 @@ export const renderTeacherDashboard = (appContainerEl = document.getElementById(
     const users = getUsers();
     const myCourses = getCourses().filter(c => c.createdBy === getCurrentUser().id);
     const currentUser = getCurrentUser();
-    appContainerEl.innerHTML = `<div class="w-full max-w-7xl mx-auto fade-in">${renderHeader('Teacher Dashboard')}<div class="grid grid-cols-1 md:grid-cols-3 gap-8 mt-6"><div class="md:col-span-2 bg-white p-6 rounded-xl shadow-lg"><h2 class="text-2xl font-bold mb-4">Khoá học của tôi</h2><div class="space-y-3">${myCourses.length > 0 ? myCourses.map(c => `<div class="p-4 bg-slate-50 rounded-lg flex items-start gap-4 overflow-hidden"><div class="flex-1 min-w-0 overflow-hidden"><h3 class="font-semibold text-lg truncate">${c.title}</h3><p class="text-sm text-slate-500 line-clamp-2 mt-1 overflow-hidden whitespace-pre-wrap break-words">${c.description}</p></div><div class="space-x-2 flex-shrink-0 flex whitespace-nowrap"><button class="edit-course-btn text-gray-500 hover:text-blue-700" data-id="${c.id}" title="Chỉnh sửa thông tin"><i class="fas fa-pen"></i></button><button class="manage-course-btn bg-blue-50 text-blue-600 px-4 py-1 rounded-full border border-blue-200 font-semibold text-sm hover:bg-blue-100 whitespace-nowrap" data-id="${c.id}">Quản lý</button></div></div>`).join('') : '<p class="text-slate-500">Bạn chưa tạo khoá học nào.</p>'}</div></div><div class="bg-white p-6 rounded-xl shadow-lg h-fit"><h2 class="text-2xl font-bold mb-4">Tạo khoá học mới</h2><div class="space-y-3"><input type="text" id="new-course-title" placeholder="Tiêu đề khoá học" class="w-full p-2 border rounded-lg"><textarea id="new-course-desc" placeholder="Mô tả khoá học" class="w-full p-2 border rounded-lg h-24"></textarea><input type="text" id="new-course-script-url" placeholder="URL Google Apps Script Web App (bắt buộc)" class="w-full p-2 border rounded-lg" title="URL để tạo folder khóa học tự động"><button id="add-course-btn" class="w-full bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700">Tạo mới</button></div></div></div></div>`;
+    // Add Tết background styling
+    appContainerEl.style.backgroundImage = 'url("tet_background.png")';
+    appContainerEl.style.backgroundRepeat = 'repeat';
+    appContainerEl.style.backgroundAttachment = 'fixed';
+    appContainerEl.style.position = 'relative';
+
+    appContainerEl.innerHTML = `<div class="w-full max-w-7xl mx-auto fade-in"><div style="min-height: 100vh; padding: 1rem;">${renderHeader('Teacher Dashboard')}<div class="grid grid-cols-1 md:grid-cols-3 gap-8 mt-6"><div class="md:col-span-2 bg-white p-6 rounded-xl shadow-lg"><h2 class="text-2xl font-bold mb-4">Khoá học của tôi</h2><div class="space-y-3">${myCourses.length > 0 ? myCourses.map(c => `<div class="p-4 bg-slate-50 rounded-lg flex items-start gap-4 overflow-hidden"><div class="flex-1 min-w-0 overflow-hidden"><h3 class="font-semibold text-lg truncate">${c.title}</h3><p class="text-sm text-slate-500 line-clamp-2 mt-1 overflow-hidden whitespace-pre-wrap break-words">${c.description}</p></div><div class="space-x-2 flex-shrink-0 flex whitespace-nowrap"><button class="edit-course-btn text-gray-500 hover:text-blue-700" data-id="${c.id}" title="Chỉnh sửa thông tin"><i class="fas fa-pen"></i></button><button class="manage-course-btn bg-blue-50 text-blue-600 px-4 py-1 rounded-full border border-blue-200 font-semibold text-sm hover:bg-blue-100 whitespace-nowrap" data-id="${c.id}">Quản lý</button></div></div>`).join('') : '<p class="text-slate-500">Bạn chưa tạo khoá học nào.</p>'}</div></div><div class="bg-white p-6 rounded-xl shadow-lg h-fit"><h2 class="text-2xl font-bold mb-4">Tạo khoá học mới</h2><div class="space-y-3"><input type="text" id="new-course-title" placeholder="Tiêu đề khoá học" class="w-full p-2 border rounded-lg"><textarea id="new-course-desc" placeholder="Mô tả khoá học" class="w-full p-2 border rounded-lg h-24"></textarea><input type="text" id="new-course-script-url" placeholder="URL Google Apps Script Web App (bắt buộc)" class="w-full p-2 border rounded-lg" title="URL để tạo folder khóa học tự động"><button id="add-course-btn" class="w-full bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700">Tạo mới</button></div></div></div></div></div>`;
 };
 
 export const renderEditCourseModal = (courseId) => {
@@ -76,13 +82,19 @@ export const renderTeacherCourseManagement = (courseId, isRestoring = false) => 
     }
     setCurrentCourseId(courseId);
     const course = getCourses().find(c => c.id === courseId);
-    if(!course) return renderTeacherDashboard();
+    if (!course) return renderTeacherDashboard();
     document.title = `Quản lý: ${course.title}`;
-    
+
     const appContainer = document.getElementById('app');
     const currentActiveTab = getCurrentActiveTab();
+    // Add Tết background styling
+    appContainer.style.backgroundImage = 'url("tet_background.png")';
+    appContainer.style.backgroundRepeat = 'repeat';
+    appContainer.style.backgroundAttachment = 'fixed';
+    appContainer.style.position = 'relative';
+
     appContainer.innerHTML = `
-         <div class="w-full max-w-7xl mx-auto fade-in">
+         <div style="min-height: 100vh; padding: 1rem;" class="fade-in"><div class="w-full max-w-7xl mx-auto">
              ${renderHeader(course.title, true)}
              <main class="mt-6">
                  <div class="border-b border-gray-200 mb-6 bg-white/80 backdrop-blur-sm shadow-sm rounded-t-lg sticky top-20 z-30">
@@ -99,8 +111,8 @@ export const renderTeacherCourseManagement = (courseId, isRestoring = false) => 
                      <div id="tab-students-progress" class="tab-content ${currentActiveTab === 'students-progress' ? '' : 'hidden'}"></div>
                  </div>
              </main>
-         </div>`;
-    
+         </div></div>`;
+
     updateTeacherCourseTabs();
 };
 
@@ -110,20 +122,20 @@ export const updateTeacherCourseTabs = () => {
     const currentUser = getCurrentUser();
     const currentView = getCurrentView();
     const currentCourseId = getCurrentCourseId();
-    
+
     if (currentView !== 'course' || currentUser?.role !== 'teacher') return;
     const courseId = currentCourseId;
     const enrolledStudents = users.filter(u => u.role === 'student' && enrollments.some(e => e.courseId === courseId && e.studentId === u.id));
 
     const overviewResult = renderTeacherCourseTabs.overview(courseId, enrolledStudents);
     const overviewTab = document.getElementById('tab-overview');
-    if(overviewTab) {
+    if (overviewTab) {
         overviewTab.innerHTML = overviewResult.html;
-        if(overviewResult.chartData) {
+        if (overviewResult.chartData) {
             setTimeout(() => renderCharts(overviewResult.chartData, 'overview-'), 50);
         }
     }
-    
+
     const lessonsTab = document.getElementById('tab-lessons');
     if (lessonsTab) {
         lessonsTab.innerHTML = renderTeacherCourseTabs.lessons(courseId);
@@ -141,38 +153,38 @@ export const renderTeacherCourseTabs = {
         const homeworks = getHomeworks();
         const progress = getProgress();
         const overviewFilterLessonId = getOverviewFilterLessonId();
-        
+
         let allLessonsWithHomework = lessons
             .filter(l => l.courseId === courseId && homeworks.some(h => h.lessonId === l.id))
             .sort((a, b) => (a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0));
-        
+
         const allLessonsInCourse = lessons
             .filter(l => l.courseId === courseId)
             .sort((a, b) => (a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0));
 
-        if (enrolledStudents.length === 0 ) {
+        if (enrolledStudents.length === 0) {
             return { html: '<div class="text-center py-12"><i class="fas fa-info-circle fa-2x text-slate-400"></i><p class="mt-4 text-slate-500">Chưa có học sinh trong khóa học.</p></div>' };
         }
         if (allLessonsWithHomework.length === 0) {
-             return { html: '<div class="text-center py-12"><i class="fas fa-info-circle fa-2x text-slate-400"></i><p class="mt-4 text-slate-500">Chưa có bài tập nào để hiển thị tổng quan.</p></div>'};
+            return { html: '<div class="text-center py-12"><i class="fas fa-info-circle fa-2x text-slate-400"></i><p class="mt-4 text-slate-500">Chưa có bài tập nào để hiển thị tổng quan.</p></div>' };
         }
-        
-        const lessonsForStats = overviewFilterLessonId === 'all' 
-            ? allLessonsWithHomework 
+
+        const lessonsForStats = overviewFilterLessonId === 'all'
+            ? allLessonsWithHomework
             : allLessonsWithHomework.filter(l => l.id === overviewFilterLessonId);
-        
+
         // ...existing code...
         let totalSubmissions = 0, totalGraded = 0, totalDeadlineMissedForGrading = 0;
         let totalPresent = 0, totalLate = 0, totalAbsentExcused = 0, totalAbsentUnexcused = 0;
         const totalPossibleSubmissions = enrolledStudents.length * lessonsForStats.length;
         const totalAttendanceSlots = enrolledStudents.length * allLessonsInCourse.length;
-        
+
         const allReadingScores = [], allListeningScores = [], allSpeakingScores = [], allWritingScores = [];
 
         enrolledStudents.forEach(student => {
             lessonsForStats.forEach(lesson => {
                 const progressRecord = progress.find(p => p.studentId === student.id && p.lessonId === lesson.id);
-                
+
                 // Nếu đã nộp
                 if (progressRecord?.submittedAt) {
                     totalSubmissions++;
@@ -215,25 +227,25 @@ export const renderTeacherCourseTabs = {
         const classAvgListening = calculateAvg(allListeningScores);
         const classAvgSpeaking = calculateAvg(allSpeakingScores);
         const classAvgWriting = calculateAvg(allWritingScores);
-        
+
         const totalRecorded = totalPresent + totalLate + totalAbsentExcused + totalAbsentUnexcused;
         const totalNotRecorded = totalAttendanceSlots - totalRecorded;
-        
+
         const chartData = {
-            submission: { labels: ['Đã nộp', 'Chưa nộp'], datasets: [{ data: [totalSubmissions, totalPossibleSubmissions > totalSubmissions ? totalPossibleSubmissions - totalSubmissions : 0], backgroundColor: ['#3b82f6', '#e2e8f0']}] },
-            grading: { labels: ['Đã chấm', 'Chưa chấm', 'Hết hạn chấm'], datasets: [{ data: [totalGraded - totalDeadlineMissedForGrading, totalSubmissions - totalGraded, totalDeadlineMissedForGrading], backgroundColor: ['#22c55e', '#facc15', '#3b82f6']}] },
+            submission: { labels: ['Đã nộp', 'Chưa nộp'], datasets: [{ data: [totalSubmissions, totalPossibleSubmissions > totalSubmissions ? totalPossibleSubmissions - totalSubmissions : 0], backgroundColor: ['#3b82f6', '#e2e8f0'] }] },
+            grading: { labels: ['Đã chấm', 'Chưa chấm', 'Hết hạn chấm'], datasets: [{ data: [totalGraded - totalDeadlineMissedForGrading, totalSubmissions - totalGraded, totalDeadlineMissedForGrading], backgroundColor: ['#22c55e', '#facc15', '#3b82f6'] }] },
             attendance: { labels: ['Có mặt', 'Đi trễ', 'Vắng có phép', 'Vắng không phép', 'Chưa điểm danh'], datasets: [{ data: [totalPresent, totalLate, totalAbsentExcused, totalAbsentUnexcused, totalNotRecorded], backgroundColor: ['#22c55e', '#f97316', '#facc15', '#ef4444', '#e2e8f0'] }] },
             skills: { labels: ['Đọc', 'Nghe', 'Nói', 'Viết'], datasets: [{ label: 'Điểm trung bình', data: [classAvgReading, classAvgListening, classAvgSpeaking, classAvgWriting], backgroundColor: 'rgba(59, 130, 246, 0.2)', borderColor: 'rgba(59, 130, 246, 1)', pointBackgroundColor: 'rgba(59, 130, 246, 1)', }] }
         };
 
-        const lessonsForTable = (overviewFilterLessonId === 'all') 
-            ? allLessonsWithHomework 
+        const lessonsForTable = (overviewFilterLessonId === 'all')
+            ? allLessonsWithHomework
             : allLessonsWithHomework.filter(l => l.id === overviewFilterLessonId);
 
         const filterMessage = "Nhấn vào ô để chỉnh sửa nhanh. 🟢 Xanh = đã chấm | 🟡 Vàng = chưa chấm | 🔴 Đỏ = chưa nộp | 🔵 Xanh dương = hết hạn nộp";
 
         // Heatmap view (12 bài 1 dòng, xuống hàng khi vượt quá)
-        const heatmapView = enrolledStudents.length > 0 
+        const heatmapView = enrolledStudents.length > 0
             ? `<div class="rounded-2xl overflow-hidden shadow-2xl border-2 border-slate-100 bg-white">
                 <!-- Header -->
                 <div class="bg-gradient-to-r from-blue-700 to-blue-600 px-8 py-6 text-white">
@@ -257,45 +269,45 @@ export const renderTeacherCourseTabs = {
                 <!-- Rows -->
                 <div class="divide-y-2 divide-slate-200">
                     ${enrolledStudents.map((student, rowIdx) => {
-                        let totalScore = 0, scoredCount = 0;
-                        const dotsHtml = lessonsForTable.map((lesson, idx) => {
-                            const progressRecord = progress.find(p => p.studentId === student.id && p.lessonId === lesson.id);
-                            let dotClass = 'bg-red-400';
-                            let tooltipText = 'Chưa nộp';
-                            
-                            if (progressRecord?.submittedAt) {
-                                if (progressRecord.grade === null || progressRecord.grade === undefined) {
-                                    dotClass = 'bg-yellow-300';
-                                    tooltipText = 'Chưa chấm';
-                                } else {
-                                    dotClass = 'bg-green-400';
-                                    tooltipText = 'Điểm: ' + progressRecord.grade;
-                                    totalScore += parseFloat(progressRecord.grade);
-                                    scoredCount++;
-                                }
-                            }
-                            // Nếu hết hạn nộp → tính 0
-                            else if (progressRecord?.isDeadlineMissed) {
-                                dotClass = 'bg-blue-600';
-                                tooltipText = '⏰ Hết hạn nộp';
-                                totalScore += 0;
-                                scoredCount++;
-                            }
-                            
-                            return '<div class="flex flex-col items-center edit-progress-shortcut-btn cursor-pointer group" data-student-id="' + student.id + '" data-lesson-id="' + lesson.id + '" title="' + tooltipText + ' - ' + lesson.title + '"><div class="w-6 h-6 rounded-full ' + dotClass + ' hover:scale-125 transition-all shadow-md ring-1 ring-offset-1 ring-white hover:ring-blue-400 group-hover:shadow-lg"></div><span class="text-xs font-bold text-slate-700 mt-1">' + (idx + 1) + '</span></div>';
-                        }).join('');
-                        
-                        const avgScore = scoredCount > 0 ? (totalScore / scoredCount).toFixed(1) : '--';
-                        
-                        // Calculate skill averages using shared utility function
-                        const studentProgress = progress.filter(p => p.studentId === student.id && lessonsForTable.some(l => l.id === p.lessonId));
-                        const skillAverages = calculateSkillAverages(lessonsForTable, studentProgress);
-                        const readingAvg = skillAverages.reading;
-                        const listeningAvg = skillAverages.listening;
-                        const speakingAvg = skillAverages.speaking;
-                        const writingAvg = skillAverages.writing;
-                        
-                        const skillsHtml = `<div class="flex flex-col gap-6 items-center justify-center">
+                let totalScore = 0, scoredCount = 0;
+                const dotsHtml = lessonsForTable.map((lesson, idx) => {
+                    const progressRecord = progress.find(p => p.studentId === student.id && p.lessonId === lesson.id);
+                    let dotClass = 'bg-red-400';
+                    let tooltipText = 'Chưa nộp';
+
+                    if (progressRecord?.submittedAt) {
+                        if (progressRecord.grade === null || progressRecord.grade === undefined) {
+                            dotClass = 'bg-yellow-300';
+                            tooltipText = 'Chưa chấm';
+                        } else {
+                            dotClass = 'bg-green-400';
+                            tooltipText = 'Điểm: ' + progressRecord.grade;
+                            totalScore += parseFloat(progressRecord.grade);
+                            scoredCount++;
+                        }
+                    }
+                    // Nếu hết hạn nộp → tính 0
+                    else if (progressRecord?.isDeadlineMissed) {
+                        dotClass = 'bg-blue-600';
+                        tooltipText = '⏰ Hết hạn nộp';
+                        totalScore += 0;
+                        scoredCount++;
+                    }
+
+                    return '<div class="flex flex-col items-center edit-progress-shortcut-btn cursor-pointer group" data-student-id="' + student.id + '" data-lesson-id="' + lesson.id + '" title="' + tooltipText + ' - ' + lesson.title + '"><div class="w-6 h-6 rounded-full ' + dotClass + ' hover:scale-125 transition-all shadow-md ring-1 ring-offset-1 ring-white hover:ring-blue-400 group-hover:shadow-lg"></div><span class="text-xs font-bold text-slate-700 mt-1">' + (idx + 1) + '</span></div>';
+                }).join('');
+
+                const avgScore = scoredCount > 0 ? (totalScore / scoredCount).toFixed(1) : '--';
+
+                // Calculate skill averages using shared utility function
+                const studentProgress = progress.filter(p => p.studentId === student.id && lessonsForTable.some(l => l.id === p.lessonId));
+                const skillAverages = calculateSkillAverages(lessonsForTable, studentProgress);
+                const readingAvg = skillAverages.reading;
+                const listeningAvg = skillAverages.listening;
+                const speakingAvg = skillAverages.speaking;
+                const writingAvg = skillAverages.writing;
+
+                const skillsHtml = `<div class="flex flex-col gap-6 items-center justify-center">
                             <div class="flex gap-6">
                                 <span class="inline-block w-12 px-2 py-1.5 rounded-lg text-xs font-bold text-center ${getSkillColorClass(listeningAvg)} shadow-sm">Nghe ${listeningAvg}</span>
                                 <span class="inline-block w-12 px-2 py-1.5 rounded-lg text-xs font-bold text-center ${getSkillColorClass(readingAvg)} shadow-sm">Đọc ${readingAvg}</span>
@@ -305,15 +317,15 @@ export const renderTeacherCourseTabs = {
                                 <span class="inline-block w-12 px-2 py-1.5 rounded-lg text-xs font-bold text-center ${getSkillColorClass(writingAvg)} shadow-sm">Viết ${writingAvg}</span>
                             </div>
                         </div>`;
-                        
-                        return '<div class="grid grid-cols-12 gap-0 px-6 py-5 items-center hover:bg-gradient-to-r hover:from-blue-50 hover:to-transparent transition-all ' + (rowIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50') + '"><div class="col-span-2 pr-4"><span class="font-semibold text-sm text-slate-900 cursor-pointer hover:text-blue-700 view-student-progress-btn block truncate transition-colors" data-student-id="' + student.id + '" title="Click để xem báo cáo - ' + student.name + '">' + student.name + '</span></div><div class="col-span-6 flex flex-wrap gap-3 justify-start items-center content-center">' + dotsHtml + '</div><div class="col-span-2 flex items-center justify-center">' + skillsHtml + '</div><div class="col-span-2 pl-4 text-center"><span class="inline-block font-bold text-xl text-white bg-gradient-to-r from-blue-700 to-blue-600 px-4 py-3 rounded-full shadow-lg hover:shadow-xl transition-shadow">' + avgScore + '</span></div></div>';
-                    }).join('')}
+
+                return '<div class="grid grid-cols-12 gap-0 px-6 py-5 items-center hover:bg-gradient-to-r hover:from-blue-50 hover:to-transparent transition-all ' + (rowIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50') + '"><div class="col-span-2 pr-4"><span class="font-semibold text-sm text-slate-900 cursor-pointer hover:text-blue-700 view-student-progress-btn block truncate transition-colors" data-student-id="' + student.id + '" title="Click để xem báo cáo - ' + student.name + '">' + student.name + '</span></div><div class="col-span-6 flex flex-wrap gap-3 justify-start items-center content-center">' + dotsHtml + '</div><div class="col-span-2 flex items-center justify-center">' + skillsHtml + '</div><div class="col-span-2 pl-4 text-center"><span class="inline-block font-bold text-xl text-white bg-gradient-to-r from-blue-700 to-blue-600 px-4 py-3 rounded-full shadow-lg hover:shadow-xl transition-shadow">' + avgScore + '</span></div></div>';
+            }).join('')}
                 </div>
             </div>`
             : '';
 
         const tableOrMessage = heatmapView;
-        
+
         const html = `
         <div>
             <h3 class="text-xl font-bold mb-4">Tổng quan tiến độ lớp học</h3>
@@ -344,12 +356,12 @@ export const renderTeacherCourseTabs = {
     lessons: (courseId) => {
         const lessons = getLessons();
         const homeworks = getHomeworks();
-        const courseLessons = lessons.filter(l => l.courseId === courseId).sort((a,b) => (a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0));
-        
+        const courseLessons = lessons.filter(l => l.courseId === courseId).sort((a, b) => (a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0));
+
         // Calculate skill distribution
         const skillCount = { reading: 0, listening: 0, speaking: 0, writing: 0 };
         let totalSkillSlots = 0;
-        
+
         courseLessons.forEach(l => {
             const skillsToTeach = l.skillsToTeach || [];
             skillsToTeach.forEach(skill => {
@@ -359,60 +371,60 @@ export const renderTeacherCourseTabs = {
                 }
             });
         });
-        
+
         // Calculate percentages and find highest/lowest skills
         const skillPercentages = {};
         let maxPercentage = 0;
         let minPercentage = 100;
         let maxSkill = '';
         let minSkill = '';
-        
+
         Object.keys(skillCount).forEach(skill => {
             const percentageNum = totalSkillSlots > 0 ? (skillCount[skill] / totalSkillSlots) * 100 : 0;
             const percentage = percentageNum.toFixed(1);
             skillPercentages[skill] = percentage;
-            
+
             // Tìm kỹ năng cao nhất (chỉ trong các kỹ năng được dạy)
             if (skillCount[skill] > 0 && percentageNum >= maxPercentage) {
                 maxPercentage = percentageNum;
                 maxSkill = skill;
             }
-            
+
             // Tìm kỹ năng thấp nhất (bao gồm cả kỹ năng 0%)
             if (percentageNum <= minPercentage) {
                 minPercentage = percentageNum;
                 minSkill = skill;
             }
         });
-        
+
         // Map skill names
         const skillNames = { reading: 'Đọc', listening: 'Nghe', speaking: 'Nói', writing: 'Viết' };
         const maxSkillName = skillNames[maxSkill] || '';
         const minSkillName = skillNames[minSkill] || '';
-        
+
         const skillStatsHtml = totalSkillSlots > 0 ? `
             <div class="mb-6 p-4 bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl border-2 border-amber-300">
                 <div class="mb-4">
                     <p class="text-lg font-bold text-slate-800 mb-4">🏆 Xếp hạng kỹ năng</p>
                     <div class="space-y-2">
                         ${(() => {
-                            const skillsArr = [
-                                { name: 'Đọc', key: 'reading', percentage: parseFloat(skillPercentages.reading), count: skillCount.reading, icon: '📖', bgColor: 'bg-green-50', borderColor: 'border-green-500', textColor: 'text-green-700' },
-                                { name: 'Nghe', key: 'listening', percentage: parseFloat(skillPercentages.listening), count: skillCount.listening, icon: '🎧', bgColor: 'bg-blue-50', borderColor: 'border-blue-500', textColor: 'text-blue-700' },
-                                { name: 'Nói', key: 'speaking', percentage: parseFloat(skillPercentages.speaking), count: skillCount.speaking, icon: '🎤', bgColor: 'bg-purple-50', borderColor: 'border-purple-500', textColor: 'text-purple-700' },
-                                { name: 'Viết', key: 'writing', percentage: parseFloat(skillPercentages.writing), count: skillCount.writing, icon: '✍️', bgColor: 'bg-orange-50', borderColor: 'border-orange-500', textColor: 'text-orange-700' }
-                            ].sort((a, b) => b.percentage - a.percentage);
-                            
-                            return skillsArr.map((skill, idx) => {
-                                return `<div class="flex items-center justify-between p-3 ${skill.bgColor} rounded-lg border-l-4 ${skill.borderColor} shadow-sm">
+                const skillsArr = [
+                    { name: 'Đọc', key: 'reading', percentage: parseFloat(skillPercentages.reading), count: skillCount.reading, icon: '📖', bgColor: 'bg-green-50', borderColor: 'border-green-500', textColor: 'text-green-700' },
+                    { name: 'Nghe', key: 'listening', percentage: parseFloat(skillPercentages.listening), count: skillCount.listening, icon: '🎧', bgColor: 'bg-blue-50', borderColor: 'border-blue-500', textColor: 'text-blue-700' },
+                    { name: 'Nói', key: 'speaking', percentage: parseFloat(skillPercentages.speaking), count: skillCount.speaking, icon: '🎤', bgColor: 'bg-purple-50', borderColor: 'border-purple-500', textColor: 'text-purple-700' },
+                    { name: 'Viết', key: 'writing', percentage: parseFloat(skillPercentages.writing), count: skillCount.writing, icon: '✍️', bgColor: 'bg-orange-50', borderColor: 'border-orange-500', textColor: 'text-orange-700' }
+                ].sort((a, b) => b.percentage - a.percentage);
+
+                return skillsArr.map((skill, idx) => {
+                    return `<div class="flex items-center justify-between p-3 ${skill.bgColor} rounded-lg border-l-4 ${skill.borderColor} shadow-sm">
                                     <div class="flex items-center gap-2">
                                         <span class="text-xl">${skill.icon}</span>
                                         <span class="font-medium ${skill.textColor}">${skill.name} <span class="text-sm">(${skill.count}/${courseLessons.length})</span></span>
                                     </div>
                                     <div class="text-lg font-bold ${skill.textColor}">${skill.percentage.toFixed(1)}%</div>
                                 </div>`;
-                            }).join('');
-                        })()}
+                }).join('');
+            })()}
                     </div>
                 </div>
                 <div class="p-3 bg-blue-100 rounded border-l-4 border-blue-500">
@@ -424,21 +436,21 @@ export const renderTeacherCourseTabs = {
                 </div>
             </div>
         ` : '';
-        
+
         return `
         <div>
             <h3 class="text-xl font-bold mb-4">Danh sách bài học</h3>
             ${skillStatsHtml}
             ${courseLessons.map(l => {
-                const hasHomework = homeworks.some(h => h.lessonId === l.id && h.title && h.description);
-                const homeworkButtonClass = hasHomework ? 'text-green-600 hover:text-green-800' : 'text-red-500 hover:text-red-700';
-                const skillsDisplay = (l.skillsToTeach || []).map(skill => {
-                    const skillNames = { reading: 'Đọc', listening: 'Nghe', speaking: 'Nói', writing: 'Viết' };
-                    const skillColors = { reading: 'bg-green-100 text-green-700', listening: 'bg-blue-100 text-blue-700', speaking: 'bg-purple-100 text-purple-700', writing: 'bg-orange-100 text-orange-700' };
-                    return `<span class="inline-block px-2 py-1 rounded text-xs font-semibold ${skillColors[skill]}">${skillNames[skill]}</span>`;
-                }).join(' ');
-                
-                return `
+            const hasHomework = homeworks.some(h => h.lessonId === l.id && h.title && h.description);
+            const homeworkButtonClass = hasHomework ? 'text-green-600 hover:text-green-800' : 'text-red-500 hover:text-red-700';
+            const skillsDisplay = (l.skillsToTeach || []).map(skill => {
+                const skillNames = { reading: 'Đọc', listening: 'Nghe', speaking: 'Nói', writing: 'Viết' };
+                const skillColors = { reading: 'bg-green-100 text-green-700', listening: 'bg-blue-100 text-blue-700', speaking: 'bg-purple-100 text-purple-700', writing: 'bg-orange-100 text-orange-700' };
+                return `<span class="inline-block px-2 py-1 rounded text-xs font-semibold ${skillColors[skill]}">${skillNames[skill]}</span>`;
+            }).join(' ');
+
+            return `
                 <div class="p-3 bg-slate-50 rounded-lg mb-2 flex justify-between items-center">
                     <div class="flex-1">
                         <span class="font-medium">${l.title}</span>
@@ -450,7 +462,7 @@ export const renderTeacherCourseTabs = {
                         <button class="delete-lesson-btn text-red-500 hover:text-red-700 text-sm" data-lesson-id="${l.id}"><i class="fas fa-trash mr-1"></i>Xóa</button>
                     </div>
                 </div>`;
-            }).join('') || '<p class="text-slate-500 text-sm">Chưa có bài học nào.</p>'}
+        }).join('') || '<p class="text-slate-500 text-sm">Chưa có bài học nào.</p>'}
             <div class="p-4 bg-slate-50 rounded-lg border border-dashed mt-6">
                 <h3 class="text-xl font-bold mb-3">Thêm bài học mới</h3>
                 <div class="space-y-3">
@@ -484,7 +496,7 @@ export const renderTeacherCourseTabs = {
         </div>`;
     },
     students: (courseId, enrolledStudents) => {
-         return `
+        return `
          <div class="flex justify-between items-center mb-6">
              <div>
                  <h3 class="text-xl font-bold">Danh sách học sinh (${enrolledStudents.length})</h3>
@@ -508,7 +520,7 @@ export const renderStudentProgressView = (studentId, isRestoring = false) => {
     const users = getUsers();
     const lessons = getLessons();
     const currentCourseId = getCurrentCourseId();
-    
+
     if (!isRestoring) {
         setCurrentView('studentProgress');
     }
@@ -519,11 +531,17 @@ export const renderStudentProgressView = (studentId, isRestoring = false) => {
         return;
     }
 
-    const courseLessons = lessons.filter(l => l.courseId === currentCourseId).sort((a,b) => (a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0));
+    const courseLessons = lessons.filter(l => l.courseId === currentCourseId).sort((a, b) => (a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0));
     document.title = `Tiến độ: ${student.name}`;
 
     const appContainer = document.getElementById('app');
-    appContainer.innerHTML = `<div class="w-full max-w-7xl mx-auto fade-in">${renderHeader(`Chỉnh sửa: ${student.name}`, true)}<main class="bg-white p-6 md:p-8 mt-6 rounded-xl shadow-lg"><p class="text-sm text-slate-500 mb-6">Nhấn vào một bài học để chỉnh sửa điểm, điểm danh và nhận xét.</p><div class="space-y-4" id="progress-list-container" data-student-id="${studentId}">${renderProgressForStudent(studentId, courseLessons)}</div></main></div>`;
+    // Add Tết background styling
+    appContainer.style.backgroundImage = 'url("tet_background.png")';
+    appContainer.style.backgroundRepeat = 'repeat';
+    appContainer.style.backgroundAttachment = 'fixed';
+    appContainer.style.position = 'relative';
+
+    appContainer.innerHTML = `<div style="min-height: 100vh; padding: 1rem;" class="fade-in"><div class="w-full max-w-7xl mx-auto">${renderHeader(`Chỉnh sửa: ${student.name}`, true)}<main class="bg-white p-6 md:p-8 mt-6 rounded-xl shadow-lg"><p class="text-sm text-slate-500 mb-6">Nhấn vào một bài học để chỉnh sửa điểm, điểm danh và nhận xét.</p><div class="space-y-4" id="progress-list-container" data-student-id="${studentId}">${renderProgressForStudent(studentId, courseLessons)}</div></main></div></div>`;
 };
 
 export const renderProgressForStudent = (studentId, courseLessons) => {
@@ -546,7 +564,7 @@ export const renderEditProgressModal = (studentId, lessonId) => {
     const users = getUsers();
     const lessons = getLessons();
     const progress = getProgress();
-    
+
     const student = users.find(u => u.id === studentId);
     const lesson = lessons.find(l => l.id === lessonId);
     if (!student || !lesson) return;
@@ -603,8 +621,14 @@ export const renderTeacherStudentReportView = (studentId, courseId, isRestoring 
     document.title = `Báo cáo: ${student.name}`;
     const { html, chartData } = generateStudentProgressReport(studentId, courseId, true);
 
+    // Add Tết background styling
+    appContainer.style.backgroundImage = 'url("tet_background.png")';
+    appContainer.style.backgroundRepeat = 'repeat';
+    appContainer.style.backgroundAttachment = 'fixed';
+    appContainer.style.position = 'relative';
+
     appContainer.innerHTML = `
-         <div class="w-full max-w-7xl mx-auto fade-in">
+         <div style="min-height: 100vh; padding: 1rem;" class="fade-in"><div class="w-full max-w-7xl mx-auto">
              <header class="w-full bg-white p-4 rounded-xl shadow-lg flex justify-between items-center sticky top-0 z-40 h-20">
                  <div class="flex items-center min-w-0">
                      <button class="back-btn mr-4 text-slate-500 hover:text-blue-600 transition-colors"><i class="fas fa-arrow-left fa-lg"></i></button>
@@ -619,8 +643,8 @@ export const renderTeacherStudentReportView = (studentId, courseId, isRestoring 
              <main class="mt-6">
                 ${html}
              </main>
-         </div>
-    `;
+         </div></div>
+     `;
     setTimeout(() => renderCharts(chartData, 'report-'), 50);
 };
 
@@ -634,7 +658,7 @@ export const getTeacherLessonFolderUrl = async (course, lesson, studentName) => 
             showToast('❌ Khóa học chưa được cấu hình GAS Web App URL', 'error');
             return null;
         }
-        
+
         // Gọi API create_folder_structure để lấy lessonUrl
         const hierarchyRes = await fetch(course.scriptUrl, {
             method: 'POST',
@@ -646,7 +670,7 @@ export const getTeacherLessonFolderUrl = async (course, lesson, studentName) => 
                 lessonName: lesson.title
             })
         });
-        
+
         const hierarchyData = await hierarchyRes.json();
         if (hierarchyData.status === 'success' && hierarchyData.lessonUrl) {
             return hierarchyData.lessonUrl;
@@ -654,7 +678,7 @@ export const getTeacherLessonFolderUrl = async (course, lesson, studentName) => 
             // Nếu chỉ có folderId, tạo URL từ folderId
             return `https://drive.google.com/drive/folders/${hierarchyData.folderId}`;
         }
-        
+
         showToast(`❌ Không tìm thấy thư mục bài học`, 'error');
         return null;
     } catch (err) {
@@ -666,22 +690,22 @@ export const getTeacherLessonFolderUrl = async (course, lesson, studentName) => 
 export const handleOpenHomeworkFolder = async (studentId, lessonId, studentName) => {
     const lessons = getLessons();
     const courses = getCourses();
-    
+
     const lesson = lessons.find(l => l.id === lessonId);
     if (!lesson) {
         showToast('❌ Không tìm thấy bài học', 'error');
         return;
     }
-    
+
     const course = courses.find(c => c.id === lesson.courseId);
     if (!course?.scriptUrl) {
         showToast('❌ Khóa học này chưa được cấu hình GAS Web App URL', 'error');
         return;
     }
-    
+
     showToast('Đang lấy link thư mục...', 'info');
     const folderUrl = await getTeacherLessonFolderUrl(course, lesson, studentName);
-    
+
     if (folderUrl) {
         window.open(folderUrl, '_blank');
         showToast('✅ Đang mở thư mục bài học', 'success');
@@ -708,20 +732,20 @@ export const handleTeacherClickEvents = async (e) => {
         const title = document.getElementById('edit-course-title').value;
         const description = document.getElementById('edit-course-desc').value;
         const scriptUrl = document.getElementById('edit-course-script-url').value;
-        
+
         if (title && description) {
             if (scriptUrl && !scriptUrl.includes('script.google.com')) {
                 showToast('❌ Google Apps Script URL không hợp lệ', 'error');
                 return true;
             }
-            
+
             try {
                 showToast('Đang cấp nhật khóa học...', 'info');
-                
+
                 // Get current course to check if folder already exists
                 const course = getCourses().find(c => c.id === courseId);
                 let courseFolderUrl = course?.courseFolderUrl;
-                
+
                 // If no folder URL yet and scriptUrl provided, create folder
                 if (!courseFolderUrl && scriptUrl) {
                     const folderRes = await fetch(scriptUrl, {
@@ -731,7 +755,7 @@ export const handleTeacherClickEvents = async (e) => {
                             className: title
                         })
                     });
-                    
+
                     const folderData = await folderRes.json();
                     if (folderData.status === 'success' && folderData.folderUrl) {
                         courseFolderUrl = folderData.folderUrl;
@@ -740,14 +764,14 @@ export const handleTeacherClickEvents = async (e) => {
                         showToast('⚠️ Không thể tạo folder tự động, nhưng khóa học vẫn được lưu', 'warning');
                     }
                 }
-                
-                await updateDoc(doc(db, 'courses', courseId), { 
-                    title, 
-                    description, 
+
+                await updateDoc(doc(db, 'courses', courseId), {
+                    title,
+                    description,
                     scriptUrl,
                     ...(courseFolderUrl && { courseFolderUrl })
                 });
-                
+
                 closeModal();
                 showToast('Cập nhật khóa học thành công', 'success');
             } catch (err) {
@@ -772,10 +796,10 @@ export const handleTeacherClickEvents = async (e) => {
                 showToast('❌ Google Apps Script URL không hợp lệ', 'error');
                 return true;
             }
-            
+
             try {
                 showToast('Đang kiểm tra Google Apps Script...', 'info');
-                
+
                 // Test GAS connection first
                 const testRes = await fetch(scriptUrl, {
                     method: 'POST',
@@ -784,30 +808,30 @@ export const handleTeacherClickEvents = async (e) => {
                         className: title
                     })
                 });
-                
+
                 const testData = await testRes.json();
                 if (testData.status !== 'success') {
                     showToast(`❌ Lỗi GAS: ${testData.message || 'Không thể kết nối'}`, 'error');
                     return true;
                 }
-                
+
                 showToast('✅ Kết nối GAS thành công! Đang tạo folder...', 'success');
-                
+
                 const courseFolderUrl = testData.folderUrl || null;
                 if (!courseFolderUrl) {
                     showToast('❌ GAS không trả về folder URL', 'error');
                     return true;
                 }
-                
+
                 // Folder created successfully, now save course
-                await addDoc(collection(db, 'courses'), { 
-                    title, 
-                    description, 
-                    createdBy: getCurrentUser().id, 
+                await addDoc(collection(db, 'courses'), {
+                    title,
+                    description,
+                    createdBy: getCurrentUser().id,
                     scriptUrl,
                     courseFolderUrl
                 });
-                
+
                 showToast('✅ Khóa học và folder đã được tạo thành công!', 'success');
                 document.getElementById('new-course-title').value = '';
                 document.getElementById('new-course-desc').value = '';
@@ -828,17 +852,17 @@ export const handleTeacherClickEvents = async (e) => {
         const content = document.getElementById('new-lesson-content').value;
         const videoUrl = document.getElementById('new-lesson-video').value;
         const selectedSkills = Array.from(document.querySelectorAll('.lesson-skill-checkbox:checked')).map(cb => cb.value);
-        
-        if(title && content) {
+
+        if (title && content) {
             if (selectedSkills.length === 0) {
                 showToast('Vui lòng chọn ít nhất một kỹ năng sẽ dạy', 'error');
                 return true;
             }
-            
+
             if (videoUrl && !videoUrl.includes('youtube.com') && !videoUrl.includes('youtu.be')) {
                 showToast('⚠️ URL video phải là YouTube link', 'warning');
             }
-            
+
             await addDoc(collection(db, 'lessons'), { courseId, title, content, videoUrl, skillsToTeach: selectedSkills, createdAt: serverTimestamp() });
             document.getElementById('new-lesson-title').value = '';
             document.getElementById('new-lesson-video').value = '';
@@ -862,16 +886,16 @@ export const handleTeacherClickEvents = async (e) => {
         const videoUrl = document.getElementById('edit-lesson-video').value;
         const content = document.getElementById('edit-lesson-content').value;
         const selectedSkills = Array.from(document.querySelectorAll('.edit-lesson-skill-checkbox:checked')).map(cb => cb.value);
-        
+
         if (selectedSkills.length === 0) {
             showToast('Vui lòng chọn ít nhất một kỹ năng sẽ dạy', 'error');
             return true;
         }
-        
+
         if (videoUrl && !videoUrl.includes('youtube.com') && !videoUrl.includes('youtu.be')) {
             showToast('⚠️ URL video phải là YouTube link', 'warning');
         }
-        
+
         await updateDoc(doc(db, 'lessons', lessonId), { title, videoUrl, content, skillsToTeach: selectedSkills });
         closeModal();
         showToast('Cập nhật bài học thành công', 'success');
@@ -947,10 +971,10 @@ export const handleTeacherClickEvents = async (e) => {
         return true;
     }
 
-    if(target.closest('.tab-btn')) {
+    if (target.closest('.tab-btn')) {
         const tabName = target.dataset.tab;
         setCurrentActiveTab(tabName);
-        
+
         // Save ALL state to localStorage for F5 restore
         saveSessionToLocalStorage();
         document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -998,7 +1022,7 @@ export const handleTeacherClickEvents = async (e) => {
         const group = target.closest('.attendance-btn-group');
         group.querySelectorAll('.attendance-btn').forEach(btn => {
             btn.classList.remove('attendance-btn-active', 'bg-red-500', 'bg-yellow-500', 'bg-orange-500');
-            if(!btn.classList.contains('bg-white')) btn.classList.add('bg-white', 'hover:bg-slate-100');
+            if (!btn.classList.contains('bg-white')) btn.classList.add('bg-white', 'hover:bg-slate-100');
         });
 
         const status = target.dataset.status;
@@ -1014,20 +1038,20 @@ export const handleTeacherClickEvents = async (e) => {
         const button = target.closest('#save-progress-btn');
         const studentId = button.dataset.studentId;
         const lessonId = button.dataset.lessonId;
-        
+
         const lesson = getLessons().find(l => l.id === lessonId);
         const skillsToTeach = lesson?.skillsToTeach || [];
         const existingRecord = getProgress().find(p => p.lessonId === lessonId && p.studentId === studentId) || {};
-        
+
         const readingScore = document.getElementById('edit-reading-score').value;
         const listeningScore = document.getElementById('edit-listening-score').value;
         const speakingScore = document.getElementById('edit-speaking-score').value;
         const writingScore = document.getElementById('edit-writing-score').value;
-        
+
         const allScores = [readingScore, listeningScore, speakingScore, writingScore]
             .filter(s => s && s !== '')
             .map(s => parseFloat(s));
-        
+
         for (let score of allScores) {
             if (isNaN(score) || score < 0 || score > 10) {
                 showToast('Điểm số phải nằm trong khoảng 0-10', 'error');
@@ -1045,23 +1069,23 @@ export const handleTeacherClickEvents = async (e) => {
         const taughtSkillScores = Object.keys(newGrades)
             .filter(skill => skillsToTeach.includes(skill) && newGrades[skill] !== null)
             .map(skill => newGrades[skill]);
-        
+
         let averageScore = null;
         if (taughtSkillScores.length > 0) {
             averageScore = parseFloat((taughtSkillScores.reduce((a, b) => a + b, 0) / taughtSkillScores.length).toFixed(1));
         }
-        
+
         const newComment = document.getElementById('edit-comment-input').value;
         const activeButton = document.querySelector('.attendance-btn.attendance-btn-active');
         const newStatus = activeButton ? activeButton.dataset.status : null;
         const submissionStatusBtn = document.querySelector('.submission-status-btn.submission-status-active');
         const submissionStatus = submissionStatusBtn ? submissionStatusBtn.dataset.submissionStatus : null;
-        
+
         if (!newStatus) {
             showToast('Vui lòng chọn trạng thái điểm danh', 'error');
             return true;
         }
-        
+
         if (!submissionStatus) {
             showToast('Vui lòng chọn trạng thái nộp bài', 'error');
             return true;
@@ -1070,7 +1094,7 @@ export const handleTeacherClickEvents = async (e) => {
         // Convert submission status to submittedAt and isDeadlineMissed fields
         let submittedAt = null;
         let isDeadlineMissed = false;
-        
+
         if (submissionStatus === 'graded' || submissionStatus === 'not_graded') {
             submittedAt = existingRecord.submittedAt || new Date().toISOString();
             isDeadlineMissed = false;
@@ -1092,7 +1116,7 @@ export const handleTeacherClickEvents = async (e) => {
             lessonId,
             courseId: getCurrentCourseId(),
         };
-        
+
         // Handle submittedAt field
         if (submittedAt) {
             dataToSave.submittedAt = submittedAt;
@@ -1100,7 +1124,7 @@ export const handleTeacherClickEvents = async (e) => {
             // Delete submittedAt if it exists
             dataToSave.submittedAt = deleteField();
         }
-        
+
         // Handle isDeadlineMissed field
         if (isDeadlineMissed) {
             dataToSave.isDeadlineMissed = true;
@@ -1110,11 +1134,11 @@ export const handleTeacherClickEvents = async (e) => {
         }
 
         const docId = existingRecord.id || `${lessonId}_${studentId}`;
-        
+
         await setDoc(doc(db, 'progress', docId), dataToSave, { merge: true });
         closeModal();
         showToast('Đã lưu tiến độ!', 'success');
-        
+
         const currentView = getCurrentView();
         if (currentView === 'studentReport') {
             renderTeacherStudentReportView(studentId, getCurrentCourseId(), false);
@@ -1153,18 +1177,18 @@ export const initTeacherListeners = () => {
         if (e.target.closest('.submission-status-btn')) {
             const group = e.target.closest('.submission-status-group');
             if (!group) return;
-            
+
             group.querySelectorAll('.submission-status-btn').forEach(btn => {
                 btn.classList.remove('submission-status-active', 'bg-green-500', 'text-white', 'border-green-600', 'font-bold', 'bg-yellow-400', 'border-yellow-600', 'bg-red-500', 'border-red-600', 'bg-blue-600', 'border-blue-700');
                 btn.classList.add('bg-white', 'text-slate-700', 'border-slate-300');
             });
-            
+
             const btn = e.target.closest('.submission-status-btn');
             const status = btn.dataset.submissionStatus;
-            
+
             btn.classList.add('submission-status-active', 'text-white', 'font-bold');
             btn.classList.remove('bg-white', 'text-slate-700', 'border-slate-300');
-            
+
             if (status === 'graded') {
                 btn.classList.add('bg-green-500', 'border-green-600');
             } else if (status === 'not_graded') {
@@ -1174,7 +1198,7 @@ export const initTeacherListeners = () => {
             } else if (status === 'deadline_missed') {
                 btn.classList.add('bg-blue-600', 'border-blue-700');
             }
-            
+
             // Update average score and enable/disable inputs
             calculateAverageScore();
         }
