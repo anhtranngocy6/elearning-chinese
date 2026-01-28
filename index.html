@@ -1,6 +1,7 @@
 <!-- filepath: /Users/anhtran/My Drive/2_Tiếng Trung/Web/index.html -->
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,35 +13,160 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Preload background images for instant loading -->
+    <link rel="preload" href="background.jpg" as="image">
+    <link rel="preload" href="tet_background.png" as="image">
+
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
-        .fade-in { animation: fadeIn 0.5s ease-in-out; }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
         }
-        .tab-active { border-color: #3b82f6; color: #3b82f6; font-weight: 600; }
-        .video-container { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 0.75rem; background-color: #000; }
-        .video-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
-        #loading-overlay { transition: opacity 0.3s ease-in-out; }
-        .attendance-btn-active { background-color: #3b82f6 !important; color: white !important; border-color: #3b82f6 !important; }
-        .attendance-btn-active.bg-red-500 { background-color: #ef4444 !important; border-color: #ef4444 !important; }
-        .attendance-btn-active.bg-yellow-500 { background-color: #eab308 !important; border-color: #eab308 !important; }
-        .attendance-btn-active.bg-orange-500 { background-color: #f97316 !important; border-color: #f97316 !important; }
-        @keyframes toast-in { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-        @keyframes toast-out { from { transform: translateX(0); opacity: 1; } to { transform: translateX(100%); opacity: 0; } }
-        .animate-toast-in { animation: toast-in 0.3s ease-out forwards; }
-        .animate-toast-out { animation: toast-out 0.3s ease-in forwards; }
-        ::-webkit-scrollbar { width: 8px; height: 8px;}
-        ::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        /* Apply background immediately to #app for instant loading */
+        #app {
+            background-image: url('background.jpg');
+            background-size: cover;
+            background-position: 70% center;
+            background-attachment: fixed;
+            position: relative;
+        }
+
+        /* Responsive background positioning */
+        @media (min-width: 1024px) {
+            #app {
+                background-position: 100% center;
+            }
+        }
+
+        @media (min-width: 1280px) {
+            #app {
+                background-position: right center;
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .tab-active {
+            border-color: #3b82f6;
+            color: #3b82f6;
+            font-weight: 600;
+        }
+
+        .video-container {
+            position: relative;
+            padding-bottom: 56.25%;
+            height: 0;
+            overflow: hidden;
+            border-radius: 0.75rem;
+            background-color: #000;
+        }
+
+        .video-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        #loading-overlay {
+            transition: opacity 0.3s ease-in-out;
+        }
+
+        .attendance-btn-active {
+            background-color: #3b82f6 !important;
+            color: white !important;
+            border-color: #3b82f6 !important;
+        }
+
+        .attendance-btn-active.bg-red-500 {
+            background-color: #ef4444 !important;
+            border-color: #ef4444 !important;
+        }
+
+        .attendance-btn-active.bg-yellow-500 {
+            background-color: #eab308 !important;
+            border-color: #eab308 !important;
+        }
+
+        .attendance-btn-active.bg-orange-500 {
+            background-color: #f97316 !important;
+            border-color: #f97316 !important;
+        }
+
+        @keyframes toast-in {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes toast-out {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
+
+        .animate-toast-in {
+            animation: toast-in 0.3s ease-out forwards;
+        }
+
+        .animate-toast-out {
+            animation: toast-out 0.3s ease-in forwards;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
     </style>
 </head>
+
 <body class="text-slate-800">
 
     <div id="app" class="min-h-screen p-4 md:p-6 lg:p-8"></div>
-    
+
     <div id="loading-overlay" class="fixed inset-0 bg-slate-50 flex items-center justify-center z-[100]">
         <div class="text-center">
             <i class="fas fa-spinner fa-spin fa-3x text-blue-500"></i>
@@ -48,7 +174,8 @@
         </div>
     </div>
 
-    <div id="modal-container" class="fixed inset-0 bg-black bg-opacity-60 z-50 hidden items-center justify-center p-4 backdrop-blur-sm"></div>
+    <div id="modal-container"
+        class="fixed inset-0 bg-black bg-opacity-60 z-50 hidden items-center justify-center p-4 backdrop-blur-sm"></div>
     <div id="toast-container" class="fixed bottom-5 right-5 z-[101] space-y-3 w-full max-w-xs"></div>
 
     <!-- App Initialization Script with cache busting -->
@@ -61,4 +188,5 @@
         });
     </script>
 </body>
+
 </html>

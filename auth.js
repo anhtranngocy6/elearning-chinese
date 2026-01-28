@@ -44,19 +44,7 @@ export const renderLoginScreen = (appContainer) => {
                 </div>
             </div>
         </div>
-    </div>
-    
-    <style>
-        /* CSS tinh chỉnh vị trí ảnh nền mượt mà cho từng loại màn hình */
-        @media (min-width: 1024px) {
-            /* Trên màn hình lớn, hiển thị rộng hơn */
-            #app { background-position: 100% center !important; }
-        }
-        @media (min-width: 1280px) {
-            /* Trên màn hình rất lớn, hiển thị phần bên phải */
-            #app { background-position: right center !important; }
-        }
-    </style>`;
+    </div>`;
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════════
