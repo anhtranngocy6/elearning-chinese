@@ -4,15 +4,18 @@
 // ═══════════════════════════════════════════════════════════════════════════════════
 export const renderLoginScreen = (appContainer) => {
     document.title = "Đăng nhập | SmartEdu x AT";
-    
+
+    // Apply background immediately to appContainer for instant loading
+    appContainer.style.backgroundImage = 'url("background.jpg")';
+    appContainer.style.backgroundSize = 'cover';
+    appContainer.style.backgroundPosition = '70% center';
+    appContainer.style.backgroundAttachment = 'fixed';
+    appContainer.style.position = 'relative';
+
     appContainer.innerHTML = `
-    <div class="fixed inset-0 w-screen h-screen overflow-y-auto overflow-x-hidden bg-white">
+    <div class="fixed inset-0 w-screen h-screen overflow-y-auto overflow-x-hidden">
         
         <div class="relative min-h-full w-full flex flex-col justify-center pb-4 pt-44 lg:pt-60">
-            
-            <img src="./background.jpg" 
-                 class="absolute inset-0 w-full h-full min-h-full object-cover object-[70%_center] lg:object-[100%_center] xl:object-right pointer-events-none z-0 transition-all duration-500" 
-                 alt="Background">
 
             <div class="absolute inset-0 bg-white/30 lg:bg-transparent z-0 pointer-events-none"></div>
 
@@ -45,9 +48,13 @@ export const renderLoginScreen = (appContainer) => {
     
     <style>
         /* CSS tinh chỉnh vị trí ảnh nền mượt mà cho từng loại màn hình */
-        @media (max-width: 1023px) {
-            /* Trên màn hình nhỏ, ưu tiên hiển thị con ngựa, chấp nhận che chữ */
-            img { object-position: 70% center !important; }
+        @media (min-width: 1024px) {
+            /* Trên màn hình lớn, hiển thị rộng hơn */
+            #app { background-position: 100% center !important; }
+        }
+        @media (min-width: 1280px) {
+            /* Trên màn hình rất lớn, hiển thị phần bên phải */
+            #app { background-position: right center !important; }
         }
     </style>`;
 };
@@ -59,9 +66,9 @@ export const handleLogin = (users, callbacks) => {
     console.log('🔑 handleLogin called with users:', users);
     const username = document.getElementById('username-input')?.value || '';
     const password = document.getElementById('password-input')?.value || '';
-    
+
     console.log(`📝 Attempting login with username: ${username}`);
-    
+
     // Validation - require both username and password
     if (!username.trim() || !password.trim()) {
         const loginError = document.getElementById('login-error');
@@ -72,10 +79,10 @@ export const handleLogin = (users, callbacks) => {
         console.warn('⚠️ Login validation failed - missing username or password');
         return;
     }
-    
+
     console.log(`🔍 Searching for user: ${username}`);
     const userToLogin = users.find(u => u.username === username && u.password === password);
-    
+
     if (userToLogin) {
         localStorage.setItem('currentUserId', userToLogin.id);
         // Add debugging
@@ -99,19 +106,19 @@ export const handleLogin = (users, callbacks) => {
 // ═══════════════════════════════════════════════════════════════════════════════════
 export const handleLogout = (callbacks) => {
     console.log('🚪 handleLogout called');
-    
+
     // Clear all session state from memory and localStorage
     callbacks.clearAllSessionState();
-    
+
     // Clear current user from memory
     callbacks.clearCurrentUser();
-    
+
     // Redirect to login page
     callbacks.navigate();
-    
+
     // Show success message
     callbacks.showToast('Đã đăng xuất!', 'success');
-    
+
     console.log('✅ Logout completed, all state cleared');
 };
 
@@ -169,7 +176,7 @@ export const handleSaveAccountChanges = async (currentUser, updateDoc, doc, db, 
     const newPassword = document.getElementById('new-password')?.value || '';
     const confirmPassword = document.getElementById('confirm-password')?.value || '';
     const passwordError = document.getElementById('password-error');
-    
+
     // Validation
     if (!currentPassword) {
         passwordError.textContent = 'Vui lòng nhập mật khẩu hiện tại!';
@@ -196,7 +203,7 @@ export const handleSaveAccountChanges = async (currentUser, updateDoc, doc, db, 
         passwordError.classList.remove('hidden');
         return;
     }
-    
+
     // Update password in Firestore
     try {
         await updateDoc(doc(db, 'users', currentUser.id), { password: newPassword });
@@ -222,10 +229,10 @@ export const handleSaveAccountChanges = async (currentUser, updateDoc, doc, db, 
 export const initAuthListeners = (callbacks) => {
     // Log to confirm listeners are initialized
     console.log('🔐 Initializing authentication listeners...');
-    
+
     document.addEventListener('click', async (e) => {
         const target = e.target;
-        
+
         // LOGIN HANDLER
         if (target.closest('#login-btn')) {
             console.log('🔑 Login button clicked');
@@ -244,13 +251,13 @@ export const initAuthListeners = (callbacks) => {
                 }
             }
         }
-        
+
         // EDIT ACCOUNT HANDLER
         if (target.closest('#edit-account-btn')) {
             console.log('✏️ Edit account button clicked');
             renderEditAccountModal(callbacks.getCurrentUser(), callbacks.showModal);
         }
-        
+
         // LOGOUT HANDLER
         if (target.closest('#logout-btn')) {
             console.log('🚪 Logout button clicked');
@@ -261,7 +268,7 @@ export const initAuthListeners = (callbacks) => {
                 showToast: callbacks.showToast
             });
         }
-        
+
         // SAVE ACCOUNT CHANGES HANDLER
         if (target.closest('#save-account-btn')) {
             console.log('💾 Save account button clicked');
