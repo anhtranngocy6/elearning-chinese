@@ -566,7 +566,7 @@ export const renderEditProgressModal = (studentId, lessonId) => {
         submissionStatus = 'not_graded';
     }
 
-    const modalContent = `<div class="bg-white w-full max-w-lg md:max-w-2xl rounded-xl shadow-lg p-8 fade-in max-h-[85vh] overflow-y-auto"><h2 class="text-2xl font-bold mb-2">Cập nhật tiến độ học tập</h2><p class="text-slate-600 mb-8">Học sinh: <strong class="font-semibold">${student.name}</strong></p><div class="space-y-8"><div><p class="block text-sm font-medium text-slate-600 mb-2">Bài học: <strong class="font-semibold text-slate-800">${lesson.title}</strong></p></div><div><label class="block text-sm font-medium text-slate-600 mb-3">Trạng thái nộp bài:</label><div class="flex flex-wrap items-center gap-2 submission-status-group"><button data-submission-status="graded" class="submission-status-btn text-sm px-4 py-2 border rounded-full transition-all ${submissionStatus === 'graded' ? 'bg-green-500 text-white border-green-600 font-bold' : 'bg-white text-slate-700 border-slate-300 hover:border-green-400'}"><i class="fas fa-check-circle mr-2"></i>Đã chấm</button><button data-submission-status="not_graded" class="submission-status-btn text-sm px-4 py-2 border rounded-full transition-all ${submissionStatus === 'not_graded' ? 'bg-yellow-400 text-white border-yellow-600 font-bold' : 'bg-white text-slate-700 border-slate-300 hover:border-yellow-300'}"><i class="fas fa-hourglass-half mr-2"></i>Chưa chấm</button><button data-submission-status="not_submitted" class="submission-status-btn text-sm px-4 py-2 border rounded-full transition-all ${submissionStatus === 'not_submitted' ? 'bg-red-500 text-white border-red-600 font-bold' : 'bg-white text-slate-700 border-slate-300 hover:border-red-300'}"><i class="fas fa-times-circle mr-2"></i>Chưa nộp</button><button data-submission-status="deadline_missed" class="submission-status-btn text-sm px-4 py-2 border rounded-full transition-all ${submissionStatus === 'deadline_missed' ? 'bg-blue-600 text-white border-blue-700 font-bold' : 'bg-white text-slate-700 border-slate-300 hover:border-blue-400'}"><i class="fas fa-clock mr-2"></i>Hết hạn nộp</button></div></div><div><label class="block text-sm font-medium text-slate-600 mb-2">Điểm danh:</label><div class="flex flex-wrap items-center gap-2 attendance-btn-group"><button data-status="present" class="attendance-btn text-sm px-3 py-1 border rounded-full ${attendanceStatus === 'present' ? 'attendance-btn-active' : 'bg-white hover:bg-slate-100'}">Có mặt</button><button data-status="absent_excused" class="attendance-btn text-sm px-3 py-1 border rounded-full ${attendanceStatus === 'absent_excused' ? 'attendance-btn-active bg-yellow-500' : 'bg-white hover:bg-slate-100'}">Vắng có phép</button><button data-status="absent_unexcused" class="attendance-btn text-sm px-3 py-1 border rounded-full ${attendanceStatus === 'absent_unexcused' ? 'attendance-btn-active bg-red-500' : 'bg-white hover:bg-slate-100'}">Vắng không phép</button><button data-status="late" class="attendance-btn text-sm px-3 py-1 border rounded-full ${attendanceStatus === 'late' ? 'attendance-btn-active bg-orange-500' : 'bg-white hover:bg-slate-100'}">Không đúng giờ</button></div></div>${course?.courseFolderUrl ? `<div><label class="block text-sm font-medium text-slate-600 mb-2">Bài tập đã nộp:</label><a href="${course.courseFolderUrl}" target="_blank" class="inline-flex items-center bg-yellow-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-yellow-600 transition-colors"><i class="fab fa-google-drive mr-2"></i>Mở thư mục bài tập</a></div>` : ''}<div class="space-y-6"><div><label class="block text-sm font-medium text-slate-600 mb-2">Điểm số:</label><div class="grid grid-cols-2 md:grid-cols-4 gap-4" id="grade-inputs">${lesson.skillsToTeach?.includes('reading') ? `<div><label for="edit-reading-score" class="block text-xs text-slate-500">Đọc</label><input type="number" id="edit-reading-score" class="score-input w-full p-2 border rounded text-center font-bold" value="${progressRecord.grades?.reading ?? ''}"></div>` : `<div style="display: none;"><input type="hidden" id="edit-reading-score" value="0"></div>`}${lesson.skillsToTeach?.includes('listening') ? `<div><label for="edit-listening-score" class="block text-xs text-slate-500">Nghe</label><input type="number" id="edit-listening-score" class="score-input w-full p-2 border rounded text-center font-bold" value="${progressRecord.grades?.listening ?? ''}"></div>` : `<div style="display: none;"><input type="hidden" id="edit-listening-score" value="0"></div>`}${lesson.skillsToTeach?.includes('speaking') ? `<div><label for="edit-speaking-score" class="block text-xs text-slate-500">Nói</label><input type="number" id="edit-speaking-score" class="score-input w-full p-2 border rounded text-center font-bold" value="${progressRecord.grades?.speaking ?? ''}"></div>` : `<div style="display: none;"><input type="hidden" id="edit-speaking-score" value="0"></div>`}${lesson.skillsToTeach?.includes('writing') ? `<div><label for="edit-writing-score" class="block text-xs text-slate-500">Viết</label><input type="number" id="edit-writing-score" class="score-input w-full p-2 border rounded text-center font-bold" value="${progressRecord.grades?.writing ?? ''}"></div>` : `<div style="display: none;"><input type="hidden" id="edit-writing-score" value="0"></div>`}</div><div class="mt-4"><span class="text-sm font-medium text-slate-600">Điểm trung bình: </span><span id="average-score-display" class="font-bold text-2xl text-blue-600">--</span></div></div><div><label for="edit-comment-input" class="block text-sm font-medium text-slate-600 mb-1">Nhận xét:</label><textarea id="edit-comment-input" class="w-full p-3 border rounded-lg text-sm h-40" placeholder="Nhập nhận xét…">${comment}</textarea></div></div></div><div class="mt-8 flex justify-end space-x-3"><button class="cancel-modal-btn px-4 py-2 bg-slate-200 text-slate-800 rounded-lg hover:bg-slate-300">Huỷ</button><button id="save-progress-btn" data-student-id="${studentId}" data-lesson-id="${lessonId}" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold">Lưu thay đổi</button></div></div>`;
+    const modalContent = `<div class="bg-white w-full max-w-lg md:max-w-2xl rounded-xl shadow-lg p-8 fade-in max-h-[85vh] overflow-y-auto"><h2 class="text-2xl font-bold mb-2">Cập nhật tiến độ học tập</h2><p class="text-slate-600 mb-8">Học sinh: <strong class="font-semibold">${student.name}</strong></p><div class="space-y-8"><div><p class="block text-sm font-medium text-slate-600 mb-2">Bài học: <strong class="font-semibold text-slate-800">${lesson.title}</strong></p></div><div><label class="block text-sm font-medium text-slate-600 mb-3">Trạng thái nộp bài:</label><div class="flex flex-wrap items-center gap-2 submission-status-group"><button data-submission-status="graded" class="submission-status-btn text-sm px-4 py-2 border rounded-full transition-all ${submissionStatus === 'graded' ? 'bg-green-500 text-white border-green-600 font-bold' : 'bg-white text-slate-700 border-slate-300 hover:border-green-400'}"><i class="fas fa-check-circle mr-2"></i>Đã chấm</button><button data-submission-status="not_graded" class="submission-status-btn text-sm px-4 py-2 border rounded-full transition-all ${submissionStatus === 'not_graded' ? 'bg-yellow-400 text-white border-yellow-600 font-bold' : 'bg-white text-slate-700 border-slate-300 hover:border-yellow-300'}"><i class="fas fa-hourglass-half mr-2"></i>Chưa chấm</button><button data-submission-status="not_submitted" class="submission-status-btn text-sm px-4 py-2 border rounded-full transition-all ${submissionStatus === 'not_submitted' ? 'bg-red-500 text-white border-red-600 font-bold' : 'bg-white text-slate-700 border-slate-300 hover:border-red-300'}"><i class="fas fa-times-circle mr-2"></i>Chưa nộp</button><button data-submission-status="deadline_missed" class="submission-status-btn text-sm px-4 py-2 border rounded-full transition-all ${submissionStatus === 'deadline_missed' ? 'bg-blue-600 text-white border-blue-700 font-bold' : 'bg-white text-slate-700 border-slate-300 hover:border-blue-400'}"><i class="fas fa-clock mr-2"></i>Hết hạn nộp</button></div></div><div><label class="block text-sm font-medium text-slate-600 mb-2">Điểm danh:</label><div class="flex flex-wrap items-center gap-2 attendance-btn-group"><button data-status="present" class="attendance-btn text-sm px-3 py-1 border rounded-full ${attendanceStatus === 'present' ? 'attendance-btn-active' : 'bg-white hover:bg-slate-100'}">Có mặt</button><button data-status="absent_excused" class="attendance-btn text-sm px-3 py-1 border rounded-full ${attendanceStatus === 'absent_excused' ? 'attendance-btn-active bg-yellow-500' : 'bg-white hover:bg-slate-100'}">Vắng có phép</button><button data-status="absent_unexcused" class="attendance-btn text-sm px-3 py-1 border rounded-full ${attendanceStatus === 'absent_unexcused' ? 'attendance-btn-active bg-red-500' : 'bg-white hover:bg-slate-100'}">Vắng không phép</button><button data-status="late" class="attendance-btn text-sm px-3 py-1 border rounded-full ${attendanceStatus === 'late' ? 'attendance-btn-active bg-orange-500' : 'bg-white hover:bg-slate-100'}">Không đúng giờ</button></div></div>${hasSubmitted && course?.scriptUrl ? `<div><label class="block text-sm font-medium text-slate-600 mb-2">Bài tập đã nộp:</label><button class="open-homework-folder-btn inline-flex items-center bg-yellow-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-yellow-600 transition-colors" data-student-id="${studentId}" data-lesson-id="${lessonId}" data-student-name="${student.name}"><i class="fab fa-google-drive mr-2"></i>Mở thư mục bài tập</button></div>` : ''}<div class="space-y-6"><div><label class="block text-sm font-medium text-slate-600 mb-2">Điểm số:</label><div class="grid grid-cols-2 md:grid-cols-4 gap-4" id="grade-inputs">${lesson.skillsToTeach?.includes('reading') ? `<div><label for="edit-reading-score" class="block text-xs text-slate-500">Đọc</label><input type="number" id="edit-reading-score" class="score-input w-full p-2 border rounded text-center font-bold" value="${progressRecord.grades?.reading ?? ''}"></div>` : `<div style="display: none;"><input type="hidden" id="edit-reading-score" value="0"></div>`}${lesson.skillsToTeach?.includes('listening') ? `<div><label for="edit-listening-score" class="block text-xs text-slate-500">Nghe</label><input type="number" id="edit-listening-score" class="score-input w-full p-2 border rounded text-center font-bold" value="${progressRecord.grades?.listening ?? ''}"></div>` : `<div style="display: none;"><input type="hidden" id="edit-listening-score" value="0"></div>`}${lesson.skillsToTeach?.includes('speaking') ? `<div><label for="edit-speaking-score" class="block text-xs text-slate-500">Nói</label><input type="number" id="edit-speaking-score" class="score-input w-full p-2 border rounded text-center font-bold" value="${progressRecord.grades?.speaking ?? ''}"></div>` : `<div style="display: none;"><input type="hidden" id="edit-speaking-score" value="0"></div>`}${lesson.skillsToTeach?.includes('writing') ? `<div><label for="edit-writing-score" class="block text-xs text-slate-500">Viết</label><input type="number" id="edit-writing-score" class="score-input w-full p-2 border rounded text-center font-bold" value="${progressRecord.grades?.writing ?? ''}"></div>` : `<div style="display: none;"><input type="hidden" id="edit-writing-score" value="0"></div>`}</div><div class="mt-4"><span class="text-sm font-medium text-slate-600">Điểm trung bình: </span><span id="average-score-display" class="font-bold text-2xl text-blue-600">--</span></div></div><div><label for="edit-comment-input" class="block text-sm font-medium text-slate-600 mb-1">Nhận xét:</label><textarea id="edit-comment-input" class="w-full p-3 border rounded-lg text-sm h-40" placeholder="Nhập nhận xét…">${comment}</textarea></div></div></div><div class="mt-8 flex justify-end space-x-3"><button class="cancel-modal-btn px-4 py-2 bg-slate-200 text-slate-800 rounded-lg hover:bg-slate-300">Huỷ</button><button id="save-progress-btn" data-student-id="${studentId}" data-lesson-id="${lessonId}" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold">Lưu thay đổi</button></div></div>`;
     showModal(modalContent);
     calculateAverageScore();
 };
@@ -622,6 +622,72 @@ export const renderTeacherStudentReportView = (studentId, courseId, isRestoring 
          </div>
     `;
     setTimeout(() => renderCharts(chartData, 'report-'), 50);
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════════
+// TEACHER HOMEWORK FOLDER MANAGEMENT
+// ═══════════════════════════════════════════════════════════════════════════════════
+
+export const getTeacherLessonFolderUrl = async (course, lesson, studentName) => {
+    try {
+        if (!course?.scriptUrl) {
+            showToast('❌ Khóa học chưa được cấu hình GAS Web App URL', 'error');
+            return null;
+        }
+        
+        // Gọi API create_folder_structure để lấy lessonUrl
+        const hierarchyRes = await fetch(course.scriptUrl, {
+            method: 'POST',
+            body: JSON.stringify({
+                action: 'create_folder_structure',
+                className: course.title,
+                homeworkName: 'Bai Tap Ve Nha',
+                studentName: studentName,
+                lessonName: lesson.title
+            })
+        });
+        
+        const hierarchyData = await hierarchyRes.json();
+        if (hierarchyData.status === 'success' && hierarchyData.lessonUrl) {
+            return hierarchyData.lessonUrl;
+        } else if (hierarchyData.status === 'success' && hierarchyData.folderId) {
+            // Nếu chỉ có folderId, tạo URL từ folderId
+            return `https://drive.google.com/drive/folders/${hierarchyData.folderId}`;
+        }
+        
+        showToast(`❌ Không tìm thấy thư mục bài học`, 'error');
+        return null;
+    } catch (err) {
+        showToast(`❌ Lỗi kết nối GAS: ${err.message}`, 'error');
+        return null;
+    }
+};
+
+export const handleOpenHomeworkFolder = async (studentId, lessonId, studentName) => {
+    const lessons = getLessons();
+    const courses = getCourses();
+    
+    const lesson = lessons.find(l => l.id === lessonId);
+    if (!lesson) {
+        showToast('❌ Không tìm thấy bài học', 'error');
+        return;
+    }
+    
+    const course = courses.find(c => c.id === lesson.courseId);
+    if (!course?.scriptUrl) {
+        showToast('❌ Khóa học này chưa được cấu hình GAS Web App URL', 'error');
+        return;
+    }
+    
+    showToast('Đang lấy link thư mục...', 'info');
+    const folderUrl = await getTeacherLessonFolderUrl(course, lesson, studentName);
+    
+    if (folderUrl) {
+        window.open(folderUrl, '_blank');
+        showToast('✅ Đang mở thư mục bài học', 'success');
+    } else {
+        showToast('❌ Không tìm thấy thư mục bài học', 'error');
+    }
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════════
@@ -869,6 +935,15 @@ export const handleTeacherClickEvents = async (e) => {
                 showToast('Đã xóa bài tập', 'success');
             }
         );
+        return true;
+    }
+
+    if (target.closest('.open-homework-folder-btn')) {
+        const btn = target.closest('.open-homework-folder-btn');
+        const studentId = btn.dataset.studentId;
+        const lessonId = btn.dataset.lessonId;
+        const studentName = btn.dataset.studentName;
+        await handleOpenHomeworkFolder(studentId, lessonId, studentName);
         return true;
     }
 
