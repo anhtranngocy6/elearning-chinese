@@ -1,7 +1,7 @@
 // admin.js - Admin dashboard and management functions
 
 import { renderHeader, showToast, showModal, closeModal, renderConfirmModal, generateUsername, saveSessionToLocalStorage } from './shared.js';
-import { 
+import {
     getUsers, setUsers, getCourses, setCourses, getLessons, setLessons,
     getProgress, setProgress, getEnrollments, setEnrollments,
     getCurrentUser, setCurrentUser, setCurrentView, setCurrentCourseId
@@ -19,7 +19,7 @@ const renderCourseOverviewCard = (course, teacher, lessons, enrollments, progres
     const courseLessons = lessons.filter(l => l.courseId === course.id);
     const studentCount = enrollments.filter(e => e.courseId === course.id).length;
     const lessonCount = courseLessons.length;
-    
+
     // Tính toán thống kê của giáo viên
     const teacherCourses = courses.filter(tc => tc.createdBy === course.createdBy);
     const teacherTotalStudents = new Set(
@@ -28,21 +28,21 @@ const renderCourseOverviewCard = (course, teacher, lessons, enrollments, progres
             .map(e => e.studentId)
     ).size;
     const teacherTotalLessons = lessons.filter(l => teacherCourses.some(tc => tc.id === l.courseId)).length;
-    
+
     // Tính tiến độ trung bình
-    const courseProgress = progress.filter(p => 
+    const courseProgress = progress.filter(p =>
         courseLessons.some(l => l.id === p.lessonId)
     );
     const submitted = courseProgress.filter(p => p.submittedAt).length;
     const graded = courseProgress.filter(p => p.submittedAt && p.grade != null).length;
     const avgProgress = courseProgress.length > 0 ? Math.round((submitted / courseProgress.length) * 100) : 0;
-    
+
     // Xác định tình trạng lớp
     let statusClass = 'from-blue-50 to-blue-100 border-blue-300';
     let statusIcon = 'fa-star';
     let statusText = 'Bình thường';
     let statusColor = 'text-blue-600';
-    
+
     if (studentCount === 0) {
         statusClass = 'from-slate-50 to-slate-100 border-slate-300';
         statusIcon = 'fa-inbox';
@@ -59,7 +59,7 @@ const renderCourseOverviewCard = (course, teacher, lessons, enrollments, progres
         statusText = 'Đang tiến hành';
         statusColor = 'text-amber-600';
     }
-    
+
     return `
     <div class="bg-gradient-to-br ${statusClass} rounded-lg border-2 hover:shadow-lg hover:scale-[1.02] transition-all p-4 relative group" data-id="${course.id}">
         <div class="flex justify-between items-start mb-3">
@@ -142,9 +142,16 @@ export const renderAdminDashboard = (appContainerEl = document.getElementById('a
     const lessons = getLessons();
     const enrollments = getEnrollments();
     const progress = getProgress();
-    
+
     const teachers = users.filter(u => u.role === 'teacher');
     const students = users.filter(u => u.role === 'student');
+
+    // Set background image
+    appContainerEl.style.backgroundImage = 'url("tet_background.png")';
+    appContainerEl.style.backgroundSize = 'cover';
+    appContainerEl.style.backgroundPosition = 'center';
+    appContainerEl.style.backgroundRepeat = 'no-repeat';
+    appContainerEl.style.backgroundAttachment = 'fixed';
 
     appContainerEl.innerHTML = `
          <div class="w-full max-w-7xl mx-auto fade-in">
@@ -302,53 +309,53 @@ export const renderAdminDashboard = (appContainerEl = document.getElementById('a
                  </div>
              </main>
          </div>`;
-    
+
     // Tab switching functionality
     setTimeout(() => {
         const tabBtns = document.querySelectorAll('.admin-tab-btn');
-        
+
         // Get saved tab from localStorage, default to 'management'
         const savedTab = localStorage.getItem('adminCurrentTab') || 'management';
-        
+
         tabBtns.forEach(btn => {
             btn.addEventListener('click', () => {
                 const tabName = btn.dataset.tab;
-                
+
                 // Hide all tabs
                 document.querySelectorAll('.admin-tab-content').forEach(tab => {
                     tab.classList.add('hidden');
                 });
-                
+
                 // Remove active state from all buttons
                 tabBtns.forEach(b => {
                     b.classList.remove('tab-active', 'text-blue-600', 'border-b-blue-600');
                     b.classList.add('text-slate-600', 'border-b-transparent');
                 });
-                
+
                 // Show selected tab
                 const selectedTab = document.getElementById(`admin-tab-${tabName}`);
                 if (selectedTab) {
                     selectedTab.classList.remove('hidden');
                 }
-                
+
                 // Add active state to clicked button
                 btn.classList.add('tab-active', 'text-blue-600', 'border-b-blue-600');
                 btn.classList.remove('text-slate-600', 'border-b-transparent');
-                
+
                 // Save session state
                 saveSessionToLocalStorage();
             });
-            
+
             // Activate saved tab on load
             if (btn.dataset.tab === savedTab) {
                 btn.click();
             }
         });
-        
+
         // Initialize admin listeners
         initAdminListeners();
     }, 100);
-    
+
     // Save session state when dashboard is rendered
     saveSessionToLocalStorage();
 };
@@ -357,7 +364,7 @@ export const renderEditStudentModal = (studentId) => {
     const users = getUsers();
     const courses = getCourses();
     const enrollments = getEnrollments();
-    
+
     const student = users.find(u => u.id === studentId);
     if (!student) return;
     const studentEnrollments = enrollments.filter(e => e.studentId === studentId).map(e => e.courseId);
@@ -369,11 +376,11 @@ export const renderDeleteCourseConfirmModal = (courseId, courseName) => {
     const enrollments = getEnrollments();
     const progress = getProgress();
     const lessons = getLessons();
-    
+
     const courseEnrollments = enrollments.filter(e => e.courseId === courseId);
     const courseLessons = lessons.filter(l => l.courseId === courseId);
     const courseProgress = progress.filter(p => courseLessons.some(l => l.id === p.lessonId));
-    
+
     const modalContent = `
     <div class="bg-white w-full max-w-md rounded-xl shadow-lg p-8 fade-in">
         <div class="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-lg">
@@ -419,12 +426,12 @@ export const renderPasswordConfirmModal = (userId, userName) => {
     const users = getUsers();
     const enrollments = getEnrollments();
     const progress = getProgress();
-    
+
     const user = users.find(u => u.id === userId);
     const isStudent = user?.role === 'student';
     const enrolledCourses = isStudent ? enrollments.filter(e => e.studentId === userId).length : 0;
     const studentProgress = isStudent ? progress.filter(p => p.studentId === userId).length : 0;
-    
+
     const modalContent = `
     <div class="bg-white w-full max-w-md rounded-xl shadow-lg p-8 fade-in">
         <div class="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-lg">
@@ -477,7 +484,7 @@ export const renderViewUserInfoModal = (userId, userRole) => {
     const lessons = getLessons();
     const enrollments = getEnrollments();
     const progress = getProgress();
-    
+
     const user = users.find(u => u.id === userId);
     if (!user) {
         showToast('Không tìm thấy người dùng', 'error');
@@ -534,14 +541,14 @@ export const renderViewUserInfoModal = (userId, userRole) => {
                     <p class="text-xs font-semibold text-slate-700 mb-2">Khóa học:</p>
                     <div class="space-y-2 max-h-32 overflow-y-auto">
                         ${teacherCourses.map(course => {
-                            const courseEnrollments = enrollments.filter(e => e.courseId === course.id);
-                            return `
+            const courseEnrollments = enrollments.filter(e => e.courseId === course.id);
+            return `
                                 <div class="text-xs p-2 bg-slate-50 rounded border border-slate-200">
                                     <p class="font-medium text-slate-800">${course.title}</p>
                                     <p class="text-slate-500">${courseEnrollments.length}HS • ${lessons.filter(l => l.courseId === course.id).length}bài</p>
                                 </div>
                             `;
-                        }).join('')}
+        }).join('')}
                     </div>
                 </div>
                 ` : ''}
@@ -597,17 +604,17 @@ export const renderViewUserInfoModal = (userId, userRole) => {
                     <p class="text-xs font-semibold text-slate-700 mb-2">Khóa học:</p>
                     <div class="space-y-2 max-h-32 overflow-y-auto">
                         ${enrolledCourses.map(course => {
-                            const teacher = users.find(u => u.id === course.createdBy);
-                            const courseLessons = lessons.filter(l => l.courseId === course.id);
-                            const courseProgress = progress.filter(p => p.studentId === userId && courseLessons.some(l => l.id === p.lessonId));
-                            const completed = courseProgress.filter(p => p.submittedAt).length;
-                            return `
+            const teacher = users.find(u => u.id === course.createdBy);
+            const courseLessons = lessons.filter(l => l.courseId === course.id);
+            const courseProgress = progress.filter(p => p.studentId === userId && courseLessons.some(l => l.id === p.lessonId));
+            const completed = courseProgress.filter(p => p.submittedAt).length;
+            return `
                                 <div class="text-xs p-2 bg-slate-50 rounded border border-slate-200">
                                     <p class="font-medium text-slate-800">${course.title}</p>
                                     <p class="text-slate-500">GV: ${teacher?.name || 'N/A'} • ${completed}/${courseLessons.length} bài</p>
                                 </div>
                             `;
-                        }).join('')}
+        }).join('')}
                     </div>
                 </div>
                 ` : ''}
@@ -790,10 +797,10 @@ export const handleAdminClickEvents = async (e) => {
                 }
                 batch.delete(doc(db, "users", userId));
                 await batch.commit();
-                
+
                 closeModal();
                 showToast('✅ Xóa người dùng thành công!', 'success');
-                
+
                 // Refresh dashboard
                 setTimeout(() => {
                     renderAdminDashboard();
@@ -877,24 +884,24 @@ export const handleAdminClickEvents = async (e) => {
                 const courseLessons = lessons.filter(l => l.courseId === courseId);
                 const courseEnrollments = enrollments.filter(e => e.courseId === courseId);
                 const courseProgress = progress.filter(p => courseLessons.some(l => l.id === p.lessonId));
-                
+
                 // Xóa tất cả progress của khóa học
                 courseProgress.forEach(p => batch.delete(doc(db, "progress", p.id)));
-                
+
                 // Xóa tất cả ghi danh của khóa học
                 courseEnrollments.forEach(e => batch.delete(doc(db, "enrollments", e.id)));
-                
+
                 // Xóa tất cả bài học của khóa học
                 courseLessons.forEach(l => batch.delete(doc(db, "lessons", l.id)));
-                
+
                 // Xóa khóa học
                 batch.delete(doc(db, "courses", courseId));
-                
+
                 await batch.commit();
-                
+
                 closeModal();
                 showToast('✅ Xóa khóa học thành công!', 'success');
-                
+
                 // Refresh dashboard
                 setTimeout(() => {
                     renderAdminDashboard();
@@ -921,9 +928,9 @@ export const initAdminListeners = () => {
     if (adminListenersInitialized) {
         return;
     }
-    
+
     adminListenersInitialized = true;
-    
+
     // Main click handler - gắn 1 lần duy nhất
     document.body.addEventListener('click', async (e) => {
         await handleAdminClickEvents(e);
