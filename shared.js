@@ -33,29 +33,29 @@ const autoSaveState = () => {
     // Only save if we have a valid view (not login) and courseId/lessonId if needed
     if (currentView && currentView !== 'login') {
         localStorage.setItem('currentView', currentView);
-        
+
         // Only save IDs if they exist (don't save empty/null values)
         if (currentCourseId) {
             localStorage.setItem('currentCourseId', currentCourseId);
         } else {
             localStorage.removeItem('currentCourseId');
         }
-        
+
         if (currentLessonId) {
             localStorage.setItem('currentLessonId', currentLessonId);
         } else {
             localStorage.removeItem('currentLessonId');
         }
-        
+
         if (currentStudentIdForProgress) {
             localStorage.setItem('currentStudentIdForProgress', currentStudentIdForProgress);
         } else {
             localStorage.removeItem('currentStudentIdForProgress');
         }
-        
+
         // Always save tab
         localStorage.setItem('currentActiveTab', currentActiveTab || 'overview');
-        
+
         console.log('💾 AUTO-SAVED state:', {
             view: currentView,
             courseId: currentCourseId || '(none)',
@@ -86,7 +86,7 @@ export const clearAllSessionState = () => {
     overviewFilterLessonId = 'all';
     currentActiveTab = 'overview';
     isFirstNavigationAfterRestore = false;
-    
+
     // Clear localStorage
     localStorage.removeItem('currentUserId');
     localStorage.removeItem('currentView');
@@ -94,7 +94,7 @@ export const clearAllSessionState = () => {
     localStorage.removeItem('currentLessonId');
     localStorage.removeItem('currentStudentIdForProgress');
     localStorage.removeItem('currentActiveTab');
-    
+
     console.log('🧹 All session state cleared');
 };
 
@@ -124,6 +124,19 @@ export const showModal = (content) => {
     } else if (content instanceof HTMLElement) {
         modalContainer.appendChild(content);
     }
+
+    // Inject nút X vào phần tử con đầu tiên (modal box)
+    const modalBox = modalContainer.firstElementChild;
+    if (modalBox) {
+        modalBox.style.position = 'relative';
+        const closeBtn = document.createElement('button');
+        closeBtn.innerHTML = '<i class="fas fa-times"></i>';
+        closeBtn.className = 'close-modal-x-btn absolute top-3 right-3 text-slate-400 hover:text-slate-700 text-xl leading-none transition-colors';
+        closeBtn.title = 'Đóng';
+        closeBtn.addEventListener('click', closeModal);
+        modalBox.prepend(closeBtn);
+    }
+
     modalContainer.classList.remove('hidden');
     modalContainer.classList.add('flex');
 };
@@ -178,16 +191,16 @@ export const getYoutubeEmbedUrl = (url) => {
 export const calculateAverageScore = () => {
     const submissionStatusBtn = document.querySelector('.submission-status-btn.submission-status-active');
     const submissionStatus = submissionStatusBtn ? submissionStatusBtn.dataset.submissionStatus : null;
-    
+
     const readingInput = document.getElementById('edit-reading-score');
     const listeningInput = document.getElementById('edit-listening-score');
     const speakingInput = document.getElementById('edit-speaking-score');
     const writingInput = document.getElementById('edit-writing-score');
-    
+
     // Enable/disable score inputs based on submission status
     const scoreInputs = [readingInput, listeningInput, speakingInput, writingInput];
     const isGraded = submissionStatus === 'graded';
-    
+
     scoreInputs.forEach(input => {
         if (input && input.offsetParent !== null) {
             input.disabled = !isGraded;
@@ -198,9 +211,9 @@ export const calculateAverageScore = () => {
             }
         }
     });
-    
+
     const scores = [];
-    
+
     // Chỉ tính điểm khi trạng thái là "Đã chấm"
     if (isGraded) {
         if (readingInput && readingInput.offsetParent !== null && readingInput.value) scores.push(parseFloat(readingInput.value));
@@ -208,7 +221,7 @@ export const calculateAverageScore = () => {
         if (speakingInput && speakingInput.offsetParent !== null && speakingInput.value) scores.push(parseFloat(speakingInput.value));
         if (writingInput && writingInput.offsetParent !== null && writingInput.value) scores.push(parseFloat(writingInput.value));
     }
-    
+
     const averageDisplay = document.getElementById('average-score-display');
     if (!averageDisplay) return;
 
@@ -241,22 +254,22 @@ export const getSkillColorClass = (score) => {
 // ═══════════════════════════════════════════════════════════════════════════════════
 
 export const renderCharts = (chartData, prefix = '') => {
-    if (window.myCharts) { 
-        Object.values(window.myCharts).forEach(chart => chart.destroy()); 
+    if (window.myCharts) {
+        Object.values(window.myCharts).forEach(chart => chart.destroy());
     }
     window.myCharts = {};
-    const doughnutPieOptions = { 
-        responsive: true, 
-        maintainAspectRatio: false, 
-        plugins: { 
-            legend: { 
-                display: true, 
+    const doughnutPieOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: true,
                 position: 'bottom',
                 labels: {
                     boxWidth: 12
                 }
-            } 
-        } 
+            }
+        }
     };
 
     const ctxSub = document.getElementById(`${prefix}submissionChart`);
@@ -270,31 +283,31 @@ export const renderCharts = (chartData, prefix = '') => {
     }
 
     const ctxAtt = document.getElementById(`${prefix}attendanceChart`);
-    if(ctxAtt && chartData.attendance) {
-        window.myCharts.attendance = new Chart(ctxAtt, { 
-            type: 'pie', 
-            data: chartData.attendance, 
+    if (ctxAtt && chartData.attendance) {
+        window.myCharts.attendance = new Chart(ctxAtt, {
+            type: 'pie',
+            data: chartData.attendance,
             options: doughnutPieOptions
         });
     }
-    
+
     const ctxSkills = document.getElementById(`${prefix}skillsChart`);
-    if(ctxSkills && chartData.skills) {
+    if (ctxSkills && chartData.skills) {
         window.myCharts.skills = new Chart(ctxSkills, {
             type: 'radar',
             data: chartData.skills,
-            options: { 
+            options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: { legend: { display: true, position: 'bottom' } },
-                scales: { 
-                    r: { 
+                scales: {
+                    r: {
                         angleLines: { display: false },
                         suggestedMin: 0,
                         suggestedMax: 10,
-                        ticks: { stepSize: 2 } 
-                    } 
-                } 
+                        ticks: { stepSize: 2 }
+                    }
+                }
             }
         });
     }
@@ -340,7 +353,7 @@ export const renderConfirmModal = (title, message, confirmText, confirmClass, on
              <button class="confirm-action px-4 py-2 text-white rounded-lg ${confirmClass}">${confirmText}</button>
          </div>
     `;
-    
+
     showModal(confirmModal);
 
     confirmModal.querySelector('.confirm-action').addEventListener('click', () => { onConfirm(); closeModal(); }, { once: true });
@@ -386,33 +399,33 @@ export const setState = (newState) => {
 };
 
 export const getCurrentUser = () => currentUser;
-export const setCurrentUser = (user) => { 
-    currentUser = user; 
+export const setCurrentUser = (user) => {
+    currentUser = user;
 };
-export const clearCurrentUser = () => { 
-    currentUser = null; 
+export const clearCurrentUser = () => {
+    currentUser = null;
 };
 
 export const getCurrentView = () => currentView;
-export const setCurrentView = (view) => { 
+export const setCurrentView = (view) => {
     currentView = view;
     autoSaveState();
 };
 
 export const getCurrentCourseId = () => currentCourseId;
-export const setCurrentCourseId = (id) => { 
+export const setCurrentCourseId = (id) => {
     currentCourseId = id;
     autoSaveState();
 };
 
 export const getCurrentLessonId = () => currentLessonId;
-export const setCurrentLessonId = (id) => { 
+export const setCurrentLessonId = (id) => {
     currentLessonId = id;
     autoSaveState();
 };
 
 export const getCurrentStudentIdForProgress = () => currentStudentIdForProgress;
-export const setCurrentStudentIdForProgress = (id) => { 
+export const setCurrentStudentIdForProgress = (id) => {
     currentStudentIdForProgress = id;
     autoSaveState();
 };
@@ -421,7 +434,7 @@ export const getOverviewFilterLessonId = () => overviewFilterLessonId;
 export const setOverviewFilterLessonId = (id) => { overviewFilterLessonId = id; };
 
 export const getCurrentActiveTab = () => currentActiveTab;
-export const setCurrentActiveTab = (tab) => { 
+export const setCurrentActiveTab = (tab) => {
     currentActiveTab = tab;
     autoSaveState();
 };
@@ -473,31 +486,55 @@ export const setEnrollments = (data) => { enrollments = data; };
  */
 export const calculateSkillAverages = (lessonsForCalculation, studentProgress) => {
     const skillTotals = { reading: 0, listening: 0, speaking: 0, writing: 0 };
-    let gradedCount = 0;
-    
+    // Đếm riêng từng kỹ năng — chỉ tính bài thực sự có điểm kỹ năng đó
+    const skillCounts = { reading: 0, listening: 0, speaking: 0, writing: 0 };
+    let overallTotal = 0;
+    let overallCount = 0;
+
     lessonsForCalculation.forEach(lesson => {
         const progressRecord = studentProgress.find(p => p.lessonId === lesson.id);
-        
+
         // Điều kiện 1: Đã nộp + Được chấm (có grade) → tính điểm thực
         if (progressRecord?.submittedAt && progressRecord?.grade != null) {
-            skillTotals.reading += progressRecord.grades?.reading ?? 0;
-            skillTotals.listening += progressRecord.grades?.listening ?? 0;
-            skillTotals.speaking += progressRecord.grades?.speaking ?? 0;
-            skillTotals.writing += progressRecord.grades?.writing ?? 0;
-            gradedCount++;
-        } 
-        // Điều kiện 2: Được đánh dấu hết hạn nộp → tính 0 (không cần cộng vì 0 không thay đổi)
-        else if (progressRecord?.isDeadlineMissed) {
-            gradedCount++;
+            overallTotal += parseFloat(progressRecord.grade);
+            overallCount++;
+
+            // Mỗi kỹ năng chỉ tính nếu:
+            // 1. Lesson có dạy kỹ năng đó (skillsToTeach)
+            // 2. Thực sự có điểm cho kỹ năng đó (không phải null)
+            ['reading', 'listening', 'speaking', 'writing'].forEach(skill => {
+                const lessonTeachesSkill = lesson.skillsToTeach?.includes(skill);
+                const score = progressRecord.grades?.[skill];
+                if (lessonTeachesSkill && score != null) {
+                    skillTotals[skill] += score;
+                    skillCounts[skill]++;
+                }
+            });
         }
+        // Điều kiện 2: Hết hạn nộp → tính 0 cho overall VÀ cho từng kỹ năng lesson đó dạy
+        else if (progressRecord?.isDeadlineMissed) {
+            overallCount++;
+            // Mỗi kỹ năng lesson dạy → tính 0
+            ['reading', 'listening', 'speaking', 'writing'].forEach(skill => {
+                if (lesson.skillsToTeach?.includes(skill)) {
+                    // skillTotals[skill] không đổi (cộng 0), nhưng count tăng
+                    skillCounts[skill]++;
+                }
+            });
+        }
+        // Còn lại (chưa nộp, chưa chấm) → không tính
     });
-    
+
     return {
-        reading: gradedCount > 0 ? (skillTotals.reading / gradedCount).toFixed(1) : '--',
-        listening: gradedCount > 0 ? (skillTotals.listening / gradedCount).toFixed(1) : '--',
-        speaking: gradedCount > 0 ? (skillTotals.speaking / gradedCount).toFixed(1) : '--',
-        writing: gradedCount > 0 ? (skillTotals.writing / gradedCount).toFixed(1) : '--',
-        count: gradedCount,
+        reading: skillCounts.reading > 0 ? (skillTotals.reading / skillCounts.reading).toFixed(1) : '--',
+        listening: skillCounts.listening > 0 ? (skillTotals.listening / skillCounts.listening).toFixed(1) : '--',
+        speaking: skillCounts.speaking > 0 ? (skillTotals.speaking / skillCounts.speaking).toFixed(1) : '--',
+        writing: skillCounts.writing > 0 ? (skillTotals.writing / skillCounts.writing).toFixed(1) : '--',
+        overall: overallCount > 0 ? (overallTotal / overallCount).toFixed(1) : '--',
+        count: overallCount,
+        skillCounts,
         totalSkills: skillTotals
     };
 };
+
+

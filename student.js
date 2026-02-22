@@ -167,7 +167,7 @@ export const renderLessonView = (lessonId, isRestoring = false) => {
     appContainer.style.backgroundAttachment = 'fixed';
     appContainer.style.position = 'relative';
 
-    appContainer.innerHTML = `<div style="min-height: 100vh; padding: 1rem;" class="fade-in"><div class="w-full max-w-7xl mx-auto">${renderHeader(lesson.title, true)}<div class="bg-white p-6 md:p-8 mt-6 rounded-xl shadow-lg">${embedUrl ? `<div class="video-container shadow-md mb-8"><iframe src="${embedUrl}" frameborder="0" allowfullscreen></iframe></div>` : ''}<h2 class="text-3xl font-bold mb-4 text-slate-800">Nội dung bài học</h2><div class="prose max-w-none text-slate-700 mb-8 whitespace-pre-wrap">${lesson.content || '<p><em>Chưa có nội dung cho bài học này.</em></p>'}</div>
+    appContainer.innerHTML = `<div style="min-height: 100vh; padding: 1rem;" class="fade-in"><div class="w-full max-w-7xl mx-auto">${renderHeader(lesson.title, true)}<div class="bg-white p-6 md:p-8 mt-6 rounded-xl shadow-lg">${embedUrl ? `<div class="video-container shadow-md mb-3"><iframe src="${embedUrl}" frameborder="0" allowfullscreen></iframe></div><div class="mb-6 text-center"><a href="${lesson.videoUrl}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 text-sm text-red-600 hover:text-red-700 font-semibold bg-red-50 hover:bg-red-100 px-4 py-2 rounded-full border border-red-200 transition-colors"><i class="fab fa-youtube text-base"></i> Xem trên YouTube (dành cho điện thoại)</a></div>` : ''}<h2 class="text-3xl font-bold mb-4 text-slate-800">Nội dung bài học</h2><div class="prose max-w-none text-slate-700 mb-8 whitespace-pre-wrap">${lesson.content || '<p><em>Chưa có nội dung cho bài học này.</em></p>'}</div>
         
         ${homework ? `<hr class="my-8"><div class="p-6 bg-slate-50 rounded-lg"><h2 class="text-2xl font-bold mb-2">Bài tập: ${homework.title}</h2><p class="text-slate-600 mb-6 whitespace-pre-wrap">${homework.description}</p>${currentUser.role === 'student' ? (hasSubmitted ? `<div class="p-4 border rounded-lg ${progressRecord.grade !== null && progressRecord.grade !== undefined ? 'bg-green-50 border-green-300' : 'bg-blue-50 border-blue-200'}"><div class="flex justify-between items-start"><div class="flex items-start"><i class="fas fa-check-circle ${progressRecord.grade !== null && progressRecord.grade !== undefined ? 'text-green-600' : 'text-blue-600'} mr-3 fa-lg mt-1"></i><div><p class="font-bold ${progressRecord.grade !== null && progressRecord.grade !== undefined ? 'text-green-800' : 'text-blue-800'}">Bạn đã nộp bài.</p><p class="mt-2"><strong>Điểm:</strong> ${progressRecord.grade !== null && progressRecord.grade !== undefined ? `<span class="font-bold text-lg">${progressRecord.grade}</span>` : 'Chưa được chấm'}</p>                     </div></div><div class="flex gap-2 flex-col sm:flex-row flex-wrap">${(progressRecord.grade === null || progressRecord.grade === undefined) ? `<button class="cancel-submission-btn bg-gray-200 text-gray-700 text-xs font-semibold px-3 py-1 rounded-full hover:bg-gray-300" data-lesson-id="${lesson.id}">Hủy xác nhận</button>` : ''}<button class="view-lesson-folder-btn bg-blue-100 text-blue-700 text-xs font-semibold px-3 py-1 rounded-full hover:bg-blue-200 transition-colors" data-lesson-id="${lesson.id}"><i class="fab fa-google-drive mr-1"></i>Thư mục bài tập của tôi</button></div></div>${progressRecord.comment ? `<div class="border-t pt-3 mt-3"><p class="font-semibold text-slate-700">Nhận xét của giáo viên:</p><p class="text-slate-600 whitespace-pre-wrap mt-1">${progressRecord.comment}</p></div>` : ''}</div>` : isDeadlineMissed ? `<div class="p-4 border-l-4 border-red-500 bg-red-50 rounded-lg"><div class="flex items-start gap-3"><i class="fas fa-times-circle text-red-600 text-2xl mt-1 flex-shrink-0"></i><div><p class="font-bold text-red-800 text-lg">⏰ Hết hạn nộp bài</p><p class="text-red-700 mt-2">Giáo viên đã đóng hạn nộp bài cho bài tập này. Bạn không thể nộp bài nữa.</p></div></div></div>` : `<div class="flex items-center space-x-3"><button class="confirm-submission-btn bg-blue-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors" data-lesson-id="${lesson.id}"><i class="fas fa-upload mr-2"></i>Nộp Bài</button><p class="text-slate-600 text-sm">Nhấn nút để tải file bài làm lên hệ thống</p></div>`) : ''}</div>` : ''}
         
@@ -236,15 +236,15 @@ export const generateStudentProgressReport = (studentId, courseId, isTeacher = f
         const attendanceInfo = attendanceMap[attendanceStatus] || { text: 'Chưa điểm danh', class: 'bg-slate-200 text-slate-500' };
 
         return `
-             <div class="p-4 border rounded-lg bg-white shadow-sm">
+             <div class="p-4 border rounded-lg bg-white shadow-sm ${isTeacher ? 'lesson-progress-summary hover:shadow-md hover:border-blue-500 transition-all cursor-pointer' : ''}" ${isTeacher ? `data-lesson-id="${lesson.id}" data-student-id="${studentId}"` : ''} ${isTeacher ? 'role="button" tabindex="0"' : ''}>
                  <div class="flex flex-col sm:flex-row justify-between sm:items-start mb-4">
                      <div>
                          <p class="font-medium text-lg">${lesson.title}</p>
                          ${submitted ? '<p class="text-xs text-green-600 font-semibold mt-1">ĐÃ NỘP BÀI</p>' : isDeadlineMissed ? '<p class="text-xs text-red-600 font-semibold mt-1">⏰ HẾT HẠN NỘP</p>' : '<p class="text-xs text-slate-400 mt-1">Chưa nộp bài</p>'}
                      </div>
-                     <div class="mt-3 sm:mt-0">
-                         <span class="text-sm font-medium">Điểm danh: </span>
+                     <div class="mt-3 sm:mt-0 flex items-center gap-3">
                          <span class="text-sm px-3 py-1 border rounded-full ${attendanceInfo.class}">${attendanceInfo.text}</span>
+                         ${isTeacher ? '<span class="text-blue-500 text-xs font-semibold"><i class="fas fa-edit"></i> Chỉnh sửa</span>' : ''}
                      </div>
                  </div>
                  
@@ -276,10 +276,8 @@ export const generateStudentProgressReport = (studentId, courseId, isTeacher = f
         `;
     }).join('');
 
-    // Calculate overall average score from all graded submissions + deadline missed
-    const allGradedRecords = studentProgress.filter(p => (p.submittedAt && p.grade != null) || p.isDeadlineMissed && lessonsWithHomework.some(l => l.id === p.lessonId));
-    const allGrades = allGradedRecords.map(p => p.isDeadlineMissed ? 0 : parseFloat(p.grade));
-    const overallAverage = allGrades.length > 0 ? (allGrades.reduce((a, b) => a + b, 0) / allGrades.length).toFixed(1) : '--';
+    // Tính điểm TB chung theo cách nhất quán toàn chương trình (dùng skillAverages.overall)
+    const overallAverage = skillAverages.overall;
 
     const fullHTML = `
         <div class="p-6 bg-gradient-to-br from-slate-50 to-blue-50 rounded-xl shadow-lg mb-6 border border-blue-100">
@@ -289,7 +287,7 @@ export const generateStudentProgressReport = (studentId, courseId, isTeacher = f
                 <div class="bg-white p-5 rounded-lg shadow-sm border-l-4 border-blue-500">
                     <p class="text-sm font-medium text-slate-600 mb-2">Điểm Đánh Giá Năng Lực</p>
                     <p class="text-3xl font-bold text-blue-600">${overallAverage}</p>
-                    <p class="text-xs text-slate-500 mt-2">Từ ${allGradedRecords.length} bài đã chấm</p>
+                    <p class="text-xs text-slate-500 mt-2">Từ ${skillAverages.count} bài đã tính điểm</p>
                 </div>
                 
                 ${isTeacher ? `
