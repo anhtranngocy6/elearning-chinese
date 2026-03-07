@@ -594,7 +594,9 @@ export const renderEditLessonModal = (lessonId) => {
 export const renderHomeworkModal = (lessonId) => {
     const homeworks = getHomeworks();
     const homework = homeworks.find(h => h.lessonId === lessonId);
-    const modalContent = `<div class="bg-white w-full max-w-lg rounded-xl shadow-lg p-6 fade-in"><h2 class="text-2xl font-bold mb-4">${homework ? 'Chỉnh sửa' : 'Tạo'} Bài tập</h2><div class="space-y-4"><div><label for="homework-title" class="block text-sm font-medium text-slate-600 mb-1">Tiêu đề:</label><input type="text" id="homework-title" class="w-full p-2 border rounded-lg" value="${homework?.title || ''}"></div><div><label for="homework-desc" class="block text-sm font-medium text-slate-600 mb-1">Mô tả:</label><textarea id="homework-desc" class="w-full p-2 border rounded-lg h-24">${homework?.description || ''}</textarea></div></div><div class="mt-6 flex justify-between"><div>${homework ? `<button id="delete-homework-btn" data-homework-id="${homework.id}" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600">Xoá</button>` : ''}</div><div class="flex space-x-3"><button class="cancel-modal-btn px-4 py-2 bg-slate-200 text-slate-800 rounded-lg hover:bg-slate-300">Huỷ</button><button id="save-homework-btn" data-lesson-id="${lessonId}" data-homework-id="${homework?.id || ''}" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Lưu</button></div></div></div>`;
+    // Format existing deadline for datetime-local input (needs 'YYYY-MM-DDTHH:MM' format)
+    const existingDeadline = homework?.deadline ? homework.deadline.substring(0, 16) : '';
+    const modalContent = `<div class="bg-white w-full max-w-lg rounded-xl shadow-lg p-6 fade-in"><h2 class="text-2xl font-bold mb-4">${homework ? 'Chỉnh sửa' : 'Tạo'} Bài tập</h2><div class="space-y-4"><div><label for="homework-title" class="block text-sm font-medium text-slate-600 mb-1">Tiêu đề:</label><input type="text" id="homework-title" class="w-full p-2 border rounded-lg" value="${homework?.title || ''}"></div><div><label for="homework-desc" class="block text-sm font-medium text-slate-600 mb-1">Mô tả:</label><textarea id="homework-desc" class="w-full p-2 border rounded-lg h-24">${homework?.description || ''}</textarea></div><div><label for="homework-deadline" class="block text-sm font-medium text-slate-600 mb-1">⏰ Thời hạn nộp bài: <span class="text-slate-400 font-normal">(tùy chọn)</span></label><input type="datetime-local" id="homework-deadline" class="w-full p-2 border rounded-lg text-slate-700" value="${existingDeadline}"></div></div><div class="mt-6 flex justify-between"><div>${homework ? `<button id="delete-homework-btn" data-homework-id="${homework.id}" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600">Xoá</button>` : ''}</div><div class="flex space-x-3"><button class="cancel-modal-btn px-4 py-2 bg-slate-200 text-slate-800 rounded-lg hover:bg-slate-300">Huỷ</button><button id="save-homework-btn" data-lesson-id="${lessonId}" data-homework-id="${homework?.id || ''}" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Lưu</button></div></div></div>`;
     showModal(modalContent);
 };
 
@@ -922,11 +924,13 @@ export const handleTeacherClickEvents = async (e) => {
         const homeworkId = target.closest('#save-homework-btn').dataset.homeworkId;
         const title = document.getElementById('homework-title').value;
         const description = document.getElementById('homework-desc').value;
+        const deadlineValue = document.getElementById('homework-deadline').value;
+        const deadline = deadlineValue ? new Date(deadlineValue).toISOString() : null;
         if (title && description) {
             if (homeworkId) {
-                await updateDoc(doc(db, 'homeworks', homeworkId), { title, description });
+                await updateDoc(doc(db, 'homeworks', homeworkId), { title, description, deadline });
             } else {
-                await addDoc(collection(db, 'homeworks'), { lessonId, title, description });
+                await addDoc(collection(db, 'homeworks'), { lessonId, title, description, deadline });
             }
             closeModal();
             showToast('Lưu bài tập thành công', 'success');
