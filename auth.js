@@ -116,9 +116,8 @@ export const handleLogout = (callbacks) => {
 export const renderEditAccountModal = (currentUser, showModal) => {
     const modalContent = `
         <div class="bg-white w-full max-w-md rounded-xl shadow-lg p-8 fade-in">
-            <div class="flex justify-between items-center mb-6 pb-4 border-b">
+            <div class="mb-6 pb-4 border-b">
                 <h2 class="text-2xl font-bold text-slate-800"><i class="fas fa-user-cog text-blue-600 mr-2"></i>Chỉnh sửa Tài khoản</h2>
-                <button class="cancel-modal-btn text-slate-400 hover:text-slate-800 text-2xl font-light">&times;</button>
             </div>
             <div class="space-y-6">
                 <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">

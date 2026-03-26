@@ -16,6 +16,50 @@ import { navigate } from './navigation.js';
 // TEACHER RENDER FUNCTIONS
 // ═══════════════════════════════════════════════════════════════════════════════════
 
+// Sort state for "Khoá học của tôi": 'date' | 'alpha' | 'alpha-desc'
+let coursesSortMode = 'date';
+
+const getSortedMyCourses = (courses) => {
+    if (coursesSortMode === 'alpha') {
+        return [...courses].sort((a, b) => a.title.localeCompare(b.title, 'vi'));
+    }
+    if (coursesSortMode === 'alpha-desc') {
+        return [...courses].sort((a, b) => b.title.localeCompare(a.title, 'vi'));
+    }
+    // default: sort by createdAt descending (newest first)
+    return [...courses].sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+};
+
+const renderMyCoursesList = (myCourses) => {
+    const sorted = getSortedMyCourses(myCourses);
+    const listHtml = sorted.length > 0
+        ? sorted.map(c => `<div class="p-4 bg-slate-50 rounded-lg flex items-start gap-4 overflow-hidden"><div class="flex-1 min-w-0 overflow-hidden"><h3 class="font-semibold text-lg truncate">${c.title}</h3><p class="text-sm text-slate-500 line-clamp-2 mt-1 overflow-hidden whitespace-pre-wrap break-words">${c.description}</p></div><div class="space-x-2 flex-shrink-0 flex whitespace-nowrap"><button class="edit-course-btn text-gray-500 hover:text-blue-700" data-id="${c.id}" title="Chỉnh sửa thông tin"><i class="fas fa-pen"></i></button><button class="manage-course-btn bg-blue-50 text-blue-600 px-4 py-1 rounded-full border border-blue-200 font-semibold text-sm hover:bg-blue-100 whitespace-nowrap" data-id="${c.id}">Quản lý</button></div></div>`).join('')
+        : '<p class="text-slate-500">Bạn chưa tạo khoá học nào.</p>';
+
+    const dateActive = coursesSortMode === 'date' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-600 border-slate-300 hover:border-blue-400';
+    const alphaIsActive = coursesSortMode === 'alpha' || coursesSortMode === 'alpha-desc';
+    const alphaActive = alphaIsActive ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-600 border-slate-300 hover:border-blue-400';
+    const alphaLabel = coursesSortMode === 'alpha-desc' ? 'Z-A' : 'A-Z';
+    const alphaIcon = coursesSortMode === 'alpha-desc' ? 'fa-sort-alpha-down-alt' : 'fa-sort-alpha-down';
+    const alphaNextSort = coursesSortMode === 'alpha' ? 'alpha-desc' : 'alpha';
+
+    return `
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-2xl font-bold">Khoá học của tôi</h2>
+            <div class="flex gap-2">
+                <button id="sort-courses-date" class="sort-courses-btn text-xs px-3 py-1.5 border rounded-full font-semibold transition-all ${dateActive}" data-sort="date" title="Sắp xếp mới nhất trước">
+                    <i class="fas fa-clock mr-1"></i>Mới Nhất
+                </button>
+                <button id="sort-courses-alpha" class="sort-courses-btn text-xs px-3 py-1.5 border rounded-full font-semibold transition-all ${alphaActive}" data-sort="${alphaNextSort}" title="Sắp xếp theo tên ${alphaLabel}">
+                    <i class="fas ${alphaIcon} mr-1"></i>${alphaLabel}
+                </button>
+            </div>
+        </div>
+        <div id="my-courses-list" class="space-y-3" style="max-height:340px;overflow-y:auto;">
+            ${listHtml}
+        </div>`;
+};
+
 export const renderTeacherDashboard = (appContainerEl = document.getElementById('app')) => {
     if (getCurrentView() !== 'course' && getCurrentView() !== 'studentProgress' && getCurrentView() !== 'studentReport') {
         setCurrentView('dashboard');
@@ -31,7 +75,7 @@ export const renderTeacherDashboard = (appContainerEl = document.getElementById(
     appContainerEl.style.backgroundAttachment = 'fixed';
     appContainerEl.style.position = 'relative';
 
-    appContainerEl.innerHTML = `<div class="w-full max-w-7xl mx-auto fade-in"><div style="min-height: 100vh; padding: 1rem;">${renderHeader('Teacher Dashboard')}<div class="grid grid-cols-1 md:grid-cols-3 gap-8 mt-6"><div class="md:col-span-2 bg-white p-6 rounded-xl shadow-lg"><h2 class="text-2xl font-bold mb-4">Khoá học của tôi</h2><div class="space-y-3">${myCourses.length > 0 ? myCourses.map(c => `<div class="p-4 bg-slate-50 rounded-lg flex items-start gap-4 overflow-hidden"><div class="flex-1 min-w-0 overflow-hidden"><h3 class="font-semibold text-lg truncate">${c.title}</h3><p class="text-sm text-slate-500 line-clamp-2 mt-1 overflow-hidden whitespace-pre-wrap break-words">${c.description}</p></div><div class="space-x-2 flex-shrink-0 flex whitespace-nowrap"><button class="edit-course-btn text-gray-500 hover:text-blue-700" data-id="${c.id}" title="Chỉnh sửa thông tin"><i class="fas fa-pen"></i></button><button class="manage-course-btn bg-blue-50 text-blue-600 px-4 py-1 rounded-full border border-blue-200 font-semibold text-sm hover:bg-blue-100 whitespace-nowrap" data-id="${c.id}">Quản lý</button></div></div>`).join('') : '<p class="text-slate-500">Bạn chưa tạo khoá học nào.</p>'}</div></div><div class="bg-white p-6 rounded-xl shadow-lg h-fit"><h2 class="text-2xl font-bold mb-4">Tạo khoá học mới</h2><div class="space-y-3"><input type="text" id="new-course-title" placeholder="Tiêu đề khoá học" class="w-full p-2 border rounded-lg"><textarea id="new-course-desc" placeholder="Mô tả khoá học" class="w-full p-2 border rounded-lg h-24"></textarea><input type="text" id="new-course-script-url" placeholder="URL Google Apps Script Web App (bắt buộc)" class="w-full p-2 border rounded-lg" title="URL để tạo folder khóa học tự động"><button id="add-course-btn" class="w-full bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700">Tạo mới</button></div></div></div></div></div>`;
+    appContainerEl.innerHTML = `<div class="w-full max-w-7xl mx-auto fade-in"><div style="min-height: 100vh; padding: 1rem;">${renderHeader('Teacher Dashboard')}<div class="grid grid-cols-1 md:grid-cols-3 gap-8 mt-6"><div id="my-courses-section" class="md:col-span-2 bg-white p-6 rounded-xl shadow-lg">${renderMyCoursesList(myCourses)}</div><div class="bg-white p-6 rounded-xl shadow-lg h-fit"><h2 class="text-2xl font-bold mb-4">Tạo khoá học mới</h2><div class="space-y-3"><input type="text" id="new-course-title" placeholder="Tiêu đề khoá học" class="w-full p-2 border rounded-lg"><textarea id="new-course-desc" placeholder="Mô tả khoá học" class="w-full p-2 border rounded-lg h-24"></textarea><input type="text" id="new-course-script-url" placeholder="URL Google Apps Script Web App (bắt buộc)" class="w-full p-2 border rounded-lg" title="URL để tạo folder khóa học tự động"><button id="add-course-btn" class="w-full bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700">Tạo mới</button></div></div></div></div></div>`;
 };
 
 export const renderEditCourseModal = (courseId) => {
@@ -712,6 +756,18 @@ export const handleOpenHomeworkFolder = async (studentId, lessonId, studentName)
 export const handleTeacherClickEvents = async (e) => {
     const target = e.target;
 
+    // Sort "Khoá học của tôi"
+    if (target.closest('.sort-courses-btn')) {
+        const btn = target.closest('.sort-courses-btn');
+        coursesSortMode = btn.dataset.sort;
+        const myCourses = getCourses().filter(c => c.createdBy === getCurrentUser().id);
+        const container = document.getElementById('my-courses-section');
+        if (container) {
+            container.innerHTML = renderMyCoursesList(myCourses);
+        }
+        return true;
+    }
+
     // Edit course
     if (target.closest('.edit-course-btn')) {
         renderEditCourseModal(target.closest('.edit-course-btn').dataset.id);
@@ -820,7 +876,8 @@ export const handleTeacherClickEvents = async (e) => {
                     description,
                     createdBy: getCurrentUser().id,
                     scriptUrl,
-                    courseFolderUrl
+                    courseFolderUrl,
+                    createdAt: serverTimestamp()
                 });
 
                 showToast('✅ Khóa học và folder đã được tạo thành công!', 'success');
