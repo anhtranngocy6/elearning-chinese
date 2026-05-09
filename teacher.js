@@ -480,7 +480,8 @@ export const renderTeacherCourseTabs = {
                 <h3 class="text-xl font-bold mb-3">Thêm bài học mới</h3>
                 <div class="space-y-3">
                     <input type="text" id="new-lesson-title" placeholder="Tiêu đề bài học" class="w-full p-2 border rounded-lg">
-                    <input type="text" id="new-lesson-video" placeholder="Link video YouTube (tùy chọn)" class="w-full p-2 border rounded-lg">
+                    <input type="text" id="new-lesson-video" placeholder="Link video YouTube chính (tùy chọn)" class="w-full p-2 border rounded-lg">
+                    <input type="text" id="new-lesson-supp-video" placeholder="Link video bổ trợ (tùy chọn)" class="w-full p-2 border rounded-lg">
                     <textarea id="new-lesson-content" placeholder="Nội dung bài học" class="w-full p-2 border rounded-lg"></textarea>
                     <div>
                         <label class="block text-sm font-medium text-slate-600 mb-2">Chọn kỹ năng sẽ dạy trong bài học:</label>
@@ -631,7 +632,7 @@ export const renderEditLessonModal = (lessonId) => {
     const lesson = lessons.find(l => l.id === lessonId);
     if (!lesson) return;
     const skillsToTeach = lesson.skillsToTeach || [];
-    const modalContent = `<div class="bg-white w-full max-w-lg rounded-xl shadow-lg p-6 fade-in"><h2 class="text-2xl font-bold mb-4">Chỉnh sửa bài học</h2><div class="space-y-4"><div><label for="edit-lesson-title" class="block text-sm font-medium text-slate-600 mb-1">Tiêu đề:</label><input type="text" id="edit-lesson-title" class="w-full p-2 border rounded-lg" value="${lesson.title}"></div><div><label for="edit-lesson-video" class="block text-sm font-medium text-slate-600 mb-1">Link video:</label><input type="text" id="edit-lesson-video" class="w-full p-2 border rounded-lg" value="${lesson.videoUrl || ''}"></div><div><label for="edit-lesson-content" class="block text-sm font-medium text-slate-600 mb-1">Nội dung:</label><textarea id="edit-lesson-content" class="w-full p-2 border rounded-lg h-32">${lesson.content}</textarea></div><div><label class="block text-sm font-medium text-slate-600 mb-2">Kỹ năng:</label><div class="space-y-2"><label class="flex items-center"><input type="checkbox" class="edit-lesson-skill-checkbox" value="reading" ${skillsToTeach.includes('reading') ? 'checked' : ''}><span class="ml-2 text-sm">Đọc</span></label><label class="flex items-center"><input type="checkbox" class="edit-lesson-skill-checkbox" value="listening" ${skillsToTeach.includes('listening') ? 'checked' : ''}><span class="ml-2 text-sm">Nghe</span></label><label class="flex items-center"><input type="checkbox" class="edit-lesson-skill-checkbox" value="speaking" ${skillsToTeach.includes('speaking') ? 'checked' : ''}><span class="ml-2 text-sm">Nói</span></label><label class="flex items-center"><input type="checkbox" class="edit-lesson-skill-checkbox" value="writing" ${skillsToTeach.includes('writing') ? 'checked' : ''}><span class="ml-2 text-sm">Viết</span></label></div></div></div><div class="mt-6 flex justify-end space-x-3"><button class="cancel-modal-btn px-4 py-2 bg-slate-200 text-slate-800 rounded-lg hover:bg-slate-300">Huỷ</button><button id="save-lesson-btn" data-lesson-id="${lessonId}" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Lưu thay đổi</button></div></div>`;
+    const modalContent = `<div class="bg-white w-full max-w-lg rounded-xl shadow-lg p-6 fade-in"><h2 class="text-2xl font-bold mb-4">Chỉnh sửa bài học</h2><div class="space-y-4"><div><label for="edit-lesson-title" class="block text-sm font-medium text-slate-600 mb-1">Tiêu đề:</label><input type="text" id="edit-lesson-title" class="w-full p-2 border rounded-lg" value="${lesson.title}"></div><div><label for="edit-lesson-video" class="block text-sm font-medium text-slate-600 mb-1">Link video chính:</label><input type="text" id="edit-lesson-video" class="w-full p-2 border rounded-lg" value="${lesson.videoUrl || ''}"></div><div><label for="edit-lesson-supp-video" class="block text-sm font-medium text-slate-600 mb-1">Link video bổ trợ:</label><input type="text" id="edit-lesson-supp-video" class="w-full p-2 border rounded-lg" value="${lesson.supplementaryVideoUrl || ''}"></div><div><label for="edit-lesson-content" class="block text-sm font-medium text-slate-600 mb-1">Nội dung:</label><textarea id="edit-lesson-content" class="w-full p-2 border rounded-lg h-32">${lesson.content}</textarea></div><div><label class="block text-sm font-medium text-slate-600 mb-2">Kỹ năng:</label><div class="space-y-2"><label class="flex items-center"><input type="checkbox" class="edit-lesson-skill-checkbox" value="reading" ${skillsToTeach.includes('reading') ? 'checked' : ''}><span class="ml-2 text-sm">Đọc</span></label><label class="flex items-center"><input type="checkbox" class="edit-lesson-skill-checkbox" value="listening" ${skillsToTeach.includes('listening') ? 'checked' : ''}><span class="ml-2 text-sm">Nghe</span></label><label class="flex items-center"><input type="checkbox" class="edit-lesson-skill-checkbox" value="speaking" ${skillsToTeach.includes('speaking') ? 'checked' : ''}><span class="ml-2 text-sm">Nói</span></label><label class="flex items-center"><input type="checkbox" class="edit-lesson-skill-checkbox" value="writing" ${skillsToTeach.includes('writing') ? 'checked' : ''}><span class="ml-2 text-sm">Viết</span></label></div></div></div><div class="mt-6 flex justify-end space-x-3"><button class="cancel-modal-btn px-4 py-2 bg-slate-200 text-slate-800 rounded-lg hover:bg-slate-300">Huỷ</button><button id="save-lesson-btn" data-lesson-id="${lessonId}" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Lưu thay đổi</button></div></div>`;
     showModal(modalContent);
 };
 
@@ -899,6 +900,7 @@ export const handleTeacherClickEvents = async (e) => {
         const title = document.getElementById('new-lesson-title').value;
         const content = document.getElementById('new-lesson-content').value;
         const videoUrl = document.getElementById('new-lesson-video').value;
+        const supplementaryVideoUrl = document.getElementById('new-lesson-supp-video')?.value || '';
         const selectedSkills = Array.from(document.querySelectorAll('.lesson-skill-checkbox:checked')).map(cb => cb.value);
 
         if (title && content) {
@@ -908,12 +910,16 @@ export const handleTeacherClickEvents = async (e) => {
             }
 
             if (videoUrl && !videoUrl.includes('youtube.com') && !videoUrl.includes('youtu.be')) {
-                showToast('⚠️ URL video phải là YouTube link', 'warning');
+                showToast('⚠️ URL video chính phải là YouTube link', 'warning');
+            }
+            if (supplementaryVideoUrl && !supplementaryVideoUrl.includes('youtube.com') && !supplementaryVideoUrl.includes('youtu.be')) {
+                showToast('⚠️ URL video bổ trợ phải là YouTube link', 'warning');
             }
 
-            await addDoc(collection(db, 'lessons'), { courseId, title, content, videoUrl, skillsToTeach: selectedSkills, createdAt: serverTimestamp() });
+            await addDoc(collection(db, 'lessons'), { courseId, title, content, videoUrl, supplementaryVideoUrl, skillsToTeach: selectedSkills, createdAt: serverTimestamp() });
             document.getElementById('new-lesson-title').value = '';
             document.getElementById('new-lesson-video').value = '';
+            if (document.getElementById('new-lesson-supp-video')) document.getElementById('new-lesson-supp-video').value = '';
             document.getElementById('new-lesson-content').value = '';
             document.querySelectorAll('.lesson-skill-checkbox').forEach(cb => cb.checked = false);
             showToast('Thêm bài học thành công', 'success');
@@ -932,6 +938,7 @@ export const handleTeacherClickEvents = async (e) => {
         const lessonId = target.closest('#save-lesson-btn').dataset.lessonId;
         const title = document.getElementById('edit-lesson-title').value;
         const videoUrl = document.getElementById('edit-lesson-video').value;
+        const supplementaryVideoUrl = document.getElementById('edit-lesson-supp-video')?.value || '';
         const content = document.getElementById('edit-lesson-content').value;
         const selectedSkills = Array.from(document.querySelectorAll('.edit-lesson-skill-checkbox:checked')).map(cb => cb.value);
 
@@ -941,10 +948,13 @@ export const handleTeacherClickEvents = async (e) => {
         }
 
         if (videoUrl && !videoUrl.includes('youtube.com') && !videoUrl.includes('youtu.be')) {
-            showToast('⚠️ URL video phải là YouTube link', 'warning');
+            showToast('⚠️ URL video chính phải là YouTube link', 'warning');
+        }
+        if (supplementaryVideoUrl && !supplementaryVideoUrl.includes('youtube.com') && !supplementaryVideoUrl.includes('youtu.be')) {
+            showToast('⚠️ URL video bổ trợ phải là YouTube link', 'warning');
         }
 
-        await updateDoc(doc(db, 'lessons', lessonId), { title, videoUrl, content, skillsToTeach: selectedSkills });
+        await updateDoc(doc(db, 'lessons', lessonId), { title, videoUrl, supplementaryVideoUrl, content, skillsToTeach: selectedSkills });
         closeModal();
         showToast('Cập nhật bài học thành công', 'success');
         return true;
