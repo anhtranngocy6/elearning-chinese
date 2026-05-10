@@ -525,6 +525,7 @@ export const renderTeacherCourseTabs = {
                         <div class="mt-1 flex gap-2">${skillsDisplay}</div>
                     </div>
                     <div class="space-x-4">
+                        <button class="manage-supp-video-btn ${l.supplementaryVideoUrl ? 'text-blue-600 hover:text-blue-800' : 'text-slate-500 hover:text-slate-700'} text-sm" data-lesson-id="${l.id}"><i class="fas fa-video mr-1"></i>Video bổ trợ</button>
                         <button class="manage-homework-btn ${homeworkButtonClass} text-sm" data-lesson-id="${l.id}"><i class="fas fa-tasks mr-1"></i>Bài tập</button>
                         <button class="edit-lesson-btn text-gray-500 hover:text-blue-700 text-sm" data-lesson-id="${l.id}"><i class="fas fa-edit mr-1"></i>Chỉnh sửa</button>
                         <button class="delete-lesson-btn text-red-500 hover:text-red-700 text-sm" data-lesson-id="${l.id}"><i class="fas fa-trash mr-1"></i>Xóa</button>
@@ -642,6 +643,31 @@ export const renderHomeworkModal = (lessonId) => {
     // Format existing deadline for datetime-local input (needs 'YYYY-MM-DDTHH:MM' format)
     const existingDeadline = homework?.deadline ? homework.deadline.substring(0, 16) : '';
     const modalContent = `<div class="bg-white w-full max-w-lg rounded-xl shadow-lg p-6 fade-in"><h2 class="text-2xl font-bold mb-4">${homework ? 'Chỉnh sửa' : 'Tạo'} Bài tập</h2><div class="space-y-4"><div><label for="homework-title" class="block text-sm font-medium text-slate-600 mb-1">Tiêu đề:</label><input type="text" id="homework-title" class="w-full p-2 border rounded-lg" value="${homework?.title || ''}"></div><div><label for="homework-desc" class="block text-sm font-medium text-slate-600 mb-1">Mô tả:</label><textarea id="homework-desc" class="w-full p-2 border rounded-lg h-24">${homework?.description || ''}</textarea></div><div><label for="homework-deadline" class="block text-sm font-medium text-slate-600 mb-1">⏰ Thời hạn nộp bài: <span class="text-slate-400 font-normal">(tùy chọn)</span></label><input type="datetime-local" id="homework-deadline" class="w-full p-2 border rounded-lg text-slate-700" value="${existingDeadline}"></div></div><div class="mt-6 flex justify-between"><div>${homework ? `<button id="delete-homework-btn" data-homework-id="${homework.id}" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600">Xoá</button>` : ''}</div><div class="flex space-x-3"><button class="cancel-modal-btn px-4 py-2 bg-slate-200 text-slate-800 rounded-lg hover:bg-slate-300">Huỷ</button><button id="save-homework-btn" data-lesson-id="${lessonId}" data-homework-id="${homework?.id || ''}" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Lưu</button></div></div></div>`;
+    showModal(modalContent);
+};
+
+export const renderSuppVideoModal = (lessonId) => {
+    const lessons = getLessons();
+    const lesson = lessons.find(l => l.id === lessonId);
+    if (!lesson) return;
+    const modalContent = `<div class="bg-white w-full max-w-lg rounded-xl shadow-lg p-6 fade-in">
+        <h2 class="text-2xl font-bold mb-4">Video bổ trợ</h2>
+        <div class="space-y-4">
+            <div>
+                <label for="modal-supp-video-url" class="block text-sm font-medium text-slate-600 mb-1">Link video YouTube bổ trợ:</label>
+                <input type="text" id="modal-supp-video-url" class="w-full p-2 border rounded-lg" value="${lesson.supplementaryVideoUrl || ''}" placeholder="Nhập link video bổ trợ...">
+            </div>
+        </div>
+        <div class="mt-6 flex justify-between">
+            <div>
+                ${lesson.supplementaryVideoUrl ? `<button id="delete-supp-video-btn" data-lesson-id="${lesson.id}" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600">Xoá video</button>` : ''}
+            </div>
+            <div class="flex space-x-3">
+                <button class="cancel-modal-btn px-4 py-2 bg-slate-200 text-slate-800 rounded-lg hover:bg-slate-300">Huỷ</button>
+                <button id="save-supp-video-btn" data-lesson-id="${lessonId}" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Lưu</button>
+            </div>
+        </div>
+    </div>`;
     showModal(modalContent);
 };
 
@@ -983,6 +1009,28 @@ export const handleTeacherClickEvents = async (e) => {
 
     if (target.closest('.manage-homework-btn')) {
         renderHomeworkModal(target.closest('.manage-homework-btn').dataset.lessonId);
+        return true;
+    }
+
+    if (target.closest('.manage-supp-video-btn')) {
+        renderSuppVideoModal(target.closest('.manage-supp-video-btn').dataset.lessonId);
+        return true;
+    }
+
+    if (target.closest('#save-supp-video-btn')) {
+        const lessonId = target.closest('#save-supp-video-btn').dataset.lessonId;
+        const supplementaryVideoUrl = document.getElementById('modal-supp-video-url').value;
+        await updateDoc(doc(db, 'lessons', lessonId), { supplementaryVideoUrl });
+        closeModal();
+        showToast('Cập nhật video bổ trợ thành công', 'success');
+        return true;
+    }
+    
+    if (target.closest('#delete-supp-video-btn')) {
+        const lessonId = target.closest('#delete-supp-video-btn').dataset.lessonId;
+        await updateDoc(doc(db, 'lessons', lessonId), { supplementaryVideoUrl: '' });
+        closeModal();
+        showToast('Đã xoá video bổ trợ', 'success');
         return true;
     }
 
