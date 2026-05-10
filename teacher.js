@@ -209,8 +209,8 @@ export const renderTeacherCourseTabs = {
         if (enrolledStudents.length === 0) {
             return { html: '<div class="text-center py-12"><i class="fas fa-info-circle fa-2x text-slate-400"></i><p class="mt-4 text-slate-500">Chưa có học sinh trong khóa học.</p></div>' };
         }
-        if (allLessonsWithHomework.length === 0) {
-            return { html: '<div class="text-center py-12"><i class="fas fa-info-circle fa-2x text-slate-400"></i><p class="mt-4 text-slate-500">Chưa có bài tập nào để hiển thị tổng quan.</p></div>' };
+        if (allLessonsInCourse.length === 0) {
+            return { html: '<div class="text-center py-12"><i class="fas fa-info-circle fa-2x text-slate-400"></i><p class="mt-4 text-slate-500">Chưa có bài học nào để hiển thị tổng quan.</p></div>' };
         }
 
         const lessonsForStats = overviewFilterLessonId === 'all'
@@ -283,8 +283,8 @@ export const renderTeacherCourseTabs = {
         };
 
         const lessonsForTable = (overviewFilterLessonId === 'all')
-            ? allLessonsWithHomework
-            : allLessonsWithHomework.filter(l => l.id === overviewFilterLessonId);
+            ? allLessonsInCourse
+            : allLessonsInCourse.filter(l => l.id === overviewFilterLessonId);
 
         const filterMessage = "Nhấn vào ô để chỉnh sửa nhanh. 🟢 Xanh = đã chấm | 🟡 Vàng = chưa chấm | 🔴 Đỏ = chưa nộp | 🔵 Xanh dương = hết hạn nộp";
 
@@ -299,6 +299,7 @@ export const renderTeacherCourseTabs = {
                         <div class="flex items-center gap-3"><div class="w-4 h-4 bg-yellow-300 rounded-full shadow-md"></div><span>Chưa chấm</span></div>
                         <div class="flex items-center gap-3"><div class="w-4 h-4 bg-red-400 rounded-full shadow-md"></div><span>Chưa nộp</span></div>
                         <div class="flex items-center gap-3"><div class="w-4 h-4 bg-blue-600 rounded-full shadow-md"></div><span>Hết hạn nộp</span></div>
+                        <div class="flex items-center gap-3"><div class="w-4 h-4 bg-slate-300 rounded-full opacity-60 shadow-inner"></div><span class="text-blue-100 opacity-80">Không có bài</span></div>
                     </div>
                 </div>
 
@@ -314,6 +315,11 @@ export const renderTeacherCourseTabs = {
                 <div class="divide-y-2 divide-slate-200">
                     ${enrolledStudents.map((student, rowIdx) => {
                 const dotsHtml = lessonsForTable.map((lesson, idx) => {
+                    const hasHomework = homeworks.some(h => h.lessonId === lesson.id && h.title && h.description);
+                    if (!hasHomework) {
+                        return '<div class="flex flex-col items-center edit-progress-shortcut-btn cursor-pointer group" data-student-id="' + student.id + '" data-lesson-id="' + lesson.id + '" title="Không giao bài - Nhấn để điểm danh/nhận xét - ' + lesson.title + '"><div class="w-6 h-6 rounded-full bg-slate-300 opacity-60 shadow-inner hover:scale-125 transition-all ring-1 ring-offset-1 ring-white hover:ring-slate-400 group-hover:shadow-lg"></div><span class="text-xs font-bold text-slate-400 mt-1">' + (idx + 1) + '</span></div>';
+                    }
+
                     const progressRecord = progress.find(p => p.studentId === student.id && p.lessonId === lesson.id);
                     let dotClass = 'bg-red-400';
                     let tooltipText = 'Chưa nộp';
@@ -372,8 +378,8 @@ export const renderTeacherCourseTabs = {
                     <div class="flex items-center">
                         <label for="overview-filter" class="text-sm font-medium text-slate-600">Lọc theo:</label>
                         <select id="overview-filter" class="ml-2 p-1.5 border rounded-md text-sm bg-white shadow-sm focus:ring-blue-500 focus:border-blue-500">
-                            <option value="all">Tất cả bài tập</option>
-                            ${allLessonsWithHomework.map(l => `<option value="${l.id}" ${overviewFilterLessonId === l.id ? 'selected' : ''}>${l.title}</option>`).join('')}
+                            <option value="all">Tất cả bài học</option>
+                            ${allLessonsInCourse.map(l => `<option value="${l.id}" ${overviewFilterLessonId === l.id ? 'selected' : ''}>${l.title}</option>`).join('')}
                         </select>
                     </div>
                 </div>
